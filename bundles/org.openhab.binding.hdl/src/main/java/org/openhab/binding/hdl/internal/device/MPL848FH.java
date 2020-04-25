@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 
 import org.eclipse.smarthome.core.library.types.DecimalType;
 import org.eclipse.smarthome.core.library.types.OnOffType;
-import org.openhab.binding.hdl.HdlBindingConstants.emumFHMode;
+import org.openhab.binding.hdl.HdlBindingConstants.EnumFHMode;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 
 /**
@@ -26,6 +26,7 @@ import org.openhab.binding.hdl.internal.handler.HdlPacket;
  *
  * @author stigla - Initial contribution
  */
+
 public class MPL848FH extends Device {
     private double temperatureValue;
     private OnOffType uvSwitch1 = null; // Status On/OFf
@@ -39,7 +40,7 @@ public class MPL848FH extends Device {
     private String floorHeatingTemperaturType;
     private double floorHeatingCurrentTemperatur;
     private OnOffType floorHeatingStatus = null;
-    private emumFHMode floorHeatingMode;
+    private EnumFHMode floorHeatingMode;
     private double floorHeatingSetNormalTemperatur;
     private double floorHeatingSetDayTemperatur;
     private double floorHeatingSetNightTemperatur;
@@ -65,19 +66,19 @@ public class MPL848FH extends Device {
     public void treatHDLPacketForDevice(HdlPacket p) {
         switch (p.commandType) {
             case Broadcast_Temperature:
-                String InToHex = String.format("%02X", p.data[5]) + String.format("%02X", p.data[4])
+                String inToHex = String.format("%02X", p.data[5]) + String.format("%02X", p.data[4])
                         + String.format("%02X", p.data[3]) + String.format("%02X", p.data[2]);
 
-                Long i = Long.valueOf(InToHex, 16);
+                Long i = Long.valueOf(inToHex, 16);
                 Float tempfloat = Float.intBitsToFloat(i.intValue());
                 setTemperatureValue(tempfloat);
                 break;
             case Response_Panel_Control:
                 switch (p.data[0]) {
-                    case (byte) 4:
+                    case (byte) 4:// Cooling Temp
                         setACCoolingTemperatur(p.data[1]);
                         break;
-                    case (byte) 5:
+                    case (byte) 5:// Fan Speed
                         if (p.data[1] == 0) {
                             setACFanSpeed("Auto");
                         } else if (p.data[1] == 1) {
@@ -88,7 +89,7 @@ public class MPL848FH extends Device {
                             setACFanSpeed("Low");
                         }
                         break;
-                    case (byte) 6:
+                    case (byte) 6:// AC Mode
                         if (p.data[1] == 0) {
                             setACMode("Cooling");
                         } else if (p.data[1] == 1) {
@@ -101,10 +102,10 @@ public class MPL848FH extends Device {
                             setACMode("Dehumidfy");
                         }
                         break;
-                    case (byte) 7:
+                    case (byte) 7:// Heat Temp
                         setACHeatTemperatur(p.data[1]);
                         break;
-                    case (byte) 8:
+                    case (byte) 8:// Auto Temp
                         setACAutoTemperatur(p.data[1]);
                         break;
 
@@ -120,15 +121,15 @@ public class MPL848FH extends Device {
                         break;
                     case (byte) 21:
                         if (p.data[1] == 1) {
-                            setFloorHeatingMode(emumFHMode.Normal);
+                            setFloorHeatingMode(EnumFHMode.Normal);
                         } else if (p.data[1] == 2) {
-                            setFloorHeatingMode(emumFHMode.Day);
+                            setFloorHeatingMode(EnumFHMode.Day);
                         } else if (p.data[1] == 3) {
-                            setFloorHeatingMode(emumFHMode.Night);
+                            setFloorHeatingMode(EnumFHMode.Night);
                         } else if (p.data[1] == 4) {
-                            setFloorHeatingMode(emumFHMode.Away);
+                            setFloorHeatingMode(EnumFHMode.Away);
                         } else if (p.data[1] == 5) {
-                            setFloorHeatingMode(emumFHMode.Timer);
+                            setFloorHeatingMode(EnumFHMode.Timer);
                         }
                         break;
                     case (byte) 25:
@@ -167,15 +168,15 @@ public class MPL848FH extends Device {
                 }
 
                 if (p.data[3] == 1) {
-                    setFloorHeatingMode(emumFHMode.Normal);
+                    setFloorHeatingMode(EnumFHMode.Normal);
                 } else if (p.data[3] == 2) {
-                    setFloorHeatingMode(emumFHMode.Day);
+                    setFloorHeatingMode(EnumFHMode.Day);
                 } else if (p.data[3] == 3) {
-                    setFloorHeatingMode(emumFHMode.Night);
+                    setFloorHeatingMode(EnumFHMode.Night);
                 } else if (p.data[3] == 4) {
-                    setFloorHeatingMode(emumFHMode.Away);
+                    setFloorHeatingMode(EnumFHMode.Away);
                 } else if (p.data[3] == 5) {
-                    setFloorHeatingMode(emumFHMode.Timer);
+                    setFloorHeatingMode(EnumFHMode.Timer);
                 }
 
                 if (p.data[8] == 1) {
@@ -205,15 +206,15 @@ public class MPL848FH extends Device {
                 }
 
                 if (p.data[3] == 1) {
-                    setFloorHeatingMode(emumFHMode.Normal);
+                    setFloorHeatingMode(EnumFHMode.Normal);
                 } else if (p.data[3] == 2) {
-                    setFloorHeatingMode(emumFHMode.Day);
+                    setFloorHeatingMode(EnumFHMode.Day);
                 } else if (p.data[3] == 3) {
-                    setFloorHeatingMode(emumFHMode.Night);
+                    setFloorHeatingMode(EnumFHMode.Night);
                 } else if (p.data[3] == 4) {
-                    setFloorHeatingMode(emumFHMode.Away);
+                    setFloorHeatingMode(EnumFHMode.Away);
                 } else if (p.data[3] == 5) {
-                    setFloorHeatingMode(emumFHMode.Timer);
+                    setFloorHeatingMode(EnumFHMode.Timer);
                 }
 
                 setFloorHeatingSetNormalTemperatur(p.data[4]);
@@ -411,14 +412,14 @@ public class MPL848FH extends Device {
         return floorHeatingStatus;
     }
 
-    public void setFloorHeatingMode(emumFHMode FloorHeatingMode) {
+    public void setFloorHeatingMode(EnumFHMode FloorHeatingMode) {
         if (this.floorHeatingMode != FloorHeatingMode) {
             setUpdated(true);
         }
         this.floorHeatingMode = FloorHeatingMode;
     }
 
-    public emumFHMode getFloorHeatingMode() {
+    public EnumFHMode getFloorHeatingMode() {
         return floorHeatingMode;
     }
 
@@ -428,7 +429,7 @@ public class MPL848FH extends Device {
         }
         this.floorHeatingSetNormalTemperatur = FloorHeatingSetNormalTemperatur;
 
-        if (this.floorHeatingMode == emumFHMode.Normal) {
+        if (this.floorHeatingMode == EnumFHMode.Normal) {
             setFloorHeatingCurrentTemperatur(FloorHeatingSetNormalTemperatur);
         }
 
@@ -445,11 +446,11 @@ public class MPL848FH extends Device {
         }
         this.floorHeatingSetDayTemperatur = FloorHeatingSetDayTemperatur;
 
-        if (this.floorHeatingMode == emumFHMode.Day) {
+        if (this.floorHeatingMode == EnumFHMode.Day) {
             setFloorHeatingCurrentTemperatur(FloorHeatingSetDayTemperatur);
         }
 
-        if (this.floorHeatingMode == emumFHMode.Timer && this.floorHeatingTimer == "Day") {
+        if (this.floorHeatingMode == EnumFHMode.Timer && this.floorHeatingTimer == "Day") {
             setFloorHeatingCurrentTemperatur(FloorHeatingSetDayTemperatur);
         }
     }
@@ -466,11 +467,11 @@ public class MPL848FH extends Device {
         }
         this.floorHeatingSetNightTemperatur = FloorHeatingSetNightTemperatur;
 
-        if (this.floorHeatingMode == emumFHMode.Night) {
+        if (this.floorHeatingMode == EnumFHMode.Night) {
             setFloorHeatingCurrentTemperatur(FloorHeatingSetNightTemperatur);
         }
 
-        if (this.floorHeatingMode == emumFHMode.Timer && this.floorHeatingTimer == "Night") {
+        if (this.floorHeatingMode == EnumFHMode.Timer && this.floorHeatingTimer == "Night") {
             setFloorHeatingCurrentTemperatur(FloorHeatingSetNightTemperatur);
         }
 
@@ -487,7 +488,7 @@ public class MPL848FH extends Device {
         }
         this.floorHeatingSetAwayTemperatur = FloorHeatingSetAwayTemperatur;
 
-        if (this.floorHeatingMode == emumFHMode.Away) {
+        if (this.floorHeatingMode == EnumFHMode.Away) {
             setFloorHeatingCurrentTemperatur(FloorHeatingSetAwayTemperatur);
         }
     }

@@ -45,7 +45,7 @@ import org.openhab.binding.hdl.internal.device.ML01;
 import org.openhab.binding.hdl.internal.device.MPL848FH;
 import org.openhab.binding.hdl.internal.device.MR1216;
 import org.openhab.binding.hdl.internal.device.MRDA06;
-import org.openhab.binding.hdl.internal.device.MS08Mn2C;
+import org.openhab.binding.hdl.internal.device.MS08;
 import org.openhab.binding.hdl.internal.device.MS122C;
 import org.openhab.binding.hdl.internal.device.MS24;
 import org.slf4j.Logger;
@@ -145,7 +145,10 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
             p.setTargetDeviceId(deviceID);
 
             switch (getThing().getThingTypeUID().getAsString()) {
+                case "hdl:MSP08M_4C":
                 case "hdl:MS08Mn_2C":
+                case "hdl:MS08":
+                case "hdl:MS12":
                 case "hdl:MS12_2C":
                     p.setCommandType(CommandType.Read_Sensors_Status);
                     logger.debug("For Thing Type: {} with device id: {} with Refresh Interval: {} command is sent.",
@@ -541,16 +544,16 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         getThing().getUID());
                 switch (device.getType()) {
                     case MS08Mn_2C:
-                        if (((MS08Mn2C) device).getTemperatureValue() != null) {
+                        if (((MS08) device).getTemperatureValue() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_TEMPERATUR),
-                                    ((MS08Mn2C) device).getTemperatureValue());
+                                    ((MS08) device).getTemperatureValue());
                         }
-                        if (((MS08Mn2C) device).getBrightnessValue() != null) {
+                        if (((MS08) device).getBrightnessValue() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BRIGHTNESS),
-                                    ((MS08Mn2C) device).getBrightnessValue());
+                                    ((MS08) device).getBrightnessValue());
                         }
-                        if (((MS08Mn2C) device).getMotionSensorValue() != null) {
-                            StopMoveType fromDevice = ((MS08Mn2C) device).getMotionSensorValue();
+                        if (((MS08) device).getMotionSensorValue() != null) {
+                            StopMoveType fromDevice = ((MS08) device).getMotionSensorValue();
                             OnOffType sendToUpdate = OnOffType.OFF;
                             if (fromDevice.equals(StopMoveType.MOVE)) {
                                 sendToUpdate = OnOffType.ON;
@@ -558,13 +561,13 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_MOTIONSSENSOR),
                                     sendToUpdate);
                         }
-                        if (((MS08Mn2C) device).getDryContact1Value() != null) {
+                        if (((MS08) device).getDryContact1Value() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT1),
-                                    ((MS08Mn2C) device).getDryContact1Value());
+                                    ((MS08) device).getDryContact1Value());
                         }
-                        if (((MS08Mn2C) device).getDryContact2Value() != null) {
+                        if (((MS08) device).getDryContact2Value() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT2),
-                                    ((MS08Mn2C) device).getDryContact2Value());
+                                    ((MS08) device).getDryContact2Value());
                         }
                         break;
                     case MS12_2C:

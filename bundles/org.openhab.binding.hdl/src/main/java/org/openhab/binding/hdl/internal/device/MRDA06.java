@@ -23,6 +23,7 @@ import org.openhab.binding.hdl.internal.handler.HdlPacket;
  *
  * @author stigla - Initial contribution
  */
+
 public class MRDA06 extends Device {
     // Ballast controller, 6 channels, 0-10V
 

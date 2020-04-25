@@ -64,7 +64,7 @@
 	</config-description>
 	</thing-type>		
 		
-	<thing-type id="MDT0601_233">
+	<thing-type id="MDT0601">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge" />
 		</supported-bridge-type-refs>
@@ -134,7 +134,7 @@
 		</config-description>
 	</thing-type>
 	
-	<thing-type id="MPT04_48">
+	<thing-type id="MPT04">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge" />
 		</supported-bridge-type-refs>
@@ -158,7 +158,7 @@
 	</config-description>
 	</thing-type>
 	
-	<thing-type id="MR1216_233">
+	<thing-type id="MR1216">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge" />
 		</supported-bridge-type-refs>
@@ -190,12 +190,36 @@
 	</config-description>
 	</thing-type>
 	
+	<thing-type id="MR0416">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="bridge" />
+		</supported-bridge-type-refs>
+		<label>Relay 4 Channel </label>
+		<description>Relay 4x16A</description>
+		<channels>
+			<channel id="RelayCh1" typeId="switch"></channel>
+			<channel id="RelayCh2" typeId="switch"></channel>
+			<channel id="RelayCh3" typeId="switch"></channel>
+			<channel id="RelayCh4" typeId="switch"></channel>
+		</channels>
+		<config-description>
+		<parameter name="Subnet" type="integer" min="1" required="true">
+			<label>Subnet</label>
+			<description>What Sub net the Relay is on.</description>
+		</parameter>
+		<parameter name="DeviceID" type="integer" min="1" required="true">
+			<label>Device ID</label>
+			<description>What device id the Relay has.</description>
+		</parameter>
+	</config-description>
+	</thing-type>
+	
 	<thing-type id="MRDA06">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge" />
 		</supported-bridge-type-refs>
 		<label>HDL Dimmer 6x1A </label>
-		<description>Ballast Controler, 6 Channels, 0-10V</description>
+		<description>Ballast Controller, 6 Channels, 0-10V</description>
 		<channels>
 			<channel id="DimChannel1" typeId="dimmer"></channel>
 			<channel id="DimChannel2" typeId="dimmer"></channel>
@@ -216,7 +240,7 @@
 	</config-description>
 	</thing-type>
 	
-	<thing-type id="MW02_231">
+	<thing-type id="MW02">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge" />
 		</supported-bridge-type-refs>
@@ -238,7 +262,7 @@
 	</config-description>
 	</thing-type>
 	
-	<thing-type id="MS12_2C">
+	<thing-type id="MS12">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge" />
 		</supported-bridge-type-refs>
@@ -270,7 +294,7 @@
 		</config-description>
 	</thing-type>
 	
-	<thing-type id="MS08Mn_2C">
+	<thing-type id="MS08">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge" />
 		</supported-bridge-type-refs>

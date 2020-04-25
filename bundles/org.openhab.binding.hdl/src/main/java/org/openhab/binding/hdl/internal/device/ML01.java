@@ -24,6 +24,7 @@ import org.openhab.binding.hdl.internal.handler.HdlPacket;
  *
  * @author stigla - Initial contribution
  */
+
 public class ML01 extends Device {
 
     private Date dateTime = null;

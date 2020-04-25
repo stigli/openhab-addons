@@ -40,14 +40,12 @@ import org.slf4j.LoggerFactory;
  * @author stigla - Initial contribution
  */
 @Component(service = ThingHandlerFactory.class, configurationPid = "binding.hdl")
-
 public class HdlHandlerFactory extends BaseThingHandlerFactory {
 
     private final Logger logger = LoggerFactory.getLogger(HdlHandlerFactory.class);
     private final Map<ThingUID, ServiceRegistration<?>> discoveryServiceRegs = new HashMap<>();
 
     @Override
-
     public Thing createThing(ThingTypeUID thingTypeUID, Configuration configuration, ThingUID thingUID,
             ThingUID bridgeUID) {
         if (HdlBindingConstants.THING_TYPE_BRIDGE.equals(thingTypeUID)) {
@@ -70,7 +68,7 @@ public class HdlHandlerFactory extends BaseThingHandlerFactory {
     private ThingUID getBridgeThingUID(ThingTypeUID thingTypeUID, ThingUID thingUID, Configuration configuration) {
         if (thingUID == null) {
             String serialNumber = (String) configuration.get(HdlBindingConstants.PROPERTY_IP);
-            thingUID = new ThingUID(thingTypeUID, serialNumber);
+            return new ThingUID(thingTypeUID, serialNumber);
         }
         return thingUID;
     }
@@ -83,7 +81,7 @@ public class HdlHandlerFactory extends BaseThingHandlerFactory {
         String serialNumber = Integer.toString(subNet * 1000 + deviceID);
 
         if (thingUID == null) {
-            thingUID = new ThingUID(thingTypeUID, serialNumber, bridgeUID.getId());
+            return new ThingUID(thingTypeUID, serialNumber, bridgeUID.getId());
         }
         return thingUID;
     }

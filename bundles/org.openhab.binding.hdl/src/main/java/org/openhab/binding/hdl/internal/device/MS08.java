@@ -27,7 +27,7 @@ import org.openhab.binding.hdl.internal.handler.HdlPacket;
  *
  * @author stigla - Initial contribution
  */
-public class MS08Mn2C extends Device {
+public class MS08 extends Device {
     private double temperatureValue;
     private double brightnessValue;
     private StopMoveType motionSensorValue = null;
@@ -37,7 +37,7 @@ public class MS08Mn2C extends Device {
     /** Device type for this sensor with 8 functions **/
     private DeviceType deviceType = DeviceType.MS08Mn_2C;
 
-    public MS08Mn2C(DeviceConfiguration c) {
+    public MS08(DeviceConfiguration c) {
         super(c);
     }
 

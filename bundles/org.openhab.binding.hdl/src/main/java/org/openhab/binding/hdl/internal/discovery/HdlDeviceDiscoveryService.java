@@ -69,7 +69,7 @@ public class HdlDeviceDiscoveryService extends AbstractDiscoveryService implemen
         ThingUID thingUID = null;
         switch (device.getType()) {
             case MDT0601_233:
-                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MDT0601_233, bridge.getUID(),
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MDT0601, bridge.getUID(),
                         device.getSerialNr());
                 break;
             case ML01:
@@ -84,19 +84,19 @@ public class HdlDeviceDiscoveryService extends AbstractDiscoveryService implemen
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MPT04_48, bridge.getUID(), device.getSerialNr());
                 break;
             case MR1216_233:
-                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MR1216_233, bridge.getUID(),
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MR1216, bridge.getUID(),
                         device.getSerialNr());
                 break;
             case MRDA0610_432:
-                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MRDA0610_432, bridge.getUID(),
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MRDA0610, bridge.getUID(),
                         device.getSerialNr());
                 break;
             case MS08Mn_2C:
-                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MS08MN_2C, bridge.getUID(),
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MS08, bridge.getUID(),
                         device.getSerialNr());
                 break;
             case MS12_2C:
-                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MS12_2C, bridge.getUID(), device.getSerialNr());
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MS12, bridge.getUID(), device.getSerialNr());
                 break;
             case MS24:
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MS24, bridge.getUID(), device.getSerialNr());

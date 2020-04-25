@@ -22,6 +22,7 @@ import org.openhab.binding.hdl.internal.handler.HdlPacket;
  *
  * @author stigla - Initial contribution
  */
+
 public class MPT0448 extends Device {
 
     /** Device type for Digital touch switch 4 buttons **/

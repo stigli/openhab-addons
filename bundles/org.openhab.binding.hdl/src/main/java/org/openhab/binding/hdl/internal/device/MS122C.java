@@ -123,10 +123,10 @@ public class MS122C extends Device {
                 }
                 break;
             case Broadcast_Temperature:
-                String InToHex = String.format("%02X", p.data[5]) + String.format("%02X", p.data[4])
+                String intoHex = String.format("%02X", p.data[5]) + String.format("%02X", p.data[4])
                         + String.format("%02X", p.data[3]) + String.format("%02X", p.data[2]);
 
-                Long i = Long.valueOf(InToHex, 16);
+                Long i = Long.valueOf(intoHex, 16);
                 Float tempfloat = Float.intBitsToFloat(i.intValue());
                 setTemperatureValue(tempfloat);
                 break;
