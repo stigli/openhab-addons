@@ -90,6 +90,30 @@
 	</config-description>
 	</thing-type>
 	
+	<thing-type id="MDT04015">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="bridge" />
+		</supported-bridge-type-refs>
+		<label>HDL Dimmer 4x1.5A </label>
+		<description>Dimmer 6x1.5A - Universell</description>
+		<channels>
+			<channel id="DimChannel1" typeId="dimmer"></channel>
+			<channel id="DimChannel2" typeId="dimmer"></channel>
+			<channel id="DimChannel3" typeId="dimmer"></channel>
+			<channel id="DimChannel4" typeId="dimmer"></channel>			
+		</channels>
+		<config-description>
+		<parameter name="Subnet" type="integer" min="1" required="true">
+			<label>Subnet</label>
+			<description>What Sub net the Dimmer is on.</description>
+		</parameter>
+		<parameter name="DeviceID" type="integer" min="1" required="true">
+			<label>Device ID</label>
+			<description>What device id the Dimmer has.</description>
+		</parameter>
+	</config-description>
+	</thing-type>
+	
 	<thing-type id="MPL8_48_FH">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge" />

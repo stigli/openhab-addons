@@ -69,8 +69,10 @@ public class HdlDeviceDiscoveryService extends AbstractDiscoveryService implemen
         ThingUID thingUID = null;
         switch (device.getType()) {
             case MDT0601_233:
-                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MDT0601, bridge.getUID(),
-                        device.getSerialNr());
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MDT0601, bridge.getUID(), device.getSerialNr());
+                break;
+            case MDT04015_433:
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MDT04015, bridge.getUID(), device.getSerialNr());
                 break;
             case ML01:
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_ML01, bridge.getUID(), device.getSerialNr());
@@ -84,16 +86,19 @@ public class HdlDeviceDiscoveryService extends AbstractDiscoveryService implemen
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MPT04_48, bridge.getUID(), device.getSerialNr());
                 break;
             case MR1216_233:
-                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MR1216, bridge.getUID(),
-                        device.getSerialNr());
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MR1216, bridge.getUID(), device.getSerialNr());
+                break;
+            case MR0416_C:
+            case MR0416_231:
+            case MR0416_431:
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MR0416, bridge.getUID(), device.getSerialNr());
                 break;
             case MRDA0610_432:
-                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MRDA0610, bridge.getUID(),
-                        device.getSerialNr());
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MRDA0610, bridge.getUID(), device.getSerialNr());
                 break;
             case MS08Mn_2C:
-                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MS08, bridge.getUID(),
-                        device.getSerialNr());
+            case MSP08M_4C:
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MS08, bridge.getUID(), device.getSerialNr());
                 break;
             case MS12_2C:
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MS12, bridge.getUID(), device.getSerialNr());

@@ -47,6 +47,7 @@ public class HdlBindingConstants {
 
     public static final ThingTypeUID THING_TYPE_ML01 = new ThingTypeUID(BINDING_ID, "ML01"); // Dimmer
     public static final ThingTypeUID THING_TYPE_MDT0601 = new ThingTypeUID(BINDING_ID, "MDT0601"); // 6 Ch Uni Dim
+    public static final ThingTypeUID THING_TYPE_MDT04015 = new ThingTypeUID(BINDING_ID, "MDT04015"); // 4 Ch Uni Dim
     public static final ThingTypeUID THING_TYPE_MPL8_48_FH = new ThingTypeUID(BINDING_ID, "MPL8_48_FH"); // DLP
                                                                                                          // Bryterpanel
     public static final ThingTypeUID THING_TYPE_MPT04_48 = new ThingTypeUID(BINDING_ID, "MPT04"); // 4 Knapper
@@ -340,17 +341,18 @@ public class HdlBindingConstants {
 
     }
 
-    public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections
-            .unmodifiableSet(Stream
-                    .of(THING_TYPE_BRIDGE, THING_TYPE_ML01, THING_TYPE_MDT0601, THING_TYPE_MPL8_48_FH,
-                            THING_TYPE_MPT04_48, THING_TYPE_MR1216, THING_TYPE_MRDA0610, THING_TYPE_MW02,
-                            THING_TYPE_MS12, THING_TYPE_MS08, THING_TYPE_MS24, THING_TYPE_MRDA06, THING_TYPE_MR0416)
-                    .collect(Collectors.toSet()));
+    public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.unmodifiableSet(Stream
+            .of(THING_TYPE_BRIDGE, THING_TYPE_ML01, THING_TYPE_MDT0601, THING_TYPE_MPL8_48_FH, THING_TYPE_MPT04_48,
+                    THING_TYPE_MR1216, THING_TYPE_MRDA0610, THING_TYPE_MW02, THING_TYPE_MS12, THING_TYPE_MS08,
+                    THING_TYPE_MS24, THING_TYPE_MRDA06, THING_TYPE_MR0416, THING_TYPE_MDT04015)
+            .collect(Collectors.toSet()));
 
     public static final Set<ThingTypeUID> SUPPORTED_DEVICE_THING_TYPES_UIDS = Collections
-            .unmodifiableSet(Stream.of(THING_TYPE_ML01, THING_TYPE_MDT0601, THING_TYPE_MPL8_48_FH, THING_TYPE_MPT04_48,
-                    THING_TYPE_MR1216, THING_TYPE_MRDA0610, THING_TYPE_MW02, THING_TYPE_MS12, THING_TYPE_MS08,
-                    THING_TYPE_MS24, THING_TYPE_MRDA06, THING_TYPE_MR0416).collect(Collectors.toSet()));
+            .unmodifiableSet(Stream
+                    .of(THING_TYPE_ML01, THING_TYPE_MDT0601, THING_TYPE_MPL8_48_FH, THING_TYPE_MPT04_48,
+                            THING_TYPE_MR1216, THING_TYPE_MRDA0610, THING_TYPE_MW02, THING_TYPE_MS12, THING_TYPE_MS08,
+                            THING_TYPE_MS24, THING_TYPE_MRDA06, THING_TYPE_MR0416, THING_TYPE_MDT04015)
+                    .collect(Collectors.toSet()));
 
     public static final Set<ThingTypeUID> SUPPORTED_BRIDGE_THING_TYPES_UIDS = Collections
             .unmodifiableSet(Stream.of(THING_TYPE_BRIDGE).collect(Collectors.toSet()));

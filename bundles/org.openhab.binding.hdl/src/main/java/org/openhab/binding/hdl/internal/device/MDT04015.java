@@ -16,23 +16,21 @@ import org.eclipse.smarthome.core.library.types.PercentType;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 
 /**
- * The MDT0601 class contains support channels for device Type MDT0601.
+ * The MDT04015 class contains support channels for device Type MDT04015.
  * And how the information on the HDL bus is packet for this device.
- * This is 6 channel, 1A dimmer.
+ * This is 4 channel, 1.5A dimmer.
  *
  * @author stigla - Initial contribution
  */
 
-public class MDT0601 extends Device {
+public class MDT04015 extends Device {
     // Dimmer 6x1A - Universal
     private PercentType dimChannel1 = null;
     private PercentType dimChannel2 = null;
     private PercentType dimChannel3 = null;
     private PercentType dimChannel4 = null;
-    private PercentType dimChannel5 = null;
-    private PercentType dimChannel6 = null;
 
-    public MDT0601(DeviceConfiguration c) {
+    public MDT04015(DeviceConfiguration c) {
         super(c);
     }
 
@@ -43,16 +41,12 @@ public class MDT0601 extends Device {
                 setDimChannel2(PercentType.valueOf(Integer.toString(p.data[2])));
                 setDimChannel3(PercentType.valueOf(Integer.toString(p.data[3])));
                 setDimChannel4(PercentType.valueOf(Integer.toString(p.data[4])));
-                setDimChannel5(PercentType.valueOf(Integer.toString(p.data[5])));
-                setDimChannel6(PercentType.valueOf(Integer.toString(p.data[6])));
                 break;
             case Response_Read_Current_Level_of_Channels:
                 setDimChannel1(PercentType.valueOf(Integer.toString(p.data[1])));
                 setDimChannel2(PercentType.valueOf(Integer.toString(p.data[2])));
                 setDimChannel3(PercentType.valueOf(Integer.toString(p.data[3])));
                 setDimChannel4(PercentType.valueOf(Integer.toString(p.data[4])));
-                setDimChannel5(PercentType.valueOf(Integer.toString(p.data[5])));
-                setDimChannel6(PercentType.valueOf(Integer.toString(p.data[6])));
                 break;
             case Response_Single_Channel_Control:
                 switch (p.data[0]) {
@@ -71,14 +65,6 @@ public class MDT0601 extends Device {
                     case 4:
                         int dimCh4 = p.data[2];
                         setDimChannel4(PercentType.valueOf(Integer.toString(dimCh4)));
-                        break;
-                    case 5:
-                        int dimCh5 = p.data[2];
-                        setDimChannel5(PercentType.valueOf(Integer.toString(dimCh5)));
-                        break;
-                    case 6:
-                        int dimCh6 = p.data[2];
-                        setDimChannel6(PercentType.valueOf(Integer.toString(dimCh6)));
                         break;
                     default:
                         LOGGER.debug("For type: {}, CommandType: {}, does not support channel: {}.", p.sourcedeviceType,
@@ -139,30 +125,8 @@ public class MDT0601 extends Device {
         return dimChannel4;
     }
 
-    public void setDimChannel5(PercentType DimChannel5) {
-        if (this.dimChannel5 != DimChannel5) {
-            setUpdated(true);
-        }
-        this.dimChannel5 = DimChannel5;
-    }
-
-    public PercentType getDimChannel5State() {
-        return dimChannel5;
-    }
-
-    public void setDimChannel6(PercentType DimChannel6) {
-        if (this.dimChannel6 != DimChannel6) {
-            setUpdated(true);
-        }
-        this.dimChannel6 = DimChannel6;
-    }
-
-    public PercentType getDimChannel6State() {
-        return dimChannel6;
-    }
-
     @Override
     public DeviceType getType() {
-        return DeviceType.MDT0601_233;
+        return DeviceType.MDT04015_433;
     }
 }

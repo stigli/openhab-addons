@@ -13,6 +13,7 @@ Thing names are using the article number that HDL are using.
 |---------------|-----------|---------------------------------------------------------------|
 | bridge        | Bridge    | This is the HDL LAN gateway (MBUS01IP)                    	|
 | MDT0601	   	| Thing     | HDL Dimmer 6x1A - Universal                                   |
+| MDT04015	   	| Thing     | HDL Dimmer 4x1.5A	                                 			|
 | ML01          | Thing     | HDL logic module                                              |
 | MPL8_48_FH    | Thing     | HDL Button Panel (DLP) with AC, Music, Clock, Floor Heating   |
 | MPT04_48      | Thing     | Digital touch switch 4 buttons                                |
@@ -46,7 +47,7 @@ DryContact(1-24)Status  means that that it can be 24 Dry Contact channels. What 
 
 | Channel Type ID       | Item Type | Description                                               | Available on thing        	|
 |-----------------------|-----------|-----------------------------------------------------------|-------------------------------|
-| DimChannel(1-6)       | Dimmer    | This channel indicates the value of the dimmer.           |MDT0601,MRDA06           		|
+| DimChannel(1-6)       | Dimmer    | This channel indicates the value of the dimmer.           |MDT0601,MRDA06,MDT04015(1-4) 	|
 | DryContact(1-24)Status| Contact   | This channel indicates the status of the dry contact.     |MS24,MS08(1-2),MS12(1-2)		|
 | RelayCh(1-12)         | Switch    | This channel indicates the value of the relay.            |MR1216,MR0416(1-4),MS12(1-2)	|
 | UVSwitch(1-240)       | Switch    | This channel indicates the value of the UV Switch.        |ML01(200-240)              	|

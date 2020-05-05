@@ -40,9 +40,11 @@ import org.eclipse.smarthome.core.types.RefreshType;
 import org.openhab.binding.hdl.HdlBindingConstants;
 import org.openhab.binding.hdl.internal.device.CommandType;
 import org.openhab.binding.hdl.internal.device.Device;
+import org.openhab.binding.hdl.internal.device.MDT04015;
 import org.openhab.binding.hdl.internal.device.MDT0601;
 import org.openhab.binding.hdl.internal.device.ML01;
 import org.openhab.binding.hdl.internal.device.MPL848FH;
+import org.openhab.binding.hdl.internal.device.MR0416;
 import org.openhab.binding.hdl.internal.device.MR1216;
 import org.openhab.binding.hdl.internal.device.MRDA06;
 import org.openhab.binding.hdl.internal.device.MS08;
@@ -233,8 +235,11 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
         p.setTargetDeviceId(deviceID);
 
         switch (getThing().getThingTypeUID().getAsString()) {
+            case "hdl:MSP08M_4C":
             case "hdl:MS08Mn_2C":
+            case "hdl:MS08":
             case "hdl:MS12_2C":
+            case "hdl:MS12":
                 p.setCommandType(CommandType.Read_Sensors_Status);
                 hdlPacketList.add(p);
                 logger.debug("For Thing Type: {} command: Refresh is sent.",
@@ -242,7 +247,11 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                 break;
             case "hdl:MRDA06":
             case "hdl:MDT0601_233":
+            case "hdl:MDT0601":
+            case "hdl:MDT04015":
             case "hdl:MR1216_233":
+            case "hdl:MR1216":
+            case "hdl:MR0416":
                 p.setCommandType(CommandType.Read_Status_of_Channels);
                 hdlPacketList.add(p);
                 logger.debug("For Thing Type: {} command: Refresh is sent.",
@@ -255,6 +264,7 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         getThing().getThingTypeUID().getAsString());
                 break;
             case "hdl:MW02_231":
+            case "hdl:MW02":
                 p.setCommandType(CommandType.Read_Status_of_Curtain_Switch);
                 p.setData(new byte[] { (byte) 1 });
                 hdlPacketList.add(p);
@@ -544,6 +554,7 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         getThing().getUID());
                 switch (device.getType()) {
                     case MS08Mn_2C:
+                    case MSP08M_4C:
                         if (((MS08) device).getTemperatureValue() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_TEMPERATUR),
                                     ((MS08) device).getTemperatureValue());
@@ -726,6 +737,24 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                                     ((MDT0601) device).getDimChannel6State());
                         }
                         break;
+                    case MDT04015_433:
+                        if (((MDT04015) device).getDimChannel1State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL1),
+                                    ((MDT04015) device).getDimChannel1State());
+                        }
+                        if (((MDT04015) device).getDimChannel2State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL2),
+                                    ((MDT04015) device).getDimChannel2State());
+                        }
+                        if (((MDT04015) device).getDimChannel3State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL3),
+                                    ((MDT04015) device).getDimChannel3State());
+                        }
+                        if (((MDT04015) device).getDimChannel4State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL4),
+                                    ((MDT04015) device).getDimChannel4State());
+                        }
+                        break;
                     case MRDA06:
                         if (((MRDA06) device).getDimChannel1State() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL1),
@@ -801,6 +830,27 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH12),
                                     ((MR1216) device).getRelayCh12State());
                         }
+                        break;
+                    case MR0416_C:
+                    case MR0416_231:
+                    case MR0416_431:
+                        if (((MR0416) device).getRelayCh01State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH1),
+                                    ((MR0416) device).getRelayCh01State());
+                        }
+                        if (((MR0416) device).getRelayCh02State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH2),
+                                    ((MR0416) device).getRelayCh02State());
+                        }
+                        if (((MR0416) device).getRelayCh03State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH3),
+                                    ((MR0416) device).getRelayCh03State());
+                        }
+                        if (((MR0416) device).getRelayCh04State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH4),
+                                    ((MR0416) device).getRelayCh04State());
+                        }
+
                         break;
                     case ML01:
                         if (((ML01) device).getUVSwitch200() != null) {

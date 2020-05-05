@@ -68,6 +68,8 @@ public abstract class Device {
         switch (c.getDeviceType()) {
             case MDT0601_233:
                 return new MDT0601(c);
+            case MDT04015_433:
+                return new MDT04015(c);
             case ML01:
                 return new ML01(c);
             case MPL8_48_FH:
@@ -78,6 +80,7 @@ public abstract class Device {
                 return new MR1216(c);
             case MR0416_C:
             case MR0416_231:
+            case MR0416_431:
                 return new MR0416(c);
             case MRDA06:
                 return new MRDA06(c);
@@ -91,6 +94,7 @@ public abstract class Device {
             case MW02_231:
                 return new MW02(c);
             default:
+                LOGGER.debug("In HDLPacket Type: {} but unhandled device.", c.getDeviceType());
                 return new UnsupportedDevice(c);
         }
     }
@@ -100,6 +104,10 @@ public abstract class Device {
             case MDT0601_233:
                 MDT0601 mdt0601233 = (MDT0601) device;
                 mdt0601233.treatHDLPacketForDevice(p);
+                break;
+            case MDT04015_433:
+                MDT04015 mdt04015 = (MDT04015) device;
+                mdt04015.treatHDLPacketForDevice(p);
                 break;
             case ML01:
                 ML01 ml01 = (ML01) device;
@@ -119,6 +127,7 @@ public abstract class Device {
                 break;
             case MR0416_C:
             case MR0416_231:
+            case MR0416_431:
                 MR0416 mr0416 = (MR0416) device;
                 mr0416.treatHDLPacketForDevice(p);
                 break;
