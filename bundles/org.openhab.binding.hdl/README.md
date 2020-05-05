@@ -17,8 +17,8 @@ Thing names are using the article number that HDL are using.
 | ML01          | Thing     | HDL logic module                                              |
 | MPL8_48_FH    | Thing     | HDL Button Panel (DLP) with AC, Music, Clock, Floor Heating   |
 | MPT04_48      | Thing     | Digital touch switch 4 buttons                                |
-| MR1216		| Thing     | HDL Relay 12x16A                                              |
-| MR0416		| Thing     | HDL Relay 4x16A                                              	|
+| MR12xx		| Thing     | HDL Relay with 12 channels                                    |
+| MR04xx		| Thing     | HDL Relay with 4 channels                                     |
 | MRDA06        | Thing     | HDL Ballast controller, 6 channels, 0-10V                     |
 | MS08			| Thing     | HDL Sensor with 8 functions                                   |
 | MS12			| Thing     | HDL Sensor with 12 functions                                  |
@@ -49,7 +49,7 @@ DryContact(1-24)Status  means that that it can be 24 Dry Contact channels. What 
 |-----------------------|-----------|-----------------------------------------------------------|-------------------------------|
 | DimChannel(1-6)       | Dimmer    | This channel indicates the value of the dimmer.           |MDT0601,MRDA06,MDT04015(1-4) 	|
 | DryContact(1-24)Status| Contact   | This channel indicates the status of the dry contact.     |MS24,MS08(1-2),MS12(1-2)		|
-| RelayCh(1-12)         | Switch    | This channel indicates the value of the relay.            |MR1216,MR0416(1-4),MS12(1-2)	|
+| RelayCh(1-12)         | Switch    | This channel indicates the value of the relay.            |MR12xx,MR04xx(1-4),MS12(1-2)	|
 | UVSwitch(1-240)       | Switch    | This channel indicates the value of the UV Switch.        |ML01(200-240)              	|
 | Brightness            | Number    | This channel indicates the measured lumen.                |MS08Mn_2C,MS12_2C         		|
 | MotionSensor          | Motion    | This channel indicates if there is any movement.          |MS08Mn_2C,MS12_2C       		|
@@ -69,11 +69,11 @@ Bridge hdl:bridge:Setup [Ip="192.168.10.250", Port=6000]{
     Thing MRDA06 1022 [Subnet=1, DeviceID=22]
     Thing MDT0601 1023 [Subnet=1, DeviceID=23]
     Thing MDT0601 1024 [Subnet=1, DeviceID=24]
-    Thing MR1216 1030 [Subnet=1, DeviceID=30]
-    Thing MR1216 1031 [Subnet=1, DeviceID=31]
-    Thing MR1216 1032 [Subnet=1, DeviceID=32]
-    Thing MR1216 1033 [Subnet=1, DeviceID=33]
-	Thing MR0416 1034 [Subnet=1, DeviceID=34]
+    Thing MR12xx 1030 [Subnet=1, DeviceID=30]
+    Thing MR12xx 1031 [Subnet=1, DeviceID=31]
+    Thing MR12xx 1032 [Subnet=1, DeviceID=32]
+    Thing MR12xx 1033 [Subnet=1, DeviceID=33]
+	Thing MR04xx 1034 [Subnet=1, DeviceID=34]
 	Thing MW02 1038 [Subnet=1, DeviceID=38]
 	Thing MS12 1040 [Subnet=1, DeviceID=40, refreshInterval=5]
 	Thing MS12 1041 [Subnet=1, DeviceID=41, refreshInterval=5]
@@ -94,11 +94,11 @@ hdl.items:
 ```
 Dimmer  E2R1LD01        "Roof lights [%d %%]"                          			{channel="hdl:MDT0601:Setup:1023:DimChannel6"}
 Number  E2R1DLP01       "Temperature [%.1f °C]"             <temperature>   	{channel="hdl:MPL8_48_FH:Setup:1082:temperature"}
-Switch  E2R1ST01        "Sockets in room"                                       {channel="hdl:MR1216:Setup:1032:RelayCh12"}
+Switch  E2R1ST01        "Sockets in room"                                       {channel="hdl:MR12xx:Setup:1032:RelayCh12"}
 Dimmer  E2R2LD01        "Roof lights [%d %%]"                                   {channel="hdl:MDT0601:Setup:1024:DimChannel1"}
-Switch  E2R2ST01        "Sockets in room"                                       {channel="hdl:MR1216:Setup:1034:RelayCh5"}
+Switch  E2R2ST01        "Sockets in room"                                       {channel="hdl:MR12xx:Setup:1034:RelayCh5"}
 Dimmer  E2R3LD01        "Roof lights [%d %%]"                                   {channel="hdl:MDT0601:Setup:1024:DimChannel2"}
-Switch  E2R3ST01        "Sockets in room"                                       {channel="hdl:MR1216:Setup:1034:RelayCh6"}
+Switch  E2R3ST01        "Sockets in room"                                       {channel="hdl:MR12xx:Setup:1034:RelayCh6"}
 Contact	E2R48i101C1		"8in1 DryContact1"										{channel="hdl:MS08:Setup:1050:DryContact1Status"}
 Contact	E2R48i101C2		"8in1 DryContact2"										{channel="hdl:MS08:Setup:1050:DryContact2Status"}
 Number	E2R48i101Br		"8in1 Brightness"					<sun>				{channel="hdl:MS08:Setup:1050:Brightness"}

@@ -182,12 +182,12 @@
 	</config-description>
 	</thing-type>
 	
-	<thing-type id="MR1216">
+	<thing-type id="MR12xx">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge" />
 		</supported-bridge-type-refs>
 		<label>Relay 12 Channel </label>
-		<description>Relay 12x16A</description>
+		<description>For all relays with 12 channels</description>
 		<channels>
 			<channel id="RelayCh1" typeId="switch"></channel>
 			<channel id="RelayCh2" typeId="switch"></channel>
@@ -214,12 +214,12 @@
 	</config-description>
 	</thing-type>
 	
-	<thing-type id="MR0416">
+	<thing-type id="MR04xx">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge" />
 		</supported-bridge-type-refs>
 		<label>Relay 4 Channel </label>
-		<description>Relay 4x16A</description>
+		<description>For all relays with 4 channels</description>
 		<channels>
 			<channel id="RelayCh1" typeId="switch"></channel>
 			<channel id="RelayCh2" typeId="switch"></channel>

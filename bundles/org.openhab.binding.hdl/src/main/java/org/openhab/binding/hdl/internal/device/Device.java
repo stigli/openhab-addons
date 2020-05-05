@@ -77,11 +77,13 @@ public abstract class Device {
             case MPT04_48:
                 return new MPT0448(c);
             case MR1216_233:
-                return new MR1216(c);
+            case MR1210_433:
+                return new MR12xx(c);
             case MR0416_C:
             case MR0416_231:
             case MR0416_431:
-                return new MR0416(c);
+            case MR0410_431:
+                return new MR04xx(c);
             case MRDA06:
                 return new MRDA06(c);
             case MSP08M_4C:
@@ -122,13 +124,15 @@ public abstract class Device {
                 mpt0448.treatHDLPacketForDevice(p);
                 break;
             case MR1216_233:
-                MR1216 mr1216233 = (MR1216) device;
-                mr1216233.treatHDLPacketForDevice(p);
+            case MR1210_433:
+                MR12xx mr12xx_ = (MR12xx) device;
+                mr12xx_.treatHDLPacketForDevice(p);
                 break;
             case MR0416_C:
             case MR0416_231:
             case MR0416_431:
-                MR0416 mr0416 = (MR0416) device;
+            case MR0410_431:
+                MR04xx mr0416 = (MR04xx) device;
                 mr0416.treatHDLPacketForDevice(p);
                 break;
             case MRDA06:

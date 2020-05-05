@@ -50,11 +50,11 @@ public class HdlBindingConstants {
     public static final ThingTypeUID THING_TYPE_MDT04015 = new ThingTypeUID(BINDING_ID, "MDT04015"); // 4 Ch Uni Dim
     public static final ThingTypeUID THING_TYPE_MPL8_48_FH = new ThingTypeUID(BINDING_ID, "MPL8_48_FH"); // DLP
                                                                                                          // Bryterpanel
-    public static final ThingTypeUID THING_TYPE_MPT04_48 = new ThingTypeUID(BINDING_ID, "MPT04"); // 4 Knapper
-    public static final ThingTypeUID THING_TYPE_MR1216 = new ThingTypeUID(BINDING_ID, "MR1216"); // 12 Rele på 16 amp
-    public static final ThingTypeUID THING_TYPE_MR0416 = new ThingTypeUID(BINDING_ID, "MR0416"); // 4 Rele på 16 amp
-    public static final ThingTypeUID THING_TYPE_MRDA0610 = new ThingTypeUID(BINDING_ID, "MRDA0610"); // 6 kanaler 0-10 V
-    public static final ThingTypeUID THING_TYPE_MRDA06 = new ThingTypeUID(BINDING_ID, "MRDA06"); // 6 kanaler 0-10 V
+    public static final ThingTypeUID THING_TYPE_MPT04_48 = new ThingTypeUID(BINDING_ID, "MPT04"); // 4 Buttons
+    public static final ThingTypeUID THING_TYPE_MR12xx = new ThingTypeUID(BINDING_ID, "MR12xx"); // 12 channel relay
+    public static final ThingTypeUID THING_TYPE_MR04xx = new ThingTypeUID(BINDING_ID, "MR04xx"); // 4 channel relay
+    public static final ThingTypeUID THING_TYPE_MRDA0610 = new ThingTypeUID(BINDING_ID, "MRDA0610"); // 6 dim channels
+    public static final ThingTypeUID THING_TYPE_MRDA06 = new ThingTypeUID(BINDING_ID, "MRDA06"); // 6 channels
     public static final ThingTypeUID THING_TYPE_MW02 = new ThingTypeUID(BINDING_ID, "MW02"); // Gardin kontroller
     public static final ThingTypeUID THING_TYPE_MS12 = new ThingTypeUID(BINDING_ID, "MS12"); // 12 i 1
     public static final ThingTypeUID THING_TYPE_MS08 = new ThingTypeUID(BINDING_ID, "MS08"); // 8 i 1 sensor
@@ -343,15 +343,15 @@ public class HdlBindingConstants {
 
     public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections.unmodifiableSet(Stream
             .of(THING_TYPE_BRIDGE, THING_TYPE_ML01, THING_TYPE_MDT0601, THING_TYPE_MPL8_48_FH, THING_TYPE_MPT04_48,
-                    THING_TYPE_MR1216, THING_TYPE_MRDA0610, THING_TYPE_MW02, THING_TYPE_MS12, THING_TYPE_MS08,
-                    THING_TYPE_MS24, THING_TYPE_MRDA06, THING_TYPE_MR0416, THING_TYPE_MDT04015)
+                    THING_TYPE_MR12xx, THING_TYPE_MRDA0610, THING_TYPE_MW02, THING_TYPE_MS12, THING_TYPE_MS08,
+                    THING_TYPE_MS24, THING_TYPE_MRDA06, THING_TYPE_MR04xx, THING_TYPE_MDT04015)
             .collect(Collectors.toSet()));
 
     public static final Set<ThingTypeUID> SUPPORTED_DEVICE_THING_TYPES_UIDS = Collections
             .unmodifiableSet(Stream
                     .of(THING_TYPE_ML01, THING_TYPE_MDT0601, THING_TYPE_MPL8_48_FH, THING_TYPE_MPT04_48,
-                            THING_TYPE_MR1216, THING_TYPE_MRDA0610, THING_TYPE_MW02, THING_TYPE_MS12, THING_TYPE_MS08,
-                            THING_TYPE_MS24, THING_TYPE_MRDA06, THING_TYPE_MR0416, THING_TYPE_MDT04015)
+                            THING_TYPE_MR12xx, THING_TYPE_MRDA0610, THING_TYPE_MW02, THING_TYPE_MS12, THING_TYPE_MS08,
+                            THING_TYPE_MS24, THING_TYPE_MRDA06, THING_TYPE_MR04xx, THING_TYPE_MDT04015)
                     .collect(Collectors.toSet()));
 
     public static final Set<ThingTypeUID> SUPPORTED_BRIDGE_THING_TYPES_UIDS = Collections

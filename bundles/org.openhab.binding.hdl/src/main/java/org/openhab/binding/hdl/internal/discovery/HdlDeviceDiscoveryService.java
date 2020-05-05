@@ -86,12 +86,14 @@ public class HdlDeviceDiscoveryService extends AbstractDiscoveryService implemen
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MPT04_48, bridge.getUID(), device.getSerialNr());
                 break;
             case MR1216_233:
-                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MR1216, bridge.getUID(), device.getSerialNr());
+            case MR1210_433:
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MR12xx, bridge.getUID(), device.getSerialNr());
                 break;
             case MR0416_C:
             case MR0416_231:
             case MR0416_431:
-                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MR0416, bridge.getUID(), device.getSerialNr());
+            case MR0410_431:
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MR04xx, bridge.getUID(), device.getSerialNr());
                 break;
             case MRDA0610_432:
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MRDA0610, bridge.getUID(), device.getSerialNr());

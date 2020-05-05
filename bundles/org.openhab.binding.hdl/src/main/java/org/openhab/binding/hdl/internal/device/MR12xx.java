@@ -16,16 +16,16 @@ import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 
 /**
- * The MR1216233 class contains support channels for device Type MR1216.
+ * The MR12xx class contains support channels for device Type MR12xx.
  * And how the information on the HDL bus is packet for this device.
  * This is a relay block with 12 relays.
  *
  * @author stigla - Initial contribution
  */
 
-public class MR1216 extends Device {
+public class MR12xx extends Device {
 
-    /** Device type for this Relay 12x16A **/
+    /** Device type for this 12 channel relay **/
     private DeviceType deviceType = DeviceType.MR1216_233;
 
     private OnOffType relayCh01 = null;
@@ -41,7 +41,7 @@ public class MR1216 extends Device {
     private OnOffType relayCh11 = null;
     private OnOffType relayCh12 = null;
 
-    public MR1216(DeviceConfiguration c) {
+    public MR12xx(DeviceConfiguration c) {
         super(c);
     }
 
