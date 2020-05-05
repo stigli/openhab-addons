@@ -186,6 +186,42 @@
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge" />
 		</supported-bridge-type-refs>
+		<label>Relay 16 Channel </label>
+		<description>For all relays with 16 channels</description>
+		<channels>
+			<channel id="RelayCh1" typeId="switch"></channel>
+			<channel id="RelayCh2" typeId="switch"></channel>
+			<channel id="RelayCh3" typeId="switch"></channel>
+			<channel id="RelayCh4" typeId="switch"></channel>
+			<channel id="RelayCh5" typeId="switch"></channel>
+			<channel id="RelayCh6" typeId="switch"></channel>
+			<channel id="RelayCh7" typeId="switch"></channel>
+			<channel id="RelayCh8" typeId="switch"></channel>
+			<channel id="RelayCh9" typeId="switch"></channel>
+			<channel id="RelayCh10" typeId="switch"></channel>
+			<channel id="RelayCh11" typeId="switch"></channel>
+			<channel id="RelayCh12" typeId="switch"></channel>
+			<channel id="RelayCh13" typeId="switch"></channel>
+			<channel id="RelayCh14" typeId="switch"></channel>
+			<channel id="RelayCh15" typeId="switch"></channel>
+			<channel id="RelayCh16" typeId="switch"></channel>
+		</channels>
+		<config-description>
+		<parameter name="Subnet" type="integer" min="1" required="true">
+			<label>Subnet</label>
+			<description>What Sub net the Relay is on.</description>
+		</parameter>
+		<parameter name="DeviceID" type="integer" min="1" required="true">
+			<label>Device ID</label>
+			<description>What device id the Relay has.</description>
+		</parameter>
+	</config-description>
+	</thing-type>
+	
+	<thing-type id="MR12xx">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="bridge" />
+		</supported-bridge-type-refs>
 		<label>Relay 12 Channel </label>
 		<description>For all relays with 12 channels</description>
 		<channels>
@@ -201,6 +237,34 @@
 			<channel id="RelayCh10" typeId="switch"></channel>
 			<channel id="RelayCh11" typeId="switch"></channel>
 			<channel id="RelayCh12" typeId="switch"></channel>
+		</channels>
+		<config-description>
+		<parameter name="Subnet" type="integer" min="1" required="true">
+			<label>Subnet</label>
+			<description>What Sub net the Relay is on.</description>
+		</parameter>
+		<parameter name="DeviceID" type="integer" min="1" required="true">
+			<label>Device ID</label>
+			<description>What device id the Relay has.</description>
+		</parameter>
+	</config-description>
+	</thing-type>
+	
+	<thing-type id="MR08xx">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="bridge" />
+		</supported-bridge-type-refs>
+		<label>Relay 8 Channel </label>
+		<description>For all relays with 8 channels</description>
+		<channels>
+			<channel id="RelayCh1" typeId="switch"></channel>
+			<channel id="RelayCh2" typeId="switch"></channel>
+			<channel id="RelayCh3" typeId="switch"></channel>
+			<channel id="RelayCh4" typeId="switch"></channel>
+			<channel id="RelayCh5" typeId="switch"></channel>
+			<channel id="RelayCh6" typeId="switch"></channel>
+			<channel id="RelayCh7" typeId="switch"></channel>
+			<channel id="RelayCh8" typeId="switch"></channel>			
 		</channels>
 		<config-description>
 		<parameter name="Subnet" type="integer" min="1" required="true">

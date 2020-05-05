@@ -17,7 +17,9 @@ Thing names are using the article number that HDL are using.
 | ML01          | Thing     | HDL logic module                                              |
 | MPL8_48_FH    | Thing     | HDL Button Panel (DLP) with AC, Music, Clock, Floor Heating   |
 | MPT04_48      | Thing     | Digital touch switch 4 buttons                                |
+| MR16xx		| Thing     | HDL Relay with 16 channels                                    |
 | MR12xx		| Thing     | HDL Relay with 12 channels                                    |
+| MR08xx		| Thing     | HDL Relay with 8 channels                                    |
 | MR04xx		| Thing     | HDL Relay with 4 channels                                     |
 | MRDA06        | Thing     | HDL Ballast controller, 6 channels, 0-10V                     |
 | MS08			| Thing     | HDL Sensor with 8 functions                                   |
@@ -45,16 +47,16 @@ Depending on the thing it supports different Channels
 
 DryContact(1-24)Status  means that that it can be 24 Dry Contact channels. What is available on that thing is shown under "Available on thing" for instead (1-2) means that channel DryContact1 and DryContact2 is available on that thing. If nothing is set all channels is available on that thing.
 
-| Channel Type ID       | Item Type | Description                                               | Available on thing        	|
-|-----------------------|-----------|-----------------------------------------------------------|-------------------------------|
-| DimChannel(1-6)       | Dimmer    | This channel indicates the value of the dimmer.           |MDT0601,MRDA06,MDT04015(1-4) 	|
-| DryContact(1-24)Status| Contact   | This channel indicates the status of the dry contact.     |MS24,MS08(1-2),MS12(1-2)		|
-| RelayCh(1-12)         | Switch    | This channel indicates the value of the relay.            |MR12xx,MR04xx(1-4),MS12(1-2)	|
-| UVSwitch(1-240)       | Switch    | This channel indicates the value of the UV Switch.        |ML01(200-240)              	|
-| Brightness            | Number    | This channel indicates the measured lumen.                |MS08Mn_2C,MS12_2C         		|
-| MotionSensor          | Motion    | This channel indicates if there is any movement.          |MS08Mn_2C,MS12_2C       		|
-| Sonic                 | Motion    | This channel indicates if there is any movement.          |MS12_2C                   		|
-| temperature           | Number    | This channel indicates the measured temperature (in °C).  |MPL8_48_FH,MS08,MS12       	|
+| Channel Type ID       | Item Type | Description                                               | Available on thing        			|
+|-----------------------|-----------|-----------------------------------------------------------|---------------------------------------|
+| DimChannel(1-6)       | Dimmer    | This channel indicates the value of the dimmer.           |MDT0601,MRDA06,MDT04015(1-4) 			|
+| DryContact(1-24)Status| Contact   | This channel indicates the status of the dry contact.     |MS24,MS08(1-2),MS12(1-2)				|
+| RelayCh(1-16)         | Switch    | This channel indicates the value of the relay.            |MR16xx,MR12xx,MR08xx,MR04xx,MS12(1-2)	|
+| UVSwitch(1-240)       | Switch    | This channel indicates the value of the UV Switch.        |ML01(200-240)              			|
+| Brightness            | Number    | This channel indicates the measured lumen.                |MS08Mn_2C,MS12_2C         				|
+| MotionSensor          | Motion    | This channel indicates if there is any movement.          |MS08Mn_2C,MS12_2C       				|
+| Sonic                 | Motion    | This channel indicates if there is any movement.          |MS12_2C                   				|
+| temperature           | Number    | This channel indicates the measured temperature (in °C).  |MPL8_48_FH,MS08,MS12       			|
 
 ## Full Example
 

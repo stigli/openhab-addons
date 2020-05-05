@@ -45,7 +45,9 @@ import org.openhab.binding.hdl.internal.device.MDT0601;
 import org.openhab.binding.hdl.internal.device.ML01;
 import org.openhab.binding.hdl.internal.device.MPL848FH;
 import org.openhab.binding.hdl.internal.device.MR04xx;
+import org.openhab.binding.hdl.internal.device.MR08xx;
 import org.openhab.binding.hdl.internal.device.MR12xx;
+import org.openhab.binding.hdl.internal.device.MR16xx;
 import org.openhab.binding.hdl.internal.device.MRDA06;
 import org.openhab.binding.hdl.internal.device.MS08;
 import org.openhab.binding.hdl.internal.device.MS122C;
@@ -254,7 +256,9 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
             case "hdl:MR1216":
             case "hdl:MR0416":
             case "hdl:MR04xx":
+            case "hdl:MR08xx":
             case "hdl:MR12xx":
+            case "hdl:MR16xx":
                 p.setCommandType(CommandType.Read_Status_of_Channels);
                 hdlPacketList.add(p);
                 logger.debug("For Thing Type: {} command: Refresh is sent.",
@@ -784,6 +788,72 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                                     ((MRDA06) device).getDimChannel6State());
                         }
                         break;
+                    case MR1610_433:
+                        if (((MR16xx) device).getRelayCh01State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH1),
+                                    ((MR16xx) device).getRelayCh01State());
+                        }
+                        if (((MR16xx) device).getRelayCh02State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH2),
+                                    ((MR16xx) device).getRelayCh02State());
+                        }
+                        if (((MR16xx) device).getRelayCh03State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH3),
+                                    ((MR16xx) device).getRelayCh03State());
+                        }
+                        if (((MR16xx) device).getRelayCh04State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH4),
+                                    ((MR16xx) device).getRelayCh04State());
+                        }
+                        if (((MR16xx) device).getRelayCh05State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH5),
+                                    ((MR16xx) device).getRelayCh05State());
+                        }
+                        if (((MR16xx) device).getRelayCh06State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH6),
+                                    ((MR16xx) device).getRelayCh06State());
+                        }
+                        if (((MR16xx) device).getRelayCh07State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH7),
+                                    ((MR16xx) device).getRelayCh07State());
+                        }
+                        if (((MR16xx) device).getRelayCh08State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH8),
+                                    ((MR16xx) device).getRelayCh08State());
+                        }
+                        if (((MR16xx) device).getRelayCh09State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH9),
+                                    ((MR16xx) device).getRelayCh09State());
+                        }
+                        if (((MR16xx) device).getRelayCh10State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH10),
+                                    ((MR16xx) device).getRelayCh10State());
+                        }
+                        if (((MR16xx) device).getRelayCh11State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH11),
+                                    ((MR16xx) device).getRelayCh11State());
+                        }
+                        if (((MR16xx) device).getRelayCh12State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH12),
+                                    ((MR16xx) device).getRelayCh12State());
+                        }
+                        if (((MR16xx) device).getRelayCh13State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH13),
+                                    ((MR16xx) device).getRelayCh13State());
+                        }
+                        if (((MR16xx) device).getRelayCh14State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH14),
+                                    ((MR16xx) device).getRelayCh14State());
+                        }
+                        if (((MR16xx) device).getRelayCh15State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH15),
+                                    ((MR16xx) device).getRelayCh15State());
+                        }
+                        if (((MR16xx) device).getRelayCh16State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH16),
+                                    ((MR16xx) device).getRelayCh16State());
+                        }
+                        break;
                     case MR1216_233:
                     case MR1210_433:
                         if (((MR12xx) device).getRelayCh01State() != null) {
@@ -833,6 +903,40 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         if (((MR12xx) device).getRelayCh12State() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH12),
                                     ((MR12xx) device).getRelayCh12State());
+                        }
+                        break;
+                    case MR0810_432:
+                        if (((MR08xx) device).getRelayCh01State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH1),
+                                    ((MR08xx) device).getRelayCh01State());
+                        }
+                        if (((MR08xx) device).getRelayCh02State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH2),
+                                    ((MR08xx) device).getRelayCh02State());
+                        }
+                        if (((MR08xx) device).getRelayCh03State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH3),
+                                    ((MR08xx) device).getRelayCh03State());
+                        }
+                        if (((MR08xx) device).getRelayCh04State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH4),
+                                    ((MR08xx) device).getRelayCh04State());
+                        }
+                        if (((MR08xx) device).getRelayCh05State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH5),
+                                    ((MR08xx) device).getRelayCh05State());
+                        }
+                        if (((MR08xx) device).getRelayCh06State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH6),
+                                    ((MR08xx) device).getRelayCh06State());
+                        }
+                        if (((MR08xx) device).getRelayCh07State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH7),
+                                    ((MR08xx) device).getRelayCh07State());
+                        }
+                        if (((MR08xx) device).getRelayCh08State() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH8),
+                                    ((MR08xx) device).getRelayCh08State());
                         }
                         break;
                     case MR0416_C:
