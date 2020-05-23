@@ -29,7 +29,7 @@ import org.openhab.binding.hdl.internal.handler.HdlPacket;
  *
  * @author stigla - Initial contribution
  */
-public class MS122C extends Device {
+public class MS12 extends Device {
     private double temperatureValue;
     private double brightnessValue;
     private StopMoveType motionSensorValue = null;
@@ -45,7 +45,7 @@ public class MS122C extends Device {
     /** Device type for this Sensor with 12 functions **/
     private DeviceType deviceType = DeviceType.MS12_2C;
 
-    public MS122C(DeviceConfiguration c) {
+    public MS12(DeviceConfiguration c) {
         super(c);
     }
 

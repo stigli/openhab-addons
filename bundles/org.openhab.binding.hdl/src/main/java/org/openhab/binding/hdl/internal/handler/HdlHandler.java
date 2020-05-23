@@ -42,6 +42,7 @@ import org.openhab.binding.hdl.internal.device.CommandType;
 import org.openhab.binding.hdl.internal.device.Device;
 import org.openhab.binding.hdl.internal.device.MDT04015;
 import org.openhab.binding.hdl.internal.device.MDT0601;
+import org.openhab.binding.hdl.internal.device.MFH06;
 import org.openhab.binding.hdl.internal.device.ML01;
 import org.openhab.binding.hdl.internal.device.MPL848FH;
 import org.openhab.binding.hdl.internal.device.MR04xx;
@@ -50,7 +51,7 @@ import org.openhab.binding.hdl.internal.device.MR12xx;
 import org.openhab.binding.hdl.internal.device.MR16xx;
 import org.openhab.binding.hdl.internal.device.MRDA06;
 import org.openhab.binding.hdl.internal.device.MS08;
-import org.openhab.binding.hdl.internal.device.MS122C;
+import org.openhab.binding.hdl.internal.device.MS12;
 import org.openhab.binding.hdl.internal.device.MS24;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +73,7 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
     private int subNet;
     private int deviceID;
     private int refreshRate;
+    private int channelNumber;
     private ScheduledFuture<?> refreshJob;
 
     public HdlHandler(Thing thing) {
@@ -91,7 +93,17 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                 refreshRate = 0;
             }
 
-            hdldeviceSerial = Integer.toString(subNet * 1000 + deviceID);
+            try {
+                channelNumber = ((BigDecimal) config.get(HdlBindingConstants.PROPERTY_CHANNELNUMBER)).intValueExact();
+            } catch (Exception e) {
+                channelNumber = 0;
+            }
+
+            if (channelNumber != 0) {
+                hdldeviceSerial = Integer.toString(subNet * 1000 + deviceID) + "_" + Integer.toString(channelNumber);
+            } else {
+                hdldeviceSerial = Integer.toString(subNet * 1000 + deviceID);
+            }
 
             if (hdldeviceSerial != null) {
                 logger.debug("Initialized Hdl! device handler for {}.", hdldeviceSerial);
@@ -163,6 +175,19 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                     logger.debug("For Thing Type: {} with device id: {} with Refresh Interval: {} command is sent.",
                             getThing().getThingTypeUID().getAsString(), deviceID, refreshRate);
                     break;
+                case "hdl:MFH06":
+                    if (channelNumber != 0) {
+                        p.setCommandType(CommandType.Read_Floor_Heating_Status);
+                        p.setData(new byte[] { (byte) channelNumber });
+                        logger.debug("For Thing Type: {} with device id: {} with Refresh Interval: {} command is sent.",
+                                getThing().getThingTypeUID().getAsString(), deviceID, refreshRate);
+                    } else {
+                        logger.debug(
+                                "For Thing Type: {} with device id: {}, Refresh not sent since channel number is 0.",
+                                getThing().getThingTypeUID().getAsString(), deviceID);
+                    }
+                    break;
+
                 /*
                  * case "hdl:MRDA06":
                  * case "hdl:MDT0601_233":
@@ -270,6 +295,15 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                 logger.debug("For Thing Type: {} command: Refresh is sent.",
                         getThing().getThingTypeUID().getAsString());
                 break;
+            case "hdl:MFH06":
+                if (channelNumber != 0) {
+                    p.setCommandType(CommandType.Read_Floor_Heating_Status);
+                    hdlPacketList.add(p);
+                    p.setData(new byte[] { (byte) channelNumber });
+                    logger.debug("For Thing Type: {} command: Refresh is sent.",
+                            getThing().getThingTypeUID().getAsString());
+                }
+                break;
             case "hdl:MW02_231":
             case "hdl:MW02":
                 p.setCommandType(CommandType.Read_Status_of_Curtain_Switch);
@@ -324,7 +358,6 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
         } else {
             switch (channelUID.getId()) {
                 case HdlBindingConstants.CHANNEL_FHMODE:
-                    sendCommand = true;
                     int modenr;
                     // What Command to send:
                     switch (command.toString().toLowerCase()) {
@@ -347,73 +380,76 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             modenr = 0;
                     }
 
-                    // Get status from existing values
-                    int tempTypenr;
-                    int statusNr;
+                    if (getThing().getThingTypeUID().getAsString() == "hdl:MPL8_48_FH") {
+                        sendCommand = true;
 
-                    if (((MPL848FH) chDevice).getFloorHeatingTemperaturType() != null) {
-                        String tempType = ((MPL848FH) chDevice).getFloorHeatingTemperaturType();
+                        // Get status from existing values
+                        int tempTypenr;
+                        int statusNr;
 
-                        if (tempType == "C") {
+                        if (((MPL848FH) chDevice).getFloorHeatingTemperaturType() != null) {
+                            String tempType = ((MPL848FH) chDevice).getFloorHeatingTemperaturType();
+
+                            if (tempType == "C") {
+                                tempTypenr = 0;
+                            } else {
+                                tempTypenr = 1;
+                            }
+                        } else {
                             tempTypenr = 0;
-                        } else {
-                            tempTypenr = 1;
+                            sendCommand = false;
                         }
-                    } else {
-                        tempTypenr = 0;
-                        sendCommand = false;
-                    }
 
-                    if (((MPL848FH) chDevice).getFloorHeatingStatus() != null) {
-                        OnOffType fhStatus = ((MPL848FH) chDevice).getFloorHeatingStatus();
+                        if (((MPL848FH) chDevice).getFloorHeatingStatus() != null) {
+                            OnOffType fhStatus = ((MPL848FH) chDevice).getFloorHeatingStatus();
 
-                        if (fhStatus == OnOffType.OFF) {
+                            if (fhStatus == OnOffType.OFF) {
+                                statusNr = 0;
+                            } else {
+                                statusNr = 1;
+                            }
+
+                        } else {
+                            sendCommand = false;
                             statusNr = 0;
-                        } else {
-                            statusNr = 1;
                         }
 
-                    } else {
-                        sendCommand = false;
-                        statusNr = 0;
+                        int setNormalTemp;
+                        if (((MPL848FH) chDevice).getFloorHeatingSetNormalTemperatur() != null) {
+                            setNormalTemp = ((MPL848FH) chDevice).getFloorHeatingSetNormalTemperatur().intValue();
+                        } else {
+                            sendCommand = false;
+                            setNormalTemp = 0;
+                        }
+
+                        int setDayTemp;
+                        if (((MPL848FH) chDevice).getFloorHeatingSetDayTemperatur() != null) {
+                            setDayTemp = ((MPL848FH) chDevice).getFloorHeatingSetDayTemperatur().intValue();
+                        } else {
+                            sendCommand = false;
+                            setDayTemp = 0;
+                        }
+
+                        int setNightTemp;
+                        if (((MPL848FH) chDevice).getFloorHeatingSetNightTemperatur() != null) {
+                            setNightTemp = ((MPL848FH) chDevice).getFloorHeatingSetNightTemperatur().intValue();
+                        } else {
+                            sendCommand = false;
+                            setNightTemp = 0;
+                        }
+
+                        int setAwayTemp;
+                        if (((MPL848FH) chDevice).getFloorHeatingSetAwayTemperatur() != null) {
+                            setAwayTemp = ((MPL848FH) chDevice).getFloorHeatingSetAwayTemperatur().intValue();
+                        } else {
+                            sendCommand = false;
+                            setAwayTemp = 0;
+                        }
+                        p.setData(new byte[] { (byte) tempTypenr, (byte) statusNr, (byte) modenr, (byte) setNormalTemp,
+                                (byte) setDayTemp, (byte) setNightTemp, (byte) setAwayTemp });
+
+                        p.setCommandType(CommandType.Control_Floor_Heating_Status_DLP);
                     }
-
-                    int setNormalTemp;
-                    if (((MPL848FH) chDevice).getFloorHeatingSetNormalTemperatur() != null) {
-                        setNormalTemp = ((MPL848FH) chDevice).getFloorHeatingSetNormalTemperatur().intValue();
-                    } else {
-                        sendCommand = false;
-                        setNormalTemp = 0;
-                    }
-
-                    int setDayTemp;
-                    if (((MPL848FH) chDevice).getFloorHeatingSetDayTemperatur() != null) {
-                        setDayTemp = ((MPL848FH) chDevice).getFloorHeatingSetDayTemperatur().intValue();
-                    } else {
-                        sendCommand = false;
-                        setDayTemp = 0;
-                    }
-
-                    int setNightTemp;
-                    if (((MPL848FH) chDevice).getFloorHeatingSetNightTemperatur() != null) {
-                        setNightTemp = ((MPL848FH) chDevice).getFloorHeatingSetNightTemperatur().intValue();
-                    } else {
-                        sendCommand = false;
-                        setNightTemp = 0;
-                    }
-
-                    int setAwayTemp;
-                    if (((MPL848FH) chDevice).getFloorHeatingSetAwayTemperatur() != null) {
-                        setAwayTemp = ((MPL848FH) chDevice).getFloorHeatingSetAwayTemperatur().intValue();
-                    } else {
-                        sendCommand = false;
-                        setAwayTemp = 0;
-                    }
-
-                    p.setData(new byte[] { (byte) tempTypenr, (byte) statusNr, (byte) modenr, (byte) setNormalTemp,
-                            (byte) setDayTemp, (byte) setNightTemp, (byte) setAwayTemp });
-
-                    p.setCommandType(CommandType.Control_Floor_Heating_Status_DLP);
 
                     break;
                 case HdlBindingConstants.CHANNEL_SHUTTER1CONTROL:
@@ -466,6 +502,10 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                 case HdlBindingConstants.CHANNEL_RELAYCH10:
                 case HdlBindingConstants.CHANNEL_RELAYCH11:
                 case HdlBindingConstants.CHANNEL_RELAYCH12:
+                case HdlBindingConstants.CHANNEL_RELAYCH13:
+                case HdlBindingConstants.CHANNEL_RELAYCH14:
+                case HdlBindingConstants.CHANNEL_RELAYCH15:
+                case HdlBindingConstants.CHANNEL_RELAYCH16:
                     if (command instanceof OnOffType) {
                         p.setCommandType(CommandType.Single_Channel_Control);
                         int relayValue = 0;
@@ -589,16 +629,16 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         }
                         break;
                     case MS12_2C:
-                        if (((MS122C) device).getTemperatureValue() != null) {
+                        if (((MS12) device).getTemperatureValue() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_TEMPERATUR),
-                                    ((MS122C) device).getTemperatureValue());
+                                    ((MS12) device).getTemperatureValue());
                         }
-                        if (((MS122C) device).getBrightnessValue() != null) {
+                        if (((MS12) device).getBrightnessValue() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BRIGHTNESS),
-                                    ((MS122C) device).getBrightnessValue());
+                                    ((MS12) device).getBrightnessValue());
                         }
-                        if (((MS122C) device).getMotionSensorValue() != null) {
-                            StopMoveType fromDevice = ((MS122C) device).getMotionSensorValue();
+                        if (((MS12) device).getMotionSensorValue() != null) {
+                            StopMoveType fromDevice = ((MS12) device).getMotionSensorValue();
                             OnOffType sendToUpdate = OnOffType.OFF;
                             if (fromDevice.equals(StopMoveType.MOVE)) {
                                 sendToUpdate = OnOffType.ON;
@@ -606,8 +646,8 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_MOTIONSSENSOR),
                                     sendToUpdate);
                         }
-                        if (((MS122C) device).getSonicValue() != null) {
-                            StopMoveType fromDevice = ((MS122C) device).getSonicValue();
+                        if (((MS12) device).getSonicValue() != null) {
+                            StopMoveType fromDevice = ((MS12) device).getSonicValue();
                             OnOffType sendToUpdate = OnOffType.OFF;
                             if (fromDevice.equals(StopMoveType.MOVE)) {
                                 sendToUpdate = OnOffType.ON;
@@ -615,21 +655,21 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_SONIC),
                                     sendToUpdate);
                         }
-                        if (((MS122C) device).getDryContact1Value() != null) {
+                        if (((MS12) device).getDryContact1Value() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT1),
-                                    ((MS122C) device).getDryContact1Value());
+                                    ((MS12) device).getDryContact1Value());
                         }
-                        if (((MS122C) device).getDryContact2Value() != null) {
+                        if (((MS12) device).getDryContact2Value() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT2),
-                                    ((MS122C) device).getDryContact2Value());
+                                    ((MS12) device).getDryContact2Value());
                         }
-                        if (((MS122C) device).getRelayCh01State() != null) {
+                        if (((MS12) device).getRelayCh01State() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH1),
-                                    ((MS122C) device).getRelayCh01State());
+                                    ((MS12) device).getRelayCh01State());
                         }
-                        if (((MS122C) device).getRelayCh02State() != null) {
+                        if (((MS12) device).getRelayCh02State() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH2),
-                                    ((MS122C) device).getRelayCh02State());
+                                    ((MS12) device).getRelayCh02State());
                         }
                         break;
                     case MPL8_48_FH:
@@ -716,6 +756,63 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         if (((MPL848FH) device).getUVSwitch6() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH6),
                                     ((MPL848FH) device).getUVSwitch6());
+                        }
+                        break;
+                    case MFH06_432:
+                        if (((MFH06) device).getTemperatureValue() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_TEMPERATUR),
+                                    ((MFH06) device).getTemperatureValue());
+                        }
+                        if (((MFH06) device).getFloorHeatingSetNormalTemperatur() != null) {
+                            updateState(
+                                    new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHNORMALTEMPSET),
+                                    ((MFH06) device).getFloorHeatingSetNormalTemperatur());
+                        }
+                        if (((MFH06) device).getFloorHeatingSetAwayTemperatur() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHAWAYTEMPSET),
+                                    ((MFH06) device).getFloorHeatingSetAwayTemperatur());
+                        }
+                        if (((MFH06) device).getFloorHeatingSetDayTemperatur() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHDAYTEMPSET),
+                                    ((MFH06) device).getFloorHeatingSetDayTemperatur());
+                        }
+                        if (((MFH06) device).getFloorHeatingSetNightTemperatur() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHNIGHTTEMPSET),
+                                    ((MFH06) device).getFloorHeatingSetNightTemperatur());
+                        }
+                        if (((MFH06) device).getFloorHeatingCurrentTemperatur() != null) {
+                            updateState(
+                                    new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHCURRENTTEMPSET),
+                                    ((MFH06) device).getFloorHeatingCurrentTemperatur());
+                        }
+                        if (((MFH06) device).getFloorHeatingMode() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHMODE),
+                                    new StringType(((MFH06) device).getFloorHeatingMode().toString()));
+                        }
+
+                        if (((MFH06) device).getUVSwitch1() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH1),
+                                    ((MFH06) device).getUVSwitch1());
+                        }
+                        if (((MFH06) device).getUVSwitch2() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH2),
+                                    ((MFH06) device).getUVSwitch2());
+                        }
+                        if (((MFH06) device).getUVSwitch3() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH3),
+                                    ((MFH06) device).getUVSwitch3());
+                        }
+                        if (((MFH06) device).getUVSwitch4() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH4),
+                                    ((MFH06) device).getUVSwitch4());
+                        }
+                        if (((MFH06) device).getUVSwitch5() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH5),
+                                    ((MFH06) device).getUVSwitch5());
+                        }
+                        if (((MFH06) device).getUVSwitch6() != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH6),
+                                    ((MFH06) device).getUVSwitch6());
                         }
                         break;
                     case MDT0601_233:
@@ -905,6 +1002,7 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                                     ((MR12xx) device).getRelayCh12State());
                         }
                         break;
+                    case MR0816_432:
                     case MR0810_432:
                         if (((MR08xx) device).getRelayCh01State() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH1),

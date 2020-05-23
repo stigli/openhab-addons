@@ -158,6 +158,40 @@
 		</config-description>
 	</thing-type>
 	
+	<thing-type id="MFH06">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="bridge" />
+		</supported-bridge-type-refs>
+		<label>Floor Heating Module</label>
+		<description>Floor Heating Module</description>
+		<channels>			
+			<channel id="FHNormalTempSet" typeId="set_temp"></channel>
+			<channel id="FHTempSet" typeId="set_temp"></channel>
+			<channel id="FHNightTempSet" typeId="set_temp"></channel>
+			<channel id="FHAwayTempSet" typeId="set_temp"></channel>
+			<channel id="FHCurrentTempSet" typeId="temperature"></channel>
+			<channel id="FHMode" typeId="fhmode" />			
+		</channels>
+		<config-description>
+			<parameter name="Subnet" type="integer" min="1" required="true">
+				<label>Subnet</label>
+				<description>What Sub net the DLP is on.</description>
+			</parameter>
+			<parameter name="DeviceID" type="integer" min="1" required="true">
+				<label>Device ID</label>
+				<description>What device id the DLP has.</description>
+			</parameter>
+			<parameter name="channelNumber" type="integer" min="1" required="true">
+				<label>Channel Numner</label>
+				<description>What channel off floor heating module is this.</description>
+			</parameter>
+			<parameter name="refreshInterval" type="integer" min="0" required="false">
+				<label>Refresh Rate</label>
+				<description>How often the things status should be requested.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+	
 	<thing-type id="MPT04">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge" />
@@ -182,7 +216,7 @@
 	</config-description>
 	</thing-type>
 	
-	<thing-type id="MR12xx">
+	<thing-type id="MR16xx">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge" />
 		</supported-bridge-type-refs>

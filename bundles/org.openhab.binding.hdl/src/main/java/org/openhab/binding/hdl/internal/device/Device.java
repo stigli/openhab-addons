@@ -74,6 +74,8 @@ public abstract class Device {
                 return new ML01(c);
             case MPL8_48_FH:
                 return new MPL848FH(c);
+            case MFH06_432:
+                return new MFH06(c);
             case MPT04_48:
                 return new MPT0448(c);
             case MR1610_433:
@@ -94,7 +96,7 @@ public abstract class Device {
             case MS08Mn_2C:
                 return new MS08(c);
             case MS12_2C:
-                return new MS122C(c);
+                return new MS12(c);
             case MS24:
                 return new MS24(c);
             case MW02_231:
@@ -123,6 +125,12 @@ public abstract class Device {
                 MPL848FH mpl848fh = (MPL848FH) device;
                 mpl848fh.treatHDLPacketForDevice(p);
                 break;
+            case MFH06_432:
+                if (p.data[0] == 1) {
+                    MFH06 mfh06 = (MFH06) device;
+                    mfh06.treatHDLPacketForDevice(p);
+                }
+                break;
             case MPT04_48:
                 MPT0448 mpt0448 = (MPT0448) device;
                 mpt0448.treatHDLPacketForDevice(p);
@@ -136,6 +144,7 @@ public abstract class Device {
                 MR12xx mr12xx = (MR12xx) device;
                 mr12xx.treatHDLPacketForDevice(p);
                 break;
+            case MR0816_432:
             case MR0810_432:
                 MR08xx mr08xx = (MR08xx) device;
                 mr08xx.treatHDLPacketForDevice(p);
@@ -157,7 +166,7 @@ public abstract class Device {
                 ms08mn2c.treatHDLPacketForDevice(p);
                 break;
             case MS12_2C:
-                MS122C ms122c = (MS122C) device;
+                MS12 ms122c = (MS12) device;
                 ms122c.treatHDLPacketForDevice(p);
                 break;
             case MS24:

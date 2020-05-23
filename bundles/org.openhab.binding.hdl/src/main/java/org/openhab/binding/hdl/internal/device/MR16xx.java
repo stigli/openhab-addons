@@ -16,17 +16,17 @@ import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 
 /**
- * The MR12xx class contains support channels for device Type MR12xx.
+ * The MR16xx class contains support channels for device Type MR16xx.
  * And how the information on the HDL bus is packet for this device.
- * This is a relay block with 12 relays.
+ * This is a relay block with 16 relays.
  *
  * @author stigla - Initial contribution
  */
 
 public class MR16xx extends Device {
 
-    /** Device type for this 12 channel relay **/
-    private DeviceType deviceType = DeviceType.MR1216_233;
+    /** Device type for this 16 channel relay **/
+    private DeviceType deviceType = DeviceType.MR1610_433;
 
     private OnOffType relayCh01 = null;
     private OnOffType relayCh02 = null;
@@ -277,24 +277,24 @@ public class MR16xx extends Device {
                     setRelayCh12(OnOffType.OFF);
                 }
                 if ((p.data[5] & 0x10) == 16) {
-                    setRelayCh12(OnOffType.ON);
+                    setRelayCh13(OnOffType.ON);
                 } else {
-                    setRelayCh12(OnOffType.OFF);
+                    setRelayCh13(OnOffType.OFF);
                 }
                 if ((p.data[5] & 0x20) == 32) {
-                    setRelayCh12(OnOffType.ON);
+                    setRelayCh14(OnOffType.ON);
                 } else {
-                    setRelayCh12(OnOffType.OFF);
+                    setRelayCh14(OnOffType.OFF);
                 }
                 if ((p.data[5] & 0x40) == 64) {
-                    setRelayCh12(OnOffType.ON);
+                    setRelayCh15(OnOffType.ON);
                 } else {
-                    setRelayCh12(OnOffType.OFF);
+                    setRelayCh15(OnOffType.OFF);
                 }
                 if ((p.data[5] & 0x80) == 128) {
-                    setRelayCh12(OnOffType.ON);
+                    setRelayCh16(OnOffType.ON);
                 } else {
-                    setRelayCh12(OnOffType.OFF);
+                    setRelayCh16(OnOffType.OFF);
                 }
                 break;
             case Broadcast_Status_of_Scene:

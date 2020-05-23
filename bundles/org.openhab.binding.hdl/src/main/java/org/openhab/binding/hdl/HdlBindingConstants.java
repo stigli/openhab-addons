@@ -41,7 +41,7 @@ public class HdlBindingConstants {
     public static final String PROPERTY_DEVICEID = "DeviceID";
     public static final String PROPERTY_CHANNEL = "Channel";
     public static final String PROPERTY_REFRESHRATE = "refreshInterval";
-
+    public static final String PROPERTY_CHANNELNUMBER = "channelNumber";
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_BRIDGE = new ThingTypeUID(BINDING_ID, "bridge");
 
@@ -333,7 +333,11 @@ public class HdlBindingConstants {
         RelayCh9(9),
         RelayCh10(10),
         RelayCh11(11),
-        RelayCh12(12);
+        RelayCh12(12),
+        RelayCh13(13),
+        RelayCh14(14),
+        RelayCh15(15),
+        RelayCh16(16);
 
         private int value;
 
