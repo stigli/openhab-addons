@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="hdl" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
+	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 org.eclipse.smarthome.thing-description.xsd">
+	<bridge-type id="bridge">
+		<label>HDL server</label>
+		<description>This bridge represents a HDL server.</description>
+		<config-description>
+			<parameter name="Ip" type="text">
+				<label>Network Address</label>
+				<context>network-address</context>
+				<description>IP address of the HDL server</description>
+				<default>localhost</default>
+				<required>true</required>
+			</parameter>
+			<parameter name="Port" type="integer">
+				<label>Port</label>
+				<description>Port of the HDL server</description>
+				<default>6000</default>
+				<required>false</required>
+			</parameter>
+		</config-description>
+	</bridge-type>
+</thing:thing-descriptions>
