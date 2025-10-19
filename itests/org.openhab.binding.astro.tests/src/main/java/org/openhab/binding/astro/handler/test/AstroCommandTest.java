@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -24,6 +24,7 @@ import org.openhab.binding.astro.internal.handler.AstroThingHandler;
 import org.openhab.binding.astro.internal.handler.SunHandler;
 import org.openhab.binding.astro.internal.model.Sun;
 import org.openhab.core.config.core.Configuration;
+import org.openhab.core.i18n.LocaleProvider;
 import org.openhab.core.i18n.TimeZoneProvider;
 import org.openhab.core.scheduler.CronScheduler;
 import org.openhab.core.thing.Channel;
@@ -59,13 +60,14 @@ public class AstroCommandTest {
         Thing thing = mock(Thing.class);
         when(thing.getConfiguration()).thenReturn(thingConfiguration);
         when(thing.getUID()).thenReturn(thingUID);
-        when(thing.getChannel(DEFAULT_TEST_CHANNEL_ID)).thenReturn(channel);
+        when(thing.getChannel(channelUID)).thenReturn(channel);
 
         ThingHandlerCallback callback = mock(ThingHandlerCallback.class);
         CronScheduler cronScheduler = mock(CronScheduler.class);
         TimeZoneProvider timeZoneProvider = mock(TimeZoneProvider.class);
+        LocaleProvider localeProvider = mock(LocaleProvider.class);
         when(timeZoneProvider.getTimeZone()).thenReturn(ZoneId.systemDefault());
-        AstroThingHandler sunHandler = spy(new SunHandler(thing, cronScheduler, timeZoneProvider));
+        AstroThingHandler sunHandler = spy(new SunHandler(thing, cronScheduler, timeZoneProvider, localeProvider));
 
         // Required from the AstroThingHandler to send the status update
         doReturn(true).when(callback).isChannelLinked(eq(channelUID));

@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -20,11 +20,10 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -93,6 +92,26 @@ class Clip2DtoTest {
             .create();
     private static final Double MINIMUM_DIMMING_LEVEL = Double.valueOf(12.34f);
 
+    // Resource types which do not yet have a test JSON payload available
+    public static final Set<ResourceType> RESOURCES_WITH_NO_JSON_TEST_CASE_YET = EnumSet.of(
+    //@formatter:off
+            ResourceType.BELL_BUTTON,
+            ResourceType.CLIP,
+            ResourceType.CONVENIENCE_AREA_MOTION,
+            ResourceType.DEVICE_SOFTWARE_UPDATE,
+            ResourceType.GROUPED_LIGHT_LEVEL,
+            ResourceType.MATTER,
+            ResourceType.MATTER_FABRIC,
+            ResourceType.MOTION_AREA_CANDIDATE,
+            ResourceType.MOTION_AREA_CONFIGURATION,
+            ResourceType.SECURITY_AREA_MOTION,
+            ResourceType.SERVICE_GROUP,
+            ResourceType.SPEAKER,
+            ResourceType.WIFI_CONNECTIVITY,
+            ResourceType.ZIGBEE_DEVICE_DISCOVERY
+    //@formatter:on
+    );
+
     /**
      * Load the test JSON payload string from a file
      */
@@ -125,8 +144,7 @@ class Clip2DtoTest {
         assertNotNull(button);
         assertEquals(new DecimalType(2003),
                 item.getButtonEventState(Map.of("00000000-0000-0000-0000-000000000001", 2)));
-        assertEquals(new DateTimeType("2023-09-17T18:51:36.959+0000"),
-                item.getButtonLastUpdatedState(ZoneId.of("UTC")));
+        assertEquals(new DateTimeType("2023-09-17T18:51:36.959+0000"), item.getButtonLastUpdatedState());
     }
 
     @Test
@@ -247,19 +265,19 @@ class Clip2DtoTest {
                 assertEquals(ResourceType.LIGHT, item.getType());
                 assertEquals(OnOffType.OFF, item.getOnOffState());
                 state = item.getBrightnessState();
-                assertTrue(state instanceof PercentType);
-                assertEquals(0, ((PercentType) state).doubleValue(), 0.1);
+                PercentType percentState = assertInstanceOf(PercentType.class, state);
+                assertEquals(0, percentState.doubleValue(), 0.1);
                 item.setOnOff(OnOffType.ON);
                 state = item.getBrightnessState();
-                assertTrue(state instanceof PercentType);
-                assertEquals(93.0, ((PercentType) state).doubleValue(), 0.1);
+                percentState = assertInstanceOf(PercentType.class, state);
+                assertEquals(93.0, percentState.doubleValue(), 0.1);
                 assertEquals(UnDefType.UNDEF, item.getColorTemperaturePercentState());
                 state = item.getColorState();
-                assertTrue(state instanceof HSBType);
-                double[] xy = ColorUtil.hsbToXY((HSBType) state);
+                HSBType hsbState = assertInstanceOf(HSBType.class, state);
+                double[] xy = ColorUtil.hsbToXY(hsbState);
                 assertEquals(0.6367, xy[0], 0.01); // note: rounding errors !!
                 assertEquals(0.3503, xy[1], 0.01); // note: rounding errors !!
-                assertEquals(item.getBrightnessState(), ((HSBType) state).getBrightness());
+                assertEquals(item.getBrightnessState(), hsbState.getBrightness());
                 Alerts alert = item.getAlerts();
                 assertNotNull(alert);
                 for (ActionType actionValue : alert.getActionValues()) {
@@ -271,12 +289,12 @@ class Clip2DtoTest {
                 assertEquals(ResourceType.LIGHT, item.getType());
                 assertEquals(OnOffType.OFF, item.getOnOffState());
                 state = item.getBrightnessState();
-                assertTrue(state instanceof PercentType);
-                assertEquals(0, ((PercentType) state).doubleValue(), 0.1);
+                PercentType percentState = assertInstanceOf(PercentType.class, state);
+                assertEquals(0, percentState.doubleValue(), 0.1);
                 item.setOnOff(OnOffType.ON);
                 state = item.getBrightnessState();
-                assertTrue(state instanceof PercentType);
-                assertEquals(56.7, ((PercentType) state).doubleValue(), 0.1);
+                percentState = assertInstanceOf(PercentType.class, state);
+                assertEquals(56.7, percentState.doubleValue(), 0.1);
                 MirekSchema mirekSchema = item.getMirekSchema();
                 assertNotNull(mirekSchema);
                 assertEquals(153, mirekSchema.getMirekMinimum());
@@ -284,42 +302,42 @@ class Clip2DtoTest {
 
                 // test color temperature percent value on light's own scale
                 state = item.getColorTemperaturePercentState();
-                assertTrue(state instanceof PercentType);
-                assertEquals(96.3, ((PercentType) state).doubleValue(), 0.1);
+                percentState = assertInstanceOf(PercentType.class, state);
+                assertEquals(96.3, percentState.doubleValue(), 0.1);
                 state = item.getColorTemperatureAbsoluteState();
-                assertTrue(state instanceof QuantityType<?>);
-                assertEquals(2257.3, ((QuantityType<?>) state).doubleValue(), 0.1);
+                QuantityType<?> quantityState = assertInstanceOf(QuantityType.class, state);
+                assertEquals(2257.3, quantityState.doubleValue(), 0.1);
 
                 // test color temperature percent value on the default (full) scale
                 MirekSchema temp = item.getMirekSchema();
                 item.setMirekSchema(MirekSchema.DEFAULT_SCHEMA);
                 state = item.getColorTemperaturePercentState();
-                assertTrue(state instanceof PercentType);
-                assertEquals(83.6, ((PercentType) state).doubleValue(), 0.1);
+                percentState = assertInstanceOf(PercentType.class, state);
+                assertEquals(83.6, percentState.doubleValue(), 0.1);
                 state = item.getColorTemperatureAbsoluteState();
-                assertTrue(state instanceof QuantityType<?>);
-                assertEquals(2257.3, ((QuantityType<?>) state).doubleValue(), 0.1);
+                quantityState = assertInstanceOf(QuantityType.class, state);
+                assertEquals(2257.3, quantityState.doubleValue(), 0.1);
                 item.setMirekSchema(temp);
 
                 // change colour temperature percent to zero
                 Setters.setColorTemperaturePercent(item, PercentType.ZERO, null);
                 assertEquals(PercentType.ZERO, item.getColorTemperaturePercentState());
                 state = item.getColorTemperatureAbsoluteState();
-                assertTrue(state instanceof QuantityType<?>);
-                assertEquals(6535.9, ((QuantityType<?>) state).doubleValue(), 0.1);
+                quantityState = assertInstanceOf(QuantityType.class, state);
+                assertEquals(6535.9, quantityState.doubleValue(), 0.1);
 
                 // change colour temperature percent to 100
                 Setters.setColorTemperaturePercent(item, PercentType.HUNDRED, null);
                 assertEquals(PercentType.HUNDRED, item.getColorTemperaturePercentState());
                 state = item.getColorTemperatureAbsoluteState();
-                assertTrue(state instanceof QuantityType<?>);
-                assertEquals(2202.6, ((QuantityType<?>) state).doubleValue(), 0.1);
+                quantityState = assertInstanceOf(QuantityType.class, state);
+                assertEquals(2202.6, quantityState.doubleValue(), 0.1);
 
                 // change colour temperature kelvin to 4000 K
                 Setters.setColorTemperatureAbsolute(item, QuantityType.valueOf("4000 K"), null);
                 state = item.getColorTemperaturePercentState();
-                assertTrue(state instanceof PercentType);
-                assertEquals(32.2, ((PercentType) state).doubleValue(), 0.1);
+                percentState = assertInstanceOf(PercentType.class, state);
+                assertEquals(32.2, percentState.doubleValue(), 0.1);
                 assertEquals(QuantityType.valueOf("4000 K"), item.getColorTemperatureAbsoluteState());
 
                 assertEquals(UnDefType.NULL, item.getColorState());
@@ -347,8 +365,7 @@ class Clip2DtoTest {
         assertNotNull(enabled);
         assertTrue(enabled);
         assertEquals(QuantityType.valueOf("1.2792921774337476 lx"), item.getLightLevelState());
-        assertEquals(new DateTimeType("2023-09-11T19:20:02.958+0000"),
-                item.getLightLevelLastUpdatedState(ZoneId.of("UTC")));
+        assertEquals(new DateTimeType("2023-09-11T19:20:02.958+0000"), item.getLightLevelLastUpdatedState());
     }
 
     @Test
@@ -410,19 +427,21 @@ class Clip2DtoTest {
         }
         Setters.setColorXy(one, HSBType.RED, null);
         Setters.setDimming(one, PercentType.HUNDRED, null);
-        assertTrue(one.getColorState() instanceof HSBType);
+        HSBType colorState = assertInstanceOf(HSBType.class, one.getColorState());
         assertEquals(PercentType.HUNDRED, one.getBrightnessState());
-        assertTrue(HSBType.RED.closeTo((HSBType) one.getColorState(), 0.01));
+        assertTrue(HSBType.RED.closeTo(colorState, 0.01));
 
         // switching off should change HSB and Brightness
         one.setOnOff(OnOffType.OFF);
-        assertEquals(0, ((HSBType) one.getColorState()).getBrightness().doubleValue(), 0.01);
+        colorState = assertInstanceOf(HSBType.class, one.getColorState());
+        assertEquals(0, colorState.getBrightness().doubleValue(), 0.01);
         assertEquals(PercentType.ZERO, one.getBrightnessState());
         one.setOnOff(OnOffType.ON);
 
         // setting brightness to zero should change it to the minimum dimming level
         Setters.setDimming(one, PercentType.ZERO, null);
-        assertEquals(MINIMUM_DIMMING_LEVEL, ((HSBType) one.getColorState()).getBrightness().doubleValue(), 0.01);
+        colorState = assertInstanceOf(HSBType.class, one.getColorState());
+        assertEquals(MINIMUM_DIMMING_LEVEL, colorState.getBrightness().doubleValue(), 0.01);
         assertEquals(MINIMUM_DIMMING_LEVEL, ((PercentType) one.getBrightnessState()).doubleValue(), 0.01);
         one.setOnOff(OnOffType.ON);
 
@@ -437,9 +456,8 @@ class Clip2DtoTest {
 
         // confirm that brightness is no longer valid, and therefore that color has also changed
         assertEquals(UnDefType.NULL, one.getBrightnessState());
-        assertTrue(one.getColorState() instanceof HSBType);
-        assertTrue((new HSBType(DecimalType.ZERO, PercentType.HUNDRED, new PercentType(50)))
-                .closeTo((HSBType) one.getColorState(), 0.01));
+        colorState = assertInstanceOf(HSBType.class, one.getColorState());
+        assertTrue((new HSBType(DecimalType.ZERO, PercentType.HUNDRED, new PercentType(50))).closeTo(colorState, 0.01));
 
         PercentType testBrightness = new PercentType(42);
 
@@ -457,9 +475,8 @@ class Clip2DtoTest {
         assertEquals("AARDVARK", one.getId());
         assertEquals(ResourceType.LIGHT, one.getType());
         assertEquals(testBrightness, one.getBrightnessState());
-        assertTrue(one.getColorState() instanceof HSBType);
-        assertTrue((new HSBType(DecimalType.ZERO, PercentType.HUNDRED, testBrightness))
-                .closeTo((HSBType) one.getColorState(), 0.01));
+        colorState = assertInstanceOf(HSBType.class, one.getColorState());
+        assertTrue((new HSBType(DecimalType.ZERO, PercentType.HUNDRED, testBrightness)).closeTo(colorState, 0.01));
     }
 
     @Test
@@ -522,9 +539,9 @@ class Clip2DtoTest {
         ResourceType type = group.getType();
         assertNotNull(type);
         assertEquals(ResourceType.ROOM, type);
-        Optional<Boolean> state = item.getSmartSceneActive();
-        assertTrue(state.isPresent());
-        assertFalse(state.get());
+        Boolean state = item.getSmartSceneActive();
+        assertNotNull(state);
+        assertFalse(state);
     }
 
     @Test
@@ -541,8 +558,7 @@ class Clip2DtoTest {
         assertNotNull(enabled);
         assertTrue(enabled);
         assertEquals(OnOffType.ON, item.getMotionState());
-        assertEquals(new DateTimeType("2023-09-04T20:04:30.395+0000"),
-                item.getMotionLastUpdatedState(ZoneId.of("UTC")));
+        assertEquals(new DateTimeType("2023-09-04T20:04:30.395+0000"), item.getMotionLastUpdatedState());
     }
 
     @Test
@@ -576,8 +592,8 @@ class Clip2DtoTest {
         for (HSBType color : Set.of(HSBType.WHITE, HSBType.RED, HSBType.GREEN, HSBType.BLUE, cyan, yellow, magenta)) {
             Setters.setColorXy(resource, color, null);
             State state = resource.getColorState();
-            assertTrue(state instanceof HSBType);
-            assertTrue(color.closeTo((HSBType) state, 0.01));
+            HSBType hsbState = assertInstanceOf(HSBType.class, state);
+            assertTrue(color.closeTo(hsbState, 0.01));
         }
     }
 
@@ -613,9 +629,9 @@ class Clip2DtoTest {
         assertNotNull(active);
         assertTrue(active.isJsonPrimitive());
         assertEquals("inactive", active.getAsString());
-        Optional<Boolean> isActive = resource.getSceneActive();
-        assertTrue(isActive.isPresent());
-        assertEquals(Boolean.FALSE, isActive.get());
+        Boolean isActive = resource.getSceneActive();
+        assertNotNull(isActive);
+        assertEquals(Boolean.FALSE, isActive);
     }
 
     @Test
@@ -632,8 +648,7 @@ class Clip2DtoTest {
         assertNotNull(enabled);
         assertTrue(enabled);
         assertEquals(QuantityType.valueOf("23.34 °C"), item.getTemperatureState());
-        assertEquals(new DateTimeType("2023-09-06T18:22:07.016+0000"),
-                item.getTemperatureLastUpdatedState(ZoneId.of("UTC")));
+        assertEquals(new DateTimeType("2023-09-06T18:22:07.016+0000"), item.getTemperatureLastUpdatedState());
     }
 
     @Test
@@ -659,6 +674,9 @@ class Clip2DtoTest {
     void testValidJson() {
         for (ResourceType res : ResourceType.values()) {
             if (!ResourceType.SSE_TYPES.contains(res)) {
+                if (RESOURCES_WITH_NO_JSON_TEST_CASE_YET.contains(res)) {
+                    continue;
+                }
                 try {
                     String file = res.name().toLowerCase();
                     String json = load(file);
@@ -722,12 +740,11 @@ class Clip2DtoTest {
         assertEquals(ResourceType.CONTACT, resource.getType());
 
         assertEquals(OpenClosedType.CLOSED, resource.getContactState());
-        assertEquals(new DateTimeType("2023-10-10T19:10:55.919Z"),
-                resource.getContactLastUpdatedState(ZoneId.of("UTC")));
+        assertEquals(new DateTimeType("2023-10-10T19:10:55.919Z"), resource.getContactLastUpdatedState());
 
         resource.setContactReport(new ContactReport().setLastChanged(Instant.now()).setContactState("no_contact"));
         assertEquals(OpenClosedType.OPEN, resource.getContactState());
-        assertTrue(resource.getContactLastUpdatedState(ZoneId.of("UTC")) instanceof DateTimeType);
+        assertInstanceOf(DateTimeType.class, resource.getContactLastUpdatedState());
     }
 
     @Test
@@ -742,8 +759,7 @@ class Clip2DtoTest {
         assertEquals(ResourceType.TAMPER, resource.getType());
 
         assertEquals(OpenClosedType.CLOSED, resource.getTamperState());
-        assertEquals(new DateTimeType("2023-01-01T00:00:00.001Z"),
-                resource.getTamperLastUpdatedState(ZoneId.of("UTC")));
+        assertEquals(new DateTimeType("2023-01-01T00:00:00.001Z"), resource.getTamperLastUpdatedState());
 
         Instant start = Instant.now();
         List<TamperReport> tamperReports;
@@ -753,18 +769,18 @@ class Clip2DtoTest {
         tamperReports.add(new TamperReport().setTamperState("not_tampered").setLastChanged(start));
         resource.setTamperReports(tamperReports);
         assertEquals(OpenClosedType.CLOSED, resource.getTamperState());
-        state = resource.getTamperLastUpdatedState(ZoneId.of("UTC"));
-        assertTrue(state instanceof DateTimeType);
-        assertEquals(start, ((DateTimeType) state).getInstant());
+        state = resource.getTamperLastUpdatedState();
+        DateTimeType dateTimeState = assertInstanceOf(DateTimeType.class, state);
+        assertEquals(start, dateTimeState.getInstant());
 
         tamperReports = new ArrayList<>();
         tamperReports.add(new TamperReport().setTamperState("not_tampered").setLastChanged(start));
         tamperReports.add(new TamperReport().setTamperState("tampered").setLastChanged(start.plusSeconds(1)));
         resource.setTamperReports(tamperReports);
         assertEquals(OpenClosedType.OPEN, resource.getTamperState());
-        state = resource.getTamperLastUpdatedState(ZoneId.of("UTC"));
-        assertTrue(state instanceof DateTimeType);
-        assertEquals(start.plusSeconds(1), ((DateTimeType) state).getInstant());
+        state = resource.getTamperLastUpdatedState();
+        dateTimeState = assertInstanceOf(DateTimeType.class, state);
+        assertEquals(start.plusSeconds(1), dateTimeState.getInstant());
 
         tamperReports = new ArrayList<>();
         tamperReports.add(new TamperReport().setTamperState("not_tampered").setLastChanged(start));
@@ -772,9 +788,9 @@ class Clip2DtoTest {
         tamperReports.add(new TamperReport().setTamperState("not_tampered").setLastChanged(start.plusSeconds(2)));
         resource.setTamperReports(tamperReports);
         assertEquals(OpenClosedType.CLOSED, resource.getTamperState());
-        state = resource.getTamperLastUpdatedState(ZoneId.of("UTC"));
-        assertTrue(state instanceof DateTimeType);
-        assertEquals(start.plusSeconds(2), ((DateTimeType) state).getInstant());
+        state = resource.getTamperLastUpdatedState();
+        dateTimeState = assertInstanceOf(DateTimeType.class, state);
+        assertEquals(start.plusSeconds(2), dateTimeState.getInstant());
     }
 
     @Test
@@ -792,8 +808,7 @@ class Clip2DtoTest {
         assertNotNull(enabled);
         assertTrue(enabled);
         assertEquals(OnOffType.ON, resource.getMotionState());
-        assertEquals(new DateTimeType("2020-04-01T20:04:30.395Z"),
-                resource.getMotionLastUpdatedState(ZoneId.of("UTC")));
+        assertEquals(new DateTimeType("2020-04-01T20:04:30.395Z"), resource.getMotionLastUpdatedState());
     }
 
     void testFixedEffectSetter() {
@@ -874,8 +889,8 @@ class Clip2DtoTest {
         assertNotNull(resultEffect);
         assertNotEquals(EffectType.SPARKLE, resultEffect.getEffect());
         assertEquals(3, resultEffect.getStatusValues().size());
-        assertTrue(resultEffect instanceof TimedEffects);
-        assertEquals(Duration.ofMinutes(11), ((TimedEffects) resultEffect).getDuration());
+        TimedEffects resultTimedEffects = assertInstanceOf(TimedEffects.class, resultEffect);
+        assertEquals(Duration.ofMinutes(11), resultTimedEffects.getDuration());
 
         // partly valid source timed effects
         source = new Resource(ResourceType.LIGHT).setTimedEffects((TimedEffects) new TimedEffects()
@@ -888,8 +903,8 @@ class Clip2DtoTest {
         assertEquals(0, resultEffect.getStatusValues().size());
         assertFalse(resultEffect.allows(EffectType.SPARKLE));
         assertFalse(resultEffect.allows(EffectType.NO_EFFECT));
-        assertTrue(resultEffect instanceof TimedEffects);
-        assertNull(((TimedEffects) resultEffect).getDuration());
+        resultTimedEffects = assertInstanceOf(TimedEffects.class, resultEffect);
+        assertNull(resultTimedEffects.getDuration());
 
         target.setTimedEffectsDuration(Duration.ofSeconds(22));
         assertEquals(Duration.ofSeconds(22), ((TimedEffects) resultEffect).getDuration());
@@ -902,7 +917,34 @@ class Clip2DtoTest {
         Setters.setResource(target, source);
         resultEffect = target.getTimedEffects();
         assertNotNull(resultEffect);
-        assertTrue(resultEffect instanceof TimedEffects);
-        assertEquals(Duration.ofMillis(44), ((TimedEffects) resultEffect).getDuration());
+        resultTimedEffects = assertInstanceOf(TimedEffects.class, resultEffect);
+        assertEquals(Duration.ofMillis(44), resultTimedEffects.getDuration());
+    }
+
+    @Test
+    void testBehaviorInstance() {
+        String json = load(ResourceType.BEHAVIOR_INSTANCE.name().toLowerCase());
+        Resources resources = GSON.fromJson(json, Resources.class);
+        assertNotNull(resources);
+        List<Resource> list = resources.getResources();
+        assertNotNull(list);
+        assertEquals(2, list.size());
+    }
+
+    @Test
+    void testGroupedMotion() {
+        String json = load(ResourceType.GROUPED_MOTION.name().toLowerCase());
+        Resources resources = GSON.fromJson(json, Resources.class);
+        assertNotNull(resources);
+        List<Resource> list = resources.getResources();
+        assertNotNull(list);
+        assertEquals(1, list.size());
+        Resource item = list.get(0);
+        assertEquals(ResourceType.GROUPED_MOTION, item.getType());
+        Boolean enabled = item.getEnabled();
+        assertNotNull(enabled);
+        assertTrue(enabled);
+        assertEquals(OnOffType.ON, item.getMotionState());
+        assertEquals(new DateTimeType("2024-12-13T11:01:25.156Z"), item.getMotionLastUpdatedState());
     }
 }

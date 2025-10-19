@@ -1,30 +1,32 @@
 # Souliss Binding
 
-[Souliss](http://www.souliss.net/) is a networking framework for Arduino and compatibles boards, and is designed to let you easily build a smart home that is distributed over multiple boards via Ethernet, WiFi, wireless point-to-point and RS485 bus.
+[Souliss](https://souliss.github.io/) is a networking framework for Arduino and compatible boards, and is designed to let you easily build a smart home that is distributed over multiple boards via Ethernet, WiFi, wireless point-to-point and RS485 bus.
 
-Souliss is an open-source and community driven project, you can use the [wiki](https://github.com/souliss/souliss/wiki) and [Community](https://github.com/souliss/souliss/wiki/Community) to get help and share your results.  
+Souliss is an open-source and community driven project.
+You can use the [Souliss Wiki documentation](https://github.com/souliss/souliss/wiki) and [Souliss Community Page on GitHub](https://github.com/souliss/souliss/wiki/Community) to get help and share your results.
 
 ## Prerequisites
 
 The binding requires a deployed network.
-As a minimum, you need one Souliss node with Ethernet or WiFi access configured as a [Gateway](https://github.com/souliss/souliss/wiki/Gateway).
+As a minimum, you need one Souliss node with Ethernet or WiFi access configured as a [Souliss Gateway](https://github.com/souliss/souliss/wiki/Gateway).
 A Gateway is a special node that is able to communicate with the user interfaces.
 The binding interacts as a user interface for Souliss.
 
-A starting point is the [Souliss wiki](https://github.com/souliss/souliss/wiki).
+A starting point is the [Souliss Wiki documentation on GitHub](https://github.com/souliss/souliss/wiki).
 The best is to start with a single node and connect with SoulissApp.
-The code for networking activities of this binding is based on [SoulissApp](https://github.com/souliss/souliss/wiki/SoulissApp) code, so once connected with SoulissApp, you can move to openHAB directly.
+The code for networking activities of this binding is based on the [SoulissApp Codebase documentation](https://github.com/souliss/souliss/wiki/SoulissApp), so once connected with SoulissApp, you can move to openHAB directly.
 
 You can use SoulissApp and the Souliss binding at the same time, and generally up to five (by default, but can be increased) user interfaces simultaneously.
 
 ### Sketches
 
-The easiest way is start with a simple example to control an ON/OFF light (through a relay).
-You can go to project [Souliss](https://github.com/souliss/souliss), see a lot of examples sketches: [Souliss examples](https://github.com/souliss/souliss/tree/friariello/examples)
+The easiest way is to start with a simple example to control an ON/OFF light (through a relay).
+
+You can go to the [Souliss GitHub Project main page](https://github.com/souliss/souliss) and see a lot of example sketches in the [Souliss Examples Directory on GitHub](https://github.com/souliss/souliss/tree/friariello/examples)
 
 ## Discovery
 
-First add a gateway (one only is permitted on LAN at this moment), then discovery can find other things (Souliss Typicals)
+First add a gateway (only one is permitted on LAN at this moment), then discovery can find other things (Souliss Typicals)
 
 ## Supported Things
 
@@ -32,7 +34,7 @@ In Souliss Framework a Typical is one of predefined logic dedicated to smart hom
 
 Typical can be one of T11, T12, T13, T14, etc...
 
-They are defined [here](https://github.com/souliss/souliss/wiki/Typicals).
+They are defined in the [Souliss Wiki Typicals documentation](https://github.com/souliss/souliss/wiki/Typicals).
 
 Typicals match directly with openHAB Thing type.
 
@@ -157,7 +159,7 @@ souliss.things:
 
 ```java
 Bridge souliss:gateway:105 "Souliss Gateway - 105" [gatewayLanAddress="192.168.1.105", gatewayPortNumber=230, pingInterval=30, subscriptionInterval=2, healthyInterval=38, userIndex=72, nodeIndex=38,  timeoutToRequeue=5000, timeoutToRemovePacket=20000]
-{  
+{
 Thing t14 1-6 "Portoncino"@"Rientro" [node=1,slot=6] //thing UID is named as node-slot only as mnemonic convention, but you are free to assign other values
 Thing t14 1-7 "Cancello"@"Rientro" [node=1,slot=7]
 Thing t57 1-4 "Consumo"@"Soggiorno" [node=1,slot=4]
@@ -179,7 +181,7 @@ Thing t19 6-9 "Termostato Soggiorno - Luminosità"@"Soggiorno" [node=6,slot=9]
 
 Thing t11 5-0 "Tettoia"@"Giardino"  [node=5,slot=0]
 
-Thing t11 12-0 "Divano"@"Soggiorno" [node=12,slot=0,sleep=10, secureSend=false] 
+Thing t11 12-0 "Divano"@"Soggiorno" [node=12,slot=0,sleep=10, secureSend=false]
 
 Thing t16 8-0 "LYT1" [node=8,slot=0]
 
@@ -220,7 +222,7 @@ Number   Consumo            "Consumo [%.1f W]"                                  
 Number   Fotovoltaico       "Fotovoltaico [%.1f W]"                                     <energy>  (FamilyRoom, Elettricita)              {channel="souliss:t57:105:4-0:value"}
 String   AggiornamentoNodo1 "Agg.Consumi [%1$td.%1$tm.%1$tY %1$tk:%1$tM:%1$tS]"         <keyring> (FamilyRoom, Elettricita, Diagnostic)  {channel="souliss:t57:105:1-4:lastStatusStored"}
 String   AggiornamentoNodo4 "Agg.Fotovoltaico [%1$td.%1$tm.%1$tY %1$tk:%1$tM:%1$tS]"    <keyring> (FamilyRoom, Elettricita, Diagnostic)  {channel="souliss:t57:105:4-0:lastStatusStored"}
-                                  
+
 Switch divano               "Divano"                                        <light> (FamilyRoom, Divano ) ["Switchable"]    {autoupdate="false", channel="souliss:t11:105:12-0:onOff"}
 String divano_aggiornamento "Agg. [%1$td.%1$tm.%1$tY %1$tk:%1$tM:%1$tS]"    <keyring> (FamilyRoom, Divano, Diagnostic)      {channel="souliss:t57:105:12-0:lastStatusStored"}
 String divano_healthy       "Salute"                                        <keyring> (FamilyRoom, Divano, Diagnostic)      {channel="souliss:t57:105:12-0:healthy"}
@@ -251,8 +253,8 @@ sitemap default label="Tonino" {
            Switch item=portoncino mappings=[ON="Apri"]
            Switch item=cancello mappings=[ON="Apri"]
         }
-    }        
-         
+    }
+
  Frame {
         Group item=Outside
     }
@@ -265,7 +267,7 @@ Frame {
         Group item=Elettricita label="Elettricità" icon="energy"
 }
 
-Frame {  
+Frame {
        Group item=Divano icon="light"
 }
 
@@ -275,7 +277,7 @@ Frame label="Temperature"{
             Default item=FamilyRoom_Temperature label="Temperatura"
             Default item=FamilyRoom_Humidity label="Umidità"
             Default item=AggiornamentoNodo6 icon="icon16x16"
-        
+
 }
 
 Text label="Termostato soggiorno" icon="temperature" {
@@ -283,7 +285,7 @@ Text label="Termostato soggiorno" icon="temperature" {
             Default item=termostatosoggiorno_temperatura
             Default item=termostatosoggiorno_umidita
             Switch item=termostatosoggiorno_setasmeasured mappings=[ON="Set"]
-            Switch item=termostatosoggiorno_modo label="Heating Mode" mappings=[HEATING_MODE="Set"] 
+            Switch item=termostatosoggiorno_modo label="Heating Mode" mappings=[HEATING_MODE="Set"]
             Switch item=termostatosoggiorno_power label="Power On/Off"
             Default item=termostatosoggiorno_fire label="Fire"
             Text item=termostatoSoggiorno_aggiornamento label="Aggiornato: [%1$td.%1$tm.%1$tY %1$tk:%1$tM:%1$tS]" icon="icon16x16"
@@ -296,19 +298,17 @@ Text label="Termostato soggiorno" icon="temperature" {
 
 ## Community
 
-Souliss is a small community and doesn't have sufficient human resources to be more active on openHAB official community.
+Souliss is a small community and doesn't have sufficient human resources to be more active on the official openHAB community.
 
-These are some very popular forum:
+These are some very popular forums:
 
-English Group, [here](https://groups.google.com/forum/#!forum/souliss)
-
-Italian Group, [here](https://groups.google.com/forum/#!forum/souliss-it)
-
-Spanish Group, [here](https://groups.google.com/forum/#!forum/souliss-es)
+- English Group: [Souliss English Google Group](https://groups.google.com/forum/#!forum/souliss)
+- Italian Group: [Souliss Italian Google Group](https://groups.google.com/forum/#!forum/souliss-it)
+- Spanish Group: [Souliss Spanish Google Group](https://groups.google.com/forum/#!forum/souliss-es)
 
 ## Contribution
 
-Official repository for contributing to the Souliss project, GitHub page: [here](https://github.com/souliss)
+Official repository for contributing to the Souliss project: [Souliss GitHub Organization page](https://github.com/souliss)
 
 ## Known issues
 

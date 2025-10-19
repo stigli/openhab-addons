@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -24,6 +24,7 @@ import org.openhab.io.homekit.internal.HomekitSettings;
 import org.openhab.io.homekit.internal.HomekitTaggedItem;
 
 import io.github.hapjava.accessories.SlatAccessory;
+import io.github.hapjava.characteristics.Characteristic;
 import io.github.hapjava.characteristics.HomekitCharacteristicChangeCallback;
 import io.github.hapjava.characteristics.impl.slat.CurrentSlatStateEnum;
 import io.github.hapjava.characteristics.impl.slat.SlatTypeEnum;
@@ -35,12 +36,13 @@ import io.github.hapjava.services.impl.SlatService;
  */
 public class HomekitSlatImpl extends AbstractHomekitAccessoryImpl implements SlatAccessory {
     private static final String CONFIG_TYPE = "type";
-    private final Map<CurrentSlatStateEnum, String> currentSlatStateMapping;
+    private final Map<CurrentSlatStateEnum, Object> currentSlatStateMapping;
     private final SlatTypeEnum slatType;
 
     public HomekitSlatImpl(HomekitTaggedItem taggedItem, List<HomekitTaggedItem> mandatoryCharacteristics,
-            HomekitAccessoryUpdater updater, HomekitSettings settings) {
-        super(taggedItem, mandatoryCharacteristics, updater, settings);
+            List<Characteristic> mandatoryRawCharacteristics, HomekitAccessoryUpdater updater,
+            HomekitSettings settings) {
+        super(taggedItem, mandatoryCharacteristics, mandatoryRawCharacteristics, updater, settings);
         final String slatTypeConfig = getAccessoryConfiguration(CONFIG_TYPE, "horizontal");
         slatType = "horizontal".equalsIgnoreCase(slatTypeConfig) ? SlatTypeEnum.HORIZONTAL : SlatTypeEnum.VERTICAL;
         currentSlatStateMapping = createMapping(CURRENT_SLAT_STATE, CurrentSlatStateEnum.class);
@@ -49,7 +51,7 @@ public class HomekitSlatImpl extends AbstractHomekitAccessoryImpl implements Sla
     @Override
     public void init() throws HomekitException {
         super.init();
-        getServices().add(new SlatService(this));
+        addService(new SlatService(this));
     }
 
     @Override

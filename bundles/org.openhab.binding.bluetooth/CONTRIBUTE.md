@@ -36,7 +36,7 @@ Two fundamental communications methods can be employed in Bluetooth: beacons and
 ### Thing Naming
 
 To avoid naming conflicts with different Bluetooth bundles a strict naming policy for things and thing xml files is proposed.
-This should use the bundle name and the thing name, separated with an underscore - e.g. for a Yeelight binding Blue2 thing, the thing type would be `yeelight_blue2`.
+This should use the bundle name and the thing name, separated with a hyphen - e.g. for a Yeelight binding Blue2 thing, the thing type would be `yeelight-blue2`.
 
 ### Connected Mode Implementation
 
@@ -60,10 +60,11 @@ The beacon mode thing handler needs to handle the following functionality:
 
 ### Generic Bluetooth Device Support
 
-The core Bluetooth binding already includes generic "beacon" and "connected" Bluetooth thing types.
+The core Bluetooth binding already includes generic `beacon` Bluetooth thing type.
 All devices for which no discovery participant defines a specific thing type are added to the inbox as a beacon device.
 The corresponding handler implementation (`BeaconBluetoothHandler`) uses Beacon mode and merely defines a channel for RSSI for such devices.
 
-The "connected" thing type can be used by manually defining a thing.
-The corresponding handler implementation (`ConnectedBluetoothHandler`) uses Connected mode and thus immediately connects to the device and reads its services.
+The generic Bluetooth binding includes `generic` Bluetooth thing type.
+The `generic` thing type can be used by manually defining a thing.
+The corresponding handler implementation (`GenericBluetoothHandler`) uses Connected mode and thus immediately connects to the device and reads its services.
 Common services are added as channels (t.b.d.).

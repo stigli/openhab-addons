@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -59,7 +59,8 @@ class JsonReportParser implements ReportParser {
         } catch (JsonSyntaxException e) {
             // The onFwBuryPoint-bd_sysinfo sends a JSON array instead of the expected JsonResponsePayloadBody object.
             // Since we don't do anything with it anyway, just ignore it
-            logger.debug("{}: Got invalid JSON message payload, ignoring: {}", device.getSerialNumber(), payload, e);
+            logger.debug("{}: Got invalid JSON data ({}), ignoring payload: {}", device.getSerialNumber(),
+                    e.getMessage(), payload);
             response = null;
         }
         if (response == null) {

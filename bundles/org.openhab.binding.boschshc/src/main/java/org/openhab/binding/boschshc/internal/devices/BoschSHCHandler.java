@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -26,6 +26,7 @@ import org.openhab.binding.boschshc.internal.devices.bridge.BridgeHandler;
 import org.openhab.binding.boschshc.internal.devices.bridge.dto.Message;
 import org.openhab.binding.boschshc.internal.exceptions.BoschSHCException;
 import org.openhab.binding.boschshc.internal.services.AbstractBoschSHCService;
+import org.openhab.binding.boschshc.internal.services.AbstractStatelessBoschSHCDeviceService;
 import org.openhab.binding.boschshc.internal.services.AbstractStatelessBoschSHCService;
 import org.openhab.binding.boschshc.internal.services.AbstractStatelessBoschSHCServiceWithRequestBody;
 import org.openhab.binding.boschshc.internal.services.BoschSHCService;
@@ -388,8 +389,9 @@ public abstract class BoschSHCHandler extends BaseThingHandler {
     }
 
     /**
-     * Updates the state of a device service.
-     * Sets the status of the device to offline if setting the state fails.
+     * Updates the state of a device service using a HTTP <code>PUT</code> request.
+     * <p>
+     * Sets the status of the device to <code>OFFLINE</code> if setting the state fails.
      *
      * @param <TService> Type of service.
      * @param <TState> Type of service state.
@@ -402,17 +404,42 @@ public abstract class BoschSHCHandler extends BaseThingHandler {
             service.setState(state);
         } catch (TimeoutException | ExecutionException e) {
             this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, String.format(
-                    "Error when trying to update state for service %s: %s", service.getServiceName(), e.getMessage()));
+                    "Error while trying to update state for service %s: %s", service.getServiceName(), e.getMessage()));
         } catch (InterruptedException e) {
-            this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, String
-                    .format("Interrupted update state for service %s: %s", service.getServiceName(), e.getMessage()));
             Thread.currentThread().interrupt();
+            this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, String
+                    .format("Interrupted state update for service %s: %s", service.getServiceName(), e.getMessage()));
+        }
+    }
+
+    /**
+     * Updates the state of a device service using a HTTP <code>POST</code> request.
+     * <p>
+     * Sets the status of the device to <code>OFFLINE</code> if setting the state fails.
+     * 
+     * @param <TService> Type of service.
+     * @param <TState> Type of service state.
+     * @param service Service to set state for.
+     * @param state State to set.
+     */
+    protected <TService extends AbstractStatelessBoschSHCDeviceService<TState>, TState extends BoschSHCServiceState> void postState(
+            TService service, TState state) {
+        try {
+            service.setState(state);
+        } catch (TimeoutException | ExecutionException e) {
+            this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, String.format(
+                    "Error while trying to post state for service %s: %s", service.getServiceName(), e.getMessage()));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            this.updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR, String
+                    .format("Interrupted state update for service %s: %s", service.getServiceName(), e.getMessage()));
         }
     }
 
     /**
      * Lets a service handle a received command.
-     * Sets the status of the device to offline if handling the command fails.
+     * <p>
+     * Sets the status of the device to <code>OFFLINE</code> if handling the command fails.
      *
      * @param <TService> Type of service.
      * @param <TState> Type of service state.
@@ -437,7 +464,8 @@ public abstract class BoschSHCHandler extends BaseThingHandler {
 
     /**
      * Requests a service to refresh its state.
-     * Sets the device offline if request fails.
+     * <p>
+     * Sets the device <code>OFFLINE</code> if request fails.
      *
      * @param <TService> Type of service.
      * @param <TState> Type of service state.

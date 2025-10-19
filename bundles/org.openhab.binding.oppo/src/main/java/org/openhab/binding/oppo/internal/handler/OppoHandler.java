@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -36,6 +36,8 @@ import org.openhab.binding.oppo.internal.communication.OppoMessageEventListener;
 import org.openhab.binding.oppo.internal.communication.OppoSerialConnector;
 import org.openhab.binding.oppo.internal.communication.OppoStatusCodes;
 import org.openhab.binding.oppo.internal.configuration.OppoThingConfiguration;
+import org.openhab.core.i18n.LocaleProvider;
+import org.openhab.core.i18n.TranslationProvider;
 import org.openhab.core.io.transport.serial.SerialPortManager;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.NextPreviousType;
@@ -56,6 +58,8 @@ import org.openhab.core.types.Command;
 import org.openhab.core.types.State;
 import org.openhab.core.types.StateOption;
 import org.openhab.core.types.UnDefType;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,6 +89,10 @@ public class OppoHandler extends BaseThingHandler implements OppoMessageEventLis
     private SerialPortManager serialPortManager;
     private OppoConnector connector = new OppoDefaultConnector();
 
+    private final TranslationProvider translationProvider;
+    private final LocaleProvider localeProvider;
+    private final @Nullable Bundle bundle;
+
     private List<StateOption> inputSourceOptions = new ArrayList<>();
     private List<StateOption> hdmiModeOptions = new ArrayList<>();
 
@@ -105,10 +113,14 @@ public class OppoHandler extends BaseThingHandler implements OppoMessageEventLis
      * Constructor
      */
     public OppoHandler(Thing thing, OppoStateDescriptionOptionProvider stateDescriptionProvider,
-            SerialPortManager serialPortManager) {
+            SerialPortManager serialPortManager, TranslationProvider translationProvider,
+            LocaleProvider localeProvider) {
         super(thing);
         this.stateDescriptionProvider = stateDescriptionProvider;
         this.serialPortManager = serialPortManager;
+        this.translationProvider = translationProvider;
+        this.localeProvider = localeProvider;
+        this.bundle = FrameworkUtil.getBundle(OppoHandler.class);
     }
 
     @Override
@@ -388,7 +400,7 @@ public class OppoHandler extends BaseThingHandler implements OppoMessageEventLis
                         // Player sent a time code update ie: 000 000 T 00:00:01
                         // g1 = title(movie only; cd always 000), g2 = chapter(movie)/track(cd), g3 = time display code,
                         // g4 = time
-                        Matcher matcher = TIME_CODE_PATTERN.matcher(updateData);
+                        final Matcher matcher = TIME_CODE_PATTERN.matcher(updateData);
                         if (matcher.find()) {
                             // only update these when chapter/track changes to prevent spamming the channels with
                             // unnecessary updates
@@ -458,7 +470,7 @@ public class OppoHandler extends BaseThingHandler implements OppoMessageEventLis
                         break;
                     case QTK:
                         // example: 02/10, split off both numbers
-                        String[] track = updateData.split(SLASH);
+                        final String[] track = updateData.split(SLASH);
                         if (track.length == 2) {
                             updateChannelState(CHANNEL_CURRENT_TITLE, track[0]);
                             updateChannelState(CHANNEL_TOTAL_TITLE, track[1]);
@@ -466,7 +478,7 @@ public class OppoHandler extends BaseThingHandler implements OppoMessageEventLis
                         break;
                     case QCH:
                         // example: 03/03, split off the both numbers
-                        String[] chapter = updateData.split(SLASH);
+                        final String[] chapter = updateData.split(SLASH);
                         if (chapter.length == 2) {
                             updateChannelState(CHANNEL_CURRENT_CHAPTER, chapter[0]);
                             updateChannelState(CHANNEL_TOTAL_CHAPTER, chapter[1]);
@@ -475,14 +487,12 @@ public class OppoHandler extends BaseThingHandler implements OppoMessageEventLis
                     case UPL:
                     case QPL:
                         // try to normalize the slightly different responses between UPL and QPL
-                        String playStatus = OppoStatusCodes.PLAYBACK_STATUS.get(updateData);
-                        if (playStatus == null) {
-                            playStatus = updateData;
-                        }
+                        currentPlayMode = OppoStatusCodes.PLAYBACK_STATUS.getOrDefault(updateData, updateData);
 
                         // if playback has stopped, we have to zero out Time, Title and Track info and so on manually
-                        if (NO_DISC.equals(playStatus) || LOADING.equals(playStatus) || OPEN.equals(playStatus)
-                                || CLOSE.equals(playStatus) || STOP.equals(playStatus)) {
+                        if (NO_DISC.equals(currentPlayMode) || LOADING.equals(currentPlayMode)
+                                || OPEN.equals(currentPlayMode) || CLOSE.equals(currentPlayMode)
+                                || STOP.equals(currentPlayMode)) {
                             updateChannelState(CHANNEL_CURRENT_TITLE, ZERO);
                             updateChannelState(CHANNEL_TOTAL_TITLE, ZERO);
                             updateChannelState(CHANNEL_CURRENT_CHAPTER, ZERO);
@@ -491,12 +501,12 @@ public class OppoHandler extends BaseThingHandler implements OppoMessageEventLis
                             updateChannelState(CHANNEL_AUDIO_TYPE, UNDEF);
                             updateChannelState(CHANNEL_SUBTITLE_TYPE, UNDEF);
                         }
-                        updateChannelState(CHANNEL_PLAY_MODE, playStatus);
+                        updateChannelState(CHANNEL_PLAY_MODE, currentPlayMode);
                         updateState(CHANNEL_CONTROL,
-                                PLAY.equals(playStatus) ? PlayPauseType.PLAY : PlayPauseType.PAUSE);
+                                PLAY.equals(currentPlayMode) ? PlayPauseType.PLAY : PlayPauseType.PAUSE);
 
                         // ejecting the disc does not produce a UDT message, so clear disc type manually
-                        if (OPEN.equals(playStatus) || NO_DISC.equals(playStatus)) {
+                        if (OPEN.equals(currentPlayMode) || NO_DISC.equals(currentPlayMode)) {
                             updateChannelState(CHANNEL_DISC_TYPE, UNKNOW_DISC);
                             currentDiscType = BLANK;
                         }
@@ -504,10 +514,9 @@ public class OppoHandler extends BaseThingHandler implements OppoMessageEventLis
                         // if switching to play mode and not a CD then query the subtitle type...
                         // because if subtitles were on when playback stopped, they got nulled out above
                         // and the subtitle update message ("UST") is not sent when play starts like it is for audio
-                        if (PLAY.equals(playStatus) && !CDDA.equals(currentDiscType)) {
+                        if (PLAY.equals(currentPlayMode) && !CDDA.equals(currentDiscType)) {
                             connector.sendCommand(OppoCommand.QUERY_SUBTITLE_TYPE);
                         }
-                        currentPlayMode = playStatus;
                         break;
                     case QRP:
                         updateChannelState(CHANNEL_REPEAT_MODE, updateData);
@@ -518,8 +527,7 @@ public class OppoHandler extends BaseThingHandler implements OppoMessageEventLis
                     case UDT:
                     case QDT:
                         // try to normalize the slightly different responses between UDT and QDT
-                        final String discType = OppoStatusCodes.DISC_TYPE.get(updateData);
-                        currentDiscType = (discType != null ? discType : updateData);
+                        currentDiscType = OppoStatusCodes.DISC_TYPE.getOrDefault(updateData, updateData);
                         updateChannelState(CHANNEL_DISC_TYPE, currentDiscType);
                         break;
                     case UAT:
@@ -547,7 +555,7 @@ public class OppoHandler extends BaseThingHandler implements OppoMessageEventLis
                         break;
                     case UVO:
                         // example: _480I60 1080P60 - 1st source res, 2nd output res
-                        String[] resolution = updateData.replace(UNDERSCORE, BLANK).split(SPACE);
+                        final String[] resolution = updateData.replace(UNDERSCORE, BLANK).split(SPACE);
                         if (resolution.length == 2) {
                             updateChannelState(CHANNEL_SOURCE_RESOLUTION, resolution[0]);
                             updateChannelState(CHANNEL_OUTPUT_RESOLUTION, resolution[1]);
@@ -842,9 +850,12 @@ public class OppoHandler extends BaseThingHandler implements OppoMessageEventLis
     }
 
     private void buildOptionDropdowns(int model) {
+        hdmiModeOptions.clear();
+        inputSourceOptions.clear();
+
         if (model == MODEL83 || model == MODEL103 || model == MODEL105) {
-            hdmiModeOptions.add(new StateOption("AUTO", "Auto"));
-            hdmiModeOptions.add(new StateOption("SRC", "Source Direct"));
+            hdmiModeOptions.add(new StateOption("AUTO", getString("auto", "Auto")));
+            hdmiModeOptions.add(new StateOption("SRC", getString("direct", "Source Direct")));
             if (model != MODEL83) {
                 hdmiModeOptions.add(new StateOption("4K2K", "4K*2K"));
             }
@@ -856,26 +867,27 @@ public class OppoHandler extends BaseThingHandler implements OppoMessageEventLis
         }
 
         if (model == MODEL103 || model == MODEL105) {
-            inputSourceOptions.add(new StateOption("0", "Blu-Ray Player"));
-            inputSourceOptions.add(new StateOption("1", "HDMI/MHL IN-Front"));
-            inputSourceOptions.add(new StateOption("2", "HDMI IN-Back"));
-            inputSourceOptions.add(new StateOption("3", "ARC"));
+            inputSourceOptions.add(new StateOption("0", getString("blu_ray", "Blu-ray Player")));
+            inputSourceOptions.add(new StateOption("1", getString("hdmi_in_front", "HDMI/MHL In-Front")));
+            inputSourceOptions.add(new StateOption("2", getString("hdmi_in_back", "HDMI In-Back")));
+            inputSourceOptions.add(new StateOption("3", getString("arc1", "ARC 1")));
+            inputSourceOptions.add(new StateOption("4", getString("arc2", "ARC 2")));
 
             if (model == MODEL105) {
-                inputSourceOptions.add(new StateOption("4", "Optical In"));
-                inputSourceOptions.add(new StateOption("5", "Coaxial In"));
-                inputSourceOptions.add(new StateOption("6", "USB Audio In"));
+                inputSourceOptions.add(new StateOption("5", getString("optical", "Optical In")));
+                inputSourceOptions.add(new StateOption("6", getString("coaxial", "Coaxial In")));
+                inputSourceOptions.add(new StateOption("7", getString("usb", "USB Audio In")));
             }
         }
 
         if (model == MODEL203 || model == MODEL205) {
-            hdmiModeOptions.add(new StateOption("AUTO", "Auto"));
-            hdmiModeOptions.add(new StateOption("SRC", "Source Direct"));
-            hdmiModeOptions.add(new StateOption("UHD_AUTO", "UHD Auto"));
+            hdmiModeOptions.add(new StateOption("AUTO", getString("auto", "Auto")));
+            hdmiModeOptions.add(new StateOption("SRC", getString("direct", "Source Direct")));
+            hdmiModeOptions.add(new StateOption("UHD_AUTO", getString("auto_uhd", "UHD Auto")));
             hdmiModeOptions.add(new StateOption("UHD24", "UHD24"));
             hdmiModeOptions.add(new StateOption("UHD50", "UHD50"));
             hdmiModeOptions.add(new StateOption("UHD60", "UHD60"));
-            hdmiModeOptions.add(new StateOption("1080P_AUTO", "1080P Auto"));
+            hdmiModeOptions.add(new StateOption("1080P_AUTO", getString("auto_1080p", "1080P Auto")));
             hdmiModeOptions.add(new StateOption("1080P24", "1080P24"));
             hdmiModeOptions.add(new StateOption("1080P50", "1080P50"));
             hdmiModeOptions.add(new StateOption("1080P60", "1080P60"));
@@ -888,16 +900,20 @@ public class OppoHandler extends BaseThingHandler implements OppoMessageEventLis
             hdmiModeOptions.add(new StateOption("480P", "480P"));
             hdmiModeOptions.add(new StateOption("480I", "480I"));
 
-            inputSourceOptions.add(new StateOption("0", "Blu-Ray Player"));
-            inputSourceOptions.add(new StateOption("1", "HDMI IN"));
-            inputSourceOptions.add(new StateOption("2", "ARC"));
+            inputSourceOptions.add(new StateOption("0", getString("blu_ray", "Blu-ray Player")));
+            inputSourceOptions.add(new StateOption("1", getString("hdmi_in", "HDMI In")));
+            inputSourceOptions.add(new StateOption("2", getString("arc", "ARC")));
 
             if (model == MODEL205) {
-                inputSourceOptions.add(new StateOption("3", "Optical In"));
-                inputSourceOptions.add(new StateOption("4", "Coaxial In"));
-                inputSourceOptions.add(new StateOption("5", "USB Audio In"));
+                inputSourceOptions.add(new StateOption("3", getString("optical", "Optical In")));
+                inputSourceOptions.add(new StateOption("4", getString("coaxial", "Coaxial In")));
+                inputSourceOptions.add(new StateOption("5", getString("usb", "USB Audio In")));
             }
         }
+    }
+
+    private @Nullable String getString(String i18nKey, String defaultStr) {
+        return translationProvider.getText(bundle, "option." + i18nKey, defaultStr, localeProvider.getLocale());
     }
 
     private void handleHdmiModeUpdate(String updateData) {

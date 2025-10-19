@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -24,11 +24,13 @@ public class BaseTariff extends Tariff {
     public final double variableHT;
     public final double variableTTC;
 
+    public static final int LEN_CONTROL = 7;
+
     public BaseTariff(String line) {
-        super(line, 7);
+        super(line, LEN_CONTROL);
         try {
-            this.variableHT = Double.parseDouble(values[5]);
-            this.variableTTC = Double.parseDouble(values[6]);
+            this.variableHT = parseDouble(values[5]);
+            this.variableTTC = parseDouble(values[6]);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Incorrect data in '%s'".formatted(line), e);
         }

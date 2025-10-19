@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -31,10 +31,12 @@ import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.types.StringType;
 import org.openhab.core.library.unit.SIUnits;
+import org.openhab.core.library.unit.Units;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
+import org.openhab.core.types.UnDefType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,8 +140,19 @@ public class SurePetcareDeviceHandler extends SurePetcareBaseObjectHandler {
                         (batVol - BATTERY_EMPTY_VOLTAGE) / (BATTERY_FULL_VOLTAGE - BATTERY_EMPTY_VOLTAGE) * 100.0f,
                         100.0f)));
                 updateState(DEVICE_CHANNEL_LOW_BATTERY, OnOffType.from(batVol < LOW_BATTERY_THRESHOLD));
-                updateState(DEVICE_CHANNEL_DEVICE_RSSI, new DecimalType(device.status.signal.deviceRssi));
-                updateState(DEVICE_CHANNEL_HUB_RSSI, new DecimalType(device.status.signal.hubRssi));
+                if (device.status.signal != null && device.status.signal.deviceRssi != null) {
+                    updateState(DEVICE_CHANNEL_DEVICE_RSSI,
+                            new QuantityType<>(device.status.signal.deviceRssi, Units.DECIBEL_MILLIWATTS));
+                } else {
+                    updateState(DEVICE_CHANNEL_DEVICE_RSSI, UnDefType.UNDEF);
+                }
+
+                if (device.status.signal != null && device.status.signal.hubRssi != null) {
+                    updateState(DEVICE_CHANNEL_HUB_RSSI,
+                            new QuantityType<>(device.status.signal.hubRssi, Units.DECIBEL_MILLIWATTS));
+                } else {
+                    updateState(DEVICE_CHANNEL_HUB_RSSI, UnDefType.UNDEF);
+                }
 
                 if (thing.getThingTypeUID().equals(THING_TYPE_FLAP_DEVICE)) {
                     updateThingCurfews(device);

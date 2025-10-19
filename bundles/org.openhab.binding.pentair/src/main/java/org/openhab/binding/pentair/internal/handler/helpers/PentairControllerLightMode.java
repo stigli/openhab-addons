@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -13,6 +13,7 @@
 package org.openhab.binding.pentair.internal.handler.helpers;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 
@@ -58,6 +59,7 @@ public enum PentairControllerLightMode {
     }
 
     public static PentairControllerLightMode valueOfModeNumber(int modeNumber) {
-        return Arrays.stream(values()).filter(value -> (value.getModeNumber() == modeNumber)).findFirst().orElse(EMPTY);
+        return Objects.requireNonNull(Arrays.stream(values()).filter(value -> (value.getModeNumber() == modeNumber))
+                .findFirst().orElse(EMPTY));
     }
 }

@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -13,22 +13,17 @@
 package org.openhab.binding.evcc.internal;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.eclipse.jdt.annotation.Nullable;
 
 /**
  * The {@link EvccConfiguration} class contains fields mapping thing configuration parameters.
  *
  * @author Florian Hotze - Initial contribution
+ * @author Marcel Goerentz - Rework the binding
  */
 @NonNullByDefault
 public class EvccConfiguration {
-
-    /**
-     * URL of the evcc instance, e.g. https://demo.evcc.io
-     */
-    public @Nullable String url;
-    /**
-     * Interval for state fetching in seconds.
-     */
-    public int refreshInterval = 60;
+    public String host = "";
+    public int pollInterval = 30;
+    public int port = 7070;
+    public String scheme = "http";
 }

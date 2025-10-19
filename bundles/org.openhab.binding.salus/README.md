@@ -1,6 +1,6 @@
 # Salus Binding
 
-The Salus Binding facilitates seamless integration between OpenHAB and [Salus Cloud](https://eu.salusconnect.io/).
+The Salus Binding facilitates seamless integration between openHAB and [Salus Cloud](https://eu.salusconnect.io/).
 
 For years, SALUS Controls has been at the forefront of designing building automation solutions for the heating industry.
 Our commitment to innovation has resulted in modern, efficient solutions to control various heating systems. With
@@ -24,23 +24,23 @@ assumed automatically based on the `oem_model`.
 
 ### `salus-cloud-bridge` Thing Configuration
 
-| Name                      | Type              | Description                                 | Default                    | Required | Advanced |
-|---------------------------|-------------------|---------------------------------------------|----------------------------|----------|----------|
-| username                  | text              | Username/email to log in to Salus Cloud     | N/A                        | yes      | no       |
-| password                  | text              | Password to log in to Salus Cloud           | N/A                        | yes      | no       |
-| url                       | text              | URL to Salus Cloud                          | https://eu.salusconnect.io | no       | yes      |
-| refreshInterval           | integer (seconds) | Refresh time in seconds                     | 30                         | no       | yes      |
-| propertiesRefreshInterval | integer (seconds) | How long device properties should be cached | 5                          | no       | yes      |
+| Name                      | Type              | Description                                 | Default                        | Required | Advanced |
+|---------------------------|-------------------|---------------------------------------------|--------------------------------|----------|----------|
+| username                  | text              | Username/email to log in to Salus Cloud     | N/A                            | yes      | no       |
+| password                  | text              | Password to log in to Salus Cloud           | N/A                            | yes      | no       |
+| url                       | text              | URL to Salus Cloud                          | <https://eu.salusconnect.io>   | no       | yes      |
+| refreshInterval           | integer (seconds) | Refresh time in seconds                     | 30                             | no       | yes      |
+| propertiesRefreshInterval | integer (seconds) | How long device properties should be cached | 5                              | no       | yes      |
 
 ### `salus-aws-bridge` Thing Configuration
 
-| Name                      | Type              | Description                                  | Default                    | Required | Advanced |
-|---------------------------|-------------------|----------------------------------------------|----------------------------|----------|----------|
-| username                  | text              | Username/email to log in to Salus Cloud      | N/A                        | yes      | no       |
-| password                  | text              | Password to log in to Salus Cloud            | N/A                        | yes      | no       |
-| url                       | text              | URL to Salus Cloud                           | https://eu.salusconnect.io | no       | yes      |
-| refreshInterval           | integer (seconds) | Refresh time in seconds                      | 30                         | no       | yes      |
-| propertiesRefreshInterval | integer (seconds) | How long device properties should be cached  | 5                          | no       | yes      |
+| Name                      | Type              | Description                                  | Default                        | Required | Advanced |
+|---------------------------|-------------------|----------------------------------------------|--------------------------------|----------|----------|
+| username                  | text              | Username/email to log in to Salus Cloud      | N/A                            | yes      | no       |
+| password                  | text              | Password to log in to Salus Cloud            | N/A                            | yes      | no       |
+| url                       | text              | URL to Salus Cloud                           | `https://eu.salusconnect.io`   | no       | yes      |
+| refreshInterval           | integer (seconds) | Refresh time in seconds                      | 30                             | no       | yes      |
+| propertiesRefreshInterval | integer (seconds) | How long device properties should be cached  | 5                              | no       | yes      |
 | userPoolId                | text              |                                              | XGRz3CgoY                  | no       | yes      |
 | clientId                  | text              | The app client ID                            | 4pk5efh3v84g5dav43imsv4fbj | no       | yes      |
 | region                    | text              | Region with which the SDK should communicate | eu-central-1               | no       | yes      |
@@ -75,11 +75,12 @@ removed.
 
 ### `salus-it600-device` Channels
 
-| Channel                     | Type               | Read/Write | Description                                                                                                                                                                                                                                                                                     |
-|-----------------------------|--------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| it600-temp-channel          | Number:Temperature | RO         | Current temperature in the room                                                                                                                                                                                                                                                                 |
-| it600-expected-temp-channel | Number:Temperature | RW         | Sets the desired temperature in the room                                                                                                                                                                                                                                                        |
-| it600-work-type-channel     | String             | RW         | Sets the work type for the device. OFF - device is turned off MANUAL - schedules are turned off, following a manual temperature set, AUTOMATIC - schedules are turned on, following schedule, TEMPORARY_MANUAL - schedules are turned on, following manual temperature until the next schedule. |
+| Channel                    | Type               | Read/Write | Description                                                                                                                                                                                                                                                                                     |
+|----------------------------|--------------------|------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| temperature         | Number:Temperature | RO         | Current temperature in the room                                                                                                                                                                                                                                                                 |
+| expected-temperature | Number:Temperature | RW         | Sets the desired temperature in the room                                                                                                                                                                                                                                                        |
+| work-type | String             | RW         | Sets the work type for the device. OFF - device is turned off MANUAL - schedules are turned off, following a manual temperature set, AUTOMATIC - schedules are turned on, following schedule, TEMPORARY_MANUAL - schedules are turned on, following manual temperature until the next schedule. |
+| running-state     | Switch             | RO         | Is the device running |
 
 ## Full Example
 
@@ -992,4 +993,3 @@ The Salus API poses challenges, and all coding efforts are a result of reverse e
 contact the Salus Team, but the closed-source nature of the API limited assistance. Consequently, there may be errors in
 implementation or channel visibility issues. If you encounter any issues, please report them, and efforts will be made
 to address and resolve them.
-

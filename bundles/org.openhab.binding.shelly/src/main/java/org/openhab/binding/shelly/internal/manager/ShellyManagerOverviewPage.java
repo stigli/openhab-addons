@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -75,7 +75,7 @@ public class ShellyManagerOverviewPage extends ShellyManagerPage {
         TreeMap<String, ShellyManagerInterface> sortedMap = new TreeMap<>();
         for (Map.Entry<String, ShellyManagerInterface> th : getThingHandlers().entrySet()) { // sort by Device Name
             ShellyManagerInterface handler = th.getValue();
-            sortedMap.put(getDisplayName(handler.getThing().getProperties()), handler);
+            sortedMap.put(getDisplayName(handler.getThing().getProperties(), handler.getThing()), handler);
         }
 
         html = loadHTML(HEADER_HTML, properties);
@@ -105,7 +105,7 @@ public class ShellyManagerOverviewPage extends ShellyManagerPage {
                     fillProperties(properties, uid, handler.getValue());
                     String deviceType = getDeviceType(properties);
 
-                    properties.put(ATTRIBUTE_DISPLAY_NAME, getDisplayName(properties));
+                    properties.put(ATTRIBUTE_DISPLAY_NAME, getDisplayName(properties, handler.getValue().getThing()));
                     properties.put(ATTRIBUTE_DEV_STATUS, fillDeviceStatus(warnings));
                     if (!warnings.isEmpty() && (status != ThingStatus.UNKNOWN)) {
                         properties.put(ATTRIBUTE_STATUS_ICON, ICON_ATTENTION);
@@ -263,7 +263,7 @@ public class ShellyManagerOverviewPage extends ShellyManagerPage {
         ShellyThingConfiguration config = thing.getConfiguration().as(ShellyThingConfiguration.class);
         TreeMap<String, String> result = new TreeMap<>();
 
-        if ((status != ThingStatus.ONLINE) && (status != ThingStatus.UNKNOWN)) {
+        if (status != ThingStatus.ONLINE && status != ThingStatus.UNKNOWN) {
             result.put("Thing Status", status.toString());
         }
         State wifiSignal = handler.getChannelValue(CHANNEL_GROUP_DEV_STATUS, CHANNEL_DEVST_RSSI);

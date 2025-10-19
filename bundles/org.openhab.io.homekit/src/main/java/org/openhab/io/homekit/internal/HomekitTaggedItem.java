@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -18,6 +18,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.measure.Quantity;
 import javax.measure.Unit;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -35,6 +36,7 @@ import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.PercentType;
 import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.types.StringType;
+import org.openhab.core.library.types.UpDownType;
 import org.openhab.core.types.State;
 import org.openhab.core.types.StateDescription;
 import org.slf4j.Logger;
@@ -62,6 +64,10 @@ public class HomekitTaggedItem {
     public static final String UNIT = "unit";
     public static final String EMULATE_STOP_STATE = "stop";
     public static final String EMULATE_STOP_SAME_DIRECTION = "stopSameDirection";
+    public static final String SEND_UP_DOWN_FOR_EXTENTS = "sendUpDownForExtents";
+
+    // The "source" sent with command events so rules can identify them as coming from HomeKit
+    public static final String HOMEKIT_SOURCE = "org.openhab.io.homekit";
 
     private static final Map<Integer, String> CREATED_ACCESSORY_IDS = new ConcurrentHashMap<>();
 
@@ -178,10 +184,10 @@ public class HomekitTaggedItem {
      */
     public void send(DecimalType command) {
         if (getItem() instanceof GroupItem groupItem && getBaseItem() instanceof NumberItem) {
-            groupItem.send(command);
+            groupItem.send(command, HOMEKIT_SOURCE);
             return;
         } else if (getItem() instanceof NumberItem numberItem) {
-            numberItem.send(command);
+            numberItem.send(command, HOMEKIT_SOURCE);
             return;
         }
         logger.warn("Received DecimalType command for item {} that doesn't support it. This is probably a bug.",
@@ -195,10 +201,10 @@ public class HomekitTaggedItem {
      */
     public void send(QuantityType command) {
         if (getItem() instanceof GroupItem groupItem && getBaseItem() instanceof NumberItem) {
-            groupItem.send(command);
+            groupItem.send(command, HOMEKIT_SOURCE);
             return;
         } else if (getItem() instanceof NumberItem numberItem) {
-            numberItem.send(command);
+            numberItem.send(command, HOMEKIT_SOURCE);
             return;
         }
         logger.warn("Received QuantityType command for item {} that doesn't support it. This is probably a bug.",
@@ -212,10 +218,10 @@ public class HomekitTaggedItem {
      */
     public void send(OnOffType command) {
         if (getItem() instanceof GroupItem groupItem && getBaseItem() instanceof SwitchItem) {
-            groupItem.send(command);
+            groupItem.send(command, HOMEKIT_SOURCE);
             return;
         } else if (getItem() instanceof SwitchItem switchItem) {
-            switchItem.send(command);
+            switchItem.send(command, HOMEKIT_SOURCE);
             return;
         }
         logger.warn("Received OnOffType command for item {} that doesn't support it. This is probably a bug.",
@@ -227,10 +233,10 @@ public class HomekitTaggedItem {
      */
     public void send(IncreaseDecreaseType command) {
         if (getItem() instanceof GroupItem groupItem && getBaseItem() instanceof DimmerItem) {
-            groupItem.send(command);
+            groupItem.send(command, HOMEKIT_SOURCE);
             return;
         } else if (getItem() instanceof DimmerItem dimmerItem) {
-            dimmerItem.send(command);
+            dimmerItem.send(command, HOMEKIT_SOURCE);
             return;
         }
         logger.warn(
@@ -246,13 +252,13 @@ public class HomekitTaggedItem {
     public void send(PercentType command) {
         if (getItem() instanceof GroupItem groupItem
                 && (getBaseItem() instanceof DimmerItem || getBaseItem() instanceof RollershutterItem)) {
-            groupItem.send(command);
+            groupItem.send(command, HOMEKIT_SOURCE);
             return;
         } else if (getItem() instanceof DimmerItem dimmerItem) {
-            dimmerItem.send(command);
+            dimmerItem.send(command, HOMEKIT_SOURCE);
             return;
         } else if (getItem() instanceof RollershutterItem rollerShutterItem) {
-            rollerShutterItem.send(command);
+            rollerShutterItem.send(command, HOMEKIT_SOURCE);
             return;
         }
         logger.warn("Received PercentType command for item {} that doesn't support it. This is probably a bug.",
@@ -266,13 +272,28 @@ public class HomekitTaggedItem {
      */
     public void send(StringType command) {
         if (getItem() instanceof GroupItem groupItem && getBaseItem() instanceof StringItem) {
-            groupItem.send(command);
+            groupItem.send(command, HOMEKIT_SOURCE);
             return;
         } else if (getItem() instanceof StringItem stringItem) {
-            stringItem.send(command);
+            stringItem.send(command, HOMEKIT_SOURCE);
             return;
         }
         logger.warn("Received StringType command for item {} that doesn't support it. This is probably a bug.",
+                getName());
+    }
+
+    /**
+     * Send UpDownType command to a RollshutterItem (or a Group:Rollershutter)
+     */
+    public void send(UpDownType command) {
+        if (getItem() instanceof GroupItem groupItem && getBaseItem() instanceof RollershutterItem) {
+            groupItem.send(command, HOMEKIT_SOURCE);
+            return;
+        } else if (getItem() instanceof RollershutterItem rollershutterItem) {
+            rollershutterItem.send(command, HOMEKIT_SOURCE);
+            return;
+        }
+        logger.warn("Received UpDownType command for item {} that doesn't support it. This is probably a bug.",
                 getName());
     }
 
@@ -433,36 +454,44 @@ public class HomekitTaggedItem {
      * @param defaultValue default value
      * @return value
      */
-    public QuantityType<?> getConfigurationAsQuantity(String key, QuantityType defaultValue,
+    public <T extends Quantity<T>> QuantityType<T> getConfigurationAsQuantity(String key, QuantityType<T> defaultValue,
             boolean relativeConversion) {
         String stringValue = getConfiguration(key, new String());
         if (stringValue.isEmpty()) {
             return defaultValue;
         }
-        var parsedValue = new QuantityType(stringValue);
-        QuantityType<?> convertedValue;
+        var parsedValue = new QuantityType<>(stringValue);
+        QuantityType<T> convertedValue;
 
         if (relativeConversion) {
-            convertedValue = parsedValue.toUnitRelative(defaultValue.getUnit());
+            if (parsedValue.getUnit().isCompatible(defaultValue.getUnit())) {
+                convertedValue = ((QuantityType<T>) parsedValue).toUnitRelative(defaultValue.getUnit());
+            } else {
+                convertedValue = null;
+            }
         } else {
-            convertedValue = parsedValue.toInvertibleUnit(defaultValue.getUnit());
+            convertedValue = (QuantityType<T>) parsedValue.toInvertibleUnit(defaultValue.getUnit());
         }
         // not convertible? just assume it's in the item's unit
         if (convertedValue == null) {
             Unit unit;
             if (getBaseItem() instanceof NumberItem numberItem && (unit = numberItem.getUnit()) != null) {
                 var bdValue = new BigDecimal(stringValue);
-                parsedValue = new QuantityType(bdValue, unit);
+                parsedValue = new QuantityType<>(bdValue, unit);
                 if (relativeConversion) {
-                    convertedValue = parsedValue.toUnitRelative(defaultValue.getUnit());
+                    if (parsedValue.getUnit().isCompatible(defaultValue.getUnit())) {
+                        convertedValue = ((QuantityType<T>) parsedValue).toUnitRelative(defaultValue.getUnit());
+                    } else {
+                        convertedValue = null;
+                    }
                 } else {
-                    convertedValue = parsedValue.toInvertibleUnit(defaultValue.getUnit());
+                    convertedValue = (QuantityType<T>) parsedValue.toInvertibleUnit(defaultValue.getUnit());
                 }
             }
         }
         // still not convertible? just assume it's in the default's unit
         if (convertedValue == null) {
-            return new QuantityType(parsedValue.toBigDecimal(), defaultValue.getUnit());
+            return new QuantityType<>(parsedValue.toBigDecimal(), defaultValue.getUnit());
         }
         return convertedValue;
     }

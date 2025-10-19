@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -14,6 +14,7 @@ package org.openhab.binding.argoclima.internal.device.api.protocol.elements;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -413,8 +414,9 @@ public abstract class ArgoApiElementBase implements IArgoElement {
 
     private final String getInFlightCommandsRawValueOrDefault() {
         final String valueNotAvailablePlaceholder = "N/A";
-        return inFlightCommand.map(c -> c.deviceCommandToSend.orElse(valueNotAvailablePlaceholder))
-                .orElse(valueNotAvailablePlaceholder);
+        return Objects
+                .requireNonNull(inFlightCommand.map(c -> c.deviceCommandToSend.orElse(valueNotAvailablePlaceholder))
+                        .orElse(valueNotAvailablePlaceholder));
     }
 
     /////////////

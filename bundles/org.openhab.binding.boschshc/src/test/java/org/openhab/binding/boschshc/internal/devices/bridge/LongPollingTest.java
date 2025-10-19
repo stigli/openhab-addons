@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,21 +12,12 @@
  */
 package org.openhab.binding.boschshc.internal.devices.bridge;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.same;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -58,7 +49,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.openhab.binding.boschshc.internal.devices.bridge.dto.DeviceServiceData;
 import org.openhab.binding.boschshc.internal.devices.bridge.dto.LongPollResult;
@@ -211,19 +201,21 @@ class LongPollingTest {
 
     private @NonNullByDefault({}) BoschHttpClient httpClient;
 
-    private @Mock @NonNullByDefault({}) Consumer<@NonNull LongPollResult> longPollHandler;
+    private @NonNullByDefault({}) Consumer<@NonNull LongPollResult> longPollHandler;
 
-    private @Mock @NonNullByDefault({}) Consumer<@NonNull Throwable> failureHandler;
+    private @NonNullByDefault({}) Consumer<@NonNull Throwable> failureHandler;
 
+    @SuppressWarnings("unchecked")
     @BeforeEach
     void beforeEach() {
-        fixture = new LongPolling(new SameThreadExecutorService(), longPollHandler, failureHandler);
         httpClient = mock(BoschHttpClient.class);
+        longPollHandler = mock(Consumer.class);
+        failureHandler = mock(Consumer.class);
+        fixture = new LongPolling(new SameThreadExecutorService(), longPollHandler, failureHandler);
     }
 
     @Test
     void start() throws InterruptedException, TimeoutException, ExecutionException, BoschSHCException {
-        // when(httpClient.getBoschSmartHomeUrl(anyString())).thenCallRealMethod();
         when(httpClient.getBoschShcUrl(anyString())).thenCallRealMethod();
 
         Request subscribeRequest = mock(Request.class);
@@ -461,10 +453,35 @@ class LongPollingTest {
         ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
         verify(failureHandler).accept(throwableCaptor.capture());
         Throwable t = throwableCaptor.getValue();
-        assertEquals(
-                "Could not deserialize long poll response: '<HTML><HEAD><TITLE>400</TITLE></HEAD><BODY><H1>400 Unsupported HTTP Protocol Version: /remote/json-rpcHTTP/1.1</H1></BODY></HTML>'",
-                t.getMessage());
-        assertTrue(t.getCause() instanceof JsonSyntaxException);
+        assertThat(t.getMessage(), is(
+                "Could not deserialize long poll response: '<HTML><HEAD><TITLE>400</TITLE></HEAD><BODY><H1>400 Unsupported HTTP Protocol Version: /remote/json-rpcHTTP/1.1</H1></BODY></HTML>'"));
+        assertThat(t.getCause(), instanceOf(JsonSyntaxException.class));
+    }
+
+    @Test
+    void testHandleLongPollResponseNPE() {
+        doThrow(NullPointerException.class).when(longPollHandler).accept(any());
+
+        var resultJson = """
+                {
+                    "result": [
+                        {
+                            "@type": "DeviceServiceData",
+                            "deleted": true,
+                            "id": "CommunicationQuality",
+                            "deviceId": "hdm:ZigBee:30fb10fffe46d732"
+                        }
+                    ],
+                    "jsonrpc":"2.0"
+                }
+                """;
+        fixture.handleLongPollResponse(httpClient, "subscriptionId", resultJson);
+
+        ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(failureHandler).accept(throwableCaptor.capture());
+        Throwable t = throwableCaptor.getValue();
+        assertThat(t.getMessage(), is("Error while handling long poll response: '" + resultJson + "'"));
+        assertThat(t.getCause(), instanceOf(NullPointerException.class));
     }
 
     @AfterEach

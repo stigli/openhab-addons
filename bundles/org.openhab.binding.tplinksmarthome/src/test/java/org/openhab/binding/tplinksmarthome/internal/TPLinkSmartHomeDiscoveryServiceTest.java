@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -91,7 +91,7 @@ public class TPLinkSmartHomeDiscoveryServiceTest {
         setUp(filename);
         discoveryService.startScan();
         ArgumentCaptor<DiscoveryResult> discoveryResultCaptor = ArgumentCaptor.forClass(DiscoveryResult.class);
-        verify(discoveryListener).thingDiscovered(any(), discoveryResultCaptor.capture());
+        verify(discoveryListener, timeout(1000L)).thingDiscovered(any(), discoveryResultCaptor.capture());
         DiscoveryResult discoveryResult = discoveryResultCaptor.getValue();
         assertEquals(TPLinkSmartHomeBindingConstants.BINDING_ID, discoveryResult.getBindingId(),
                 "Check if correct binding id found");

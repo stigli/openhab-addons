@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -17,23 +17,23 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hue.internal.api.dto.clip2.enums.ActionType;
 import org.openhab.binding.hue.internal.api.dto.clip2.enums.ButtonEventType;
+import org.openhab.binding.hue.internal.api.dto.clip2.enums.CategoryType;
 import org.openhab.binding.hue.internal.api.dto.clip2.enums.ContactStateType;
+import org.openhab.binding.hue.internal.api.dto.clip2.enums.ContentType;
 import org.openhab.binding.hue.internal.api.dto.clip2.enums.EffectType;
 import org.openhab.binding.hue.internal.api.dto.clip2.enums.ResourceType;
 import org.openhab.binding.hue.internal.api.dto.clip2.enums.SceneRecallAction;
 import org.openhab.binding.hue.internal.api.dto.clip2.enums.SmartSceneRecallAction;
 import org.openhab.binding.hue.internal.api.dto.clip2.enums.SmartSceneState;
+import org.openhab.binding.hue.internal.api.dto.clip2.enums.SoftwareUpdateStatusType;
 import org.openhab.binding.hue.internal.api.dto.clip2.enums.TamperStateType;
 import org.openhab.binding.hue.internal.api.dto.clip2.enums.ZigbeeStatus;
 import org.openhab.binding.hue.internal.exceptions.DTOPresentButEmptyException;
@@ -53,8 +53,10 @@ import org.openhab.core.types.UnDefType;
 import org.openhab.core.util.ColorUtil;
 import org.openhab.core.util.ColorUtil.Gamut;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.annotations.SerializedName;
 
 /**
@@ -68,14 +70,23 @@ import com.google.gson.annotations.SerializedName;
 public class Resource {
 
     public static final MathContext PERCENT_MATH_CONTEXT = new MathContext(4, RoundingMode.HALF_UP);
+    private static final Gson GSON = new Gson();
 
     /**
      * The SSE event mechanism sends resources in a sparse (skeleton) format that only includes state fields whose
      * values have changed. A sparse resource does not contain the full state of the resource. And the absence of any
      * field from such a resource does not indicate that the field value is UNDEF, but rather that the value is the same
      * as what it was previously set to by the last non-sparse resource.
+     * <p>
+     * The following content types are defined:
+     *
+     * <li><b>ADD</b> resource being added; contains (assumed) all fields</li>
+     * <li><b>DELETE</b> resource being deleted; contains id and type only</li>
+     * <li><b>UPDATE</b> resource being updated; contains id, type and changed fields</li>
+     * <li><b>ERROR</b> resource with error; contents unknown</li>
+     * <li><b>FULL_STATE</b> existing resource being downloaded; contains all fields</li>
      */
-    private transient boolean hasSparseData;
+    private transient ContentType contentType;
 
     private @Nullable String type;
     private @Nullable String id;
@@ -89,7 +100,7 @@ public class Resource {
     private @Nullable Dimming dimming;
     private @Nullable @SerializedName("color_temperature") ColorTemperature colorTemperature;
     private @Nullable ColorXy color;
-    private @Nullable Alerts alert;
+    private @Nullable JsonElement alert;
     private @Nullable Effects effects;
     private @Nullable @SerializedName("timed_effects") TimedEffects timedEffects;
     private @Nullable ResourceReference group;
@@ -107,7 +118,18 @@ public class Resource {
     private @Nullable Dynamics dynamics;
     private @Nullable @SerializedName("contact_report") ContactReport contactReport;
     private @Nullable @SerializedName("tamper_reports") List<TamperReport> tamperReports;
-    private @Nullable String state;
+    private @Nullable JsonElement state;
+    private @Nullable @SerializedName("script_id") String scriptId;
+    private @Nullable Sound alarm;
+    private @Nullable Sound chime;
+    private @Nullable Mute mute;
+
+    /**
+     * Constructor
+     */
+    public Resource() {
+        contentType = ContentType.FULL_STATE;
+    }
 
     /**
      * Constructor
@@ -115,6 +137,7 @@ public class Resource {
      * @param resourceType
      */
     public Resource(@Nullable ResourceType resourceType) {
+        this();
         if (Objects.nonNull(resourceType)) {
             setType(resourceType);
         }
@@ -154,12 +177,22 @@ public class Resource {
         return actions;
     }
 
+    /**
+     * Get the alerts setting. We need to disambiguate between an alert setting and an alerts setting, because
+     * both are represented by the same 'alert' JSON element. If the JSON element contains a 'status' field it is
+     * an alert setting, if it contains an 'action' or 'action_values' field it is an alerts setting.
+     */
     public @Nullable Alerts getAlerts() {
-        return alert;
+        JsonElement alert = this.alert;
+        if (Objects.nonNull(alert) && alert.isJsonObject() && (alert.getAsJsonObject().get("action") != null
+                || alert.getAsJsonObject().get("action_values") != null)) {
+            return GSON.fromJson(alert, Alerts.class);
+        }
+        return null;
     }
 
     public State getAlertState() {
-        Alerts alerts = this.alert;
+        Alerts alerts = getAlerts();
         if (Objects.nonNull(alerts)) {
             if (!alerts.getActionValues().isEmpty()) {
                 ActionType alertType = alerts.getAction();
@@ -252,7 +285,7 @@ public class Resource {
         return new DecimalType((controlIds.getOrDefault(getId(), 0).intValue() * 1000) + event.ordinal());
     }
 
-    public State getButtonLastUpdatedState(ZoneId zoneId) {
+    public State getButtonLastUpdatedState() {
         Button button = this.button;
         if (button == null) {
             return UnDefType.NULL;
@@ -265,7 +298,7 @@ public class Resource {
         if (Instant.EPOCH.equals(lastChanged)) {
             return UnDefType.UNDEF;
         }
-        return new DateTimeType(ZonedDateTime.ofInstant(lastChanged, zoneId));
+        return new DateTimeType(lastChanged);
     }
 
     public List<ResourceReference> getChildren() {
@@ -344,6 +377,14 @@ public class Resource {
     }
 
     /**
+     * Return the resource's metadata category.
+     */
+    public CategoryType getCategory() {
+        MetaData metaData = getMetaData();
+        return Objects.nonNull(metaData) ? metaData.getCategory() : CategoryType.NULL;
+    }
+
+    /**
      * Return an HSB where the HS part is derived from the color xy JSON element (only), so the B part is 100%
      *
      * @return an HSBType.
@@ -361,11 +402,9 @@ public class Resource {
         return UnDefType.NULL;
     }
 
-    public State getContactLastUpdatedState(ZoneId zoneId) {
+    public State getContactLastUpdatedState() {
         ContactReport contactReport = this.contactReport;
-        return Objects.nonNull(contactReport)
-                ? new DateTimeType(ZonedDateTime.ofInstant(contactReport.getLastChanged(), zoneId))
-                : UnDefType.NULL;
+        return Objects.nonNull(contactReport) ? new DateTimeType(contactReport.getLastChanged()) : UnDefType.NULL;
     }
 
     public State getContactState() {
@@ -373,6 +412,10 @@ public class Resource {
         return Objects.isNull(contactReport) ? UnDefType.NULL
                 : ContactStateType.CONTACT == contactReport.getContactState() ? OpenClosedType.CLOSED
                         : OpenClosedType.OPEN;
+    }
+
+    public ContentType getContentType() {
+        return contentType;
     }
 
     public int getControlId() {
@@ -475,7 +518,7 @@ public class Resource {
         return new QuantityType<>(Math.pow(10f, (double) lightLevelReport.getLightLevel() / 10000f) - 1f, Units.LUX);
     }
 
-    public State getLightLevelLastUpdatedState(ZoneId zoneId) {
+    public State getLightLevelLastUpdatedState() {
         LightLevel lightLevel = this.light;
         if (lightLevel == null) {
             return UnDefType.NULL;
@@ -488,7 +531,7 @@ public class Resource {
         if (Instant.EPOCH.equals(lastChanged)) {
             return UnDefType.UNDEF;
         }
-        return new DateTimeType(ZonedDateTime.ofInstant(lastChanged, zoneId));
+        return new DateTimeType(lastChanged);
     }
 
     public @Nullable MetaData getMetaData() {
@@ -521,7 +564,7 @@ public class Resource {
         return OnOffType.from(motionReport.isMotion());
     }
 
-    public State getMotionLastUpdatedState(ZoneId zoneId) {
+    public State getMotionLastUpdatedState() {
         Motion motion = this.motion;
         if (motion == null) {
             return UnDefType.NULL;
@@ -534,7 +577,7 @@ public class Resource {
         if (Instant.EPOCH.equals(lastChanged)) {
             return UnDefType.UNDEF;
         }
-        return new DateTimeType(ZonedDateTime.ofInstant(lastChanged, zoneId));
+        return new DateTimeType(lastChanged);
     }
 
     public State getMotionValidState() {
@@ -613,7 +656,7 @@ public class Resource {
         return rotation.getStepsState();
     }
 
-    public State getRotaryStepsLastUpdatedState(ZoneId zoneId) {
+    public State getRotaryStepsLastUpdatedState() {
         RelativeRotary relativeRotary = this.relativeRotary;
         if (relativeRotary == null) {
             return UnDefType.NULL;
@@ -626,64 +669,74 @@ public class Resource {
         if (Instant.EPOCH.equals(lastChanged)) {
             return UnDefType.UNDEF;
         }
-        return new DateTimeType(ZonedDateTime.ofInstant(lastChanged, zoneId));
+        return new DateTimeType(lastChanged);
     }
 
     /**
-     * Check if the scene resource contains a 'status.active' element. If such an element is present, returns a Boolean
-     * Optional whose value depends on the value of that element, or an empty Optional if it is not.
+     * Check if the scene resource contains a 'status.active' element. Returns a Boolean if such an element is present,
+     * whose value depends on the value of that element, or null if it is not.
      *
-     * @return true, false, or empty.
+     * @return true, false, or null.
      */
-    public Optional<Boolean> getSceneActive() {
+    public @Nullable Boolean getSceneActive() {
         if (ResourceType.SCENE == getType()) {
             JsonElement status = this.status;
             if (Objects.nonNull(status) && status.isJsonObject()) {
                 JsonElement active = ((JsonObject) status).get("active");
                 if (Objects.nonNull(active) && active.isJsonPrimitive()) {
-                    return Optional.of(!"inactive".equalsIgnoreCase(active.getAsString()));
+                    return !"inactive".equalsIgnoreCase(active.getAsString());
                 }
             }
         }
-        return Optional.empty();
+        return null;
     }
 
     /**
-     * If the getSceneActive() optional result is empty return 'UnDefType.NULL'. Otherwise if the optional result is
-     * present and 'true' (i.e. the scene is active) return the scene name. Or finally (the optional result is present
-     * and 'false') return 'UnDefType.UNDEF'.
+     * Return the scriptId if any.
+     */
+    public @Nullable String getScriptId() {
+        return scriptId;
+    }
+
+    /**
+     * Depending on the returned value from getSceneActive() this method returns 'UnDefType.NULL' for 'null',
+     * 'UnDefType.UNDEF' for 'false' or when 'true' (i.e. the scene is active) return the scene name.
      *
-     * @return either 'UnDefType.NULL', a StringType containing the (active) scene name, or 'UnDefType.UNDEF'.
+     * @return either a StringType containing the (active) scene name, 'UnDefType.UNDEF' or 'UnDefType.NULL'.
      */
     public State getSceneState() {
-        return getSceneActive().map(a -> a ? new StringType(getName()) : UnDefType.UNDEF).orElse(UnDefType.NULL);
+        Boolean sceneActive = getSceneActive();
+        return sceneActive != null ? sceneActive ? new StringType(getName()) : UnDefType.UNDEF : UnDefType.NULL;
     }
 
     /**
      * Check if the smart scene resource contains a 'state' element. If such an element is present, returns a Boolean
-     * Optional whose value depends on the value of that element, or an empty Optional if it is not.
+     * whose value depends on the value of that element, or null if it is not. Disambiguate between a software update
+     * status and a smart scene state, because both are represented by the 'state' JSON element. If the resource type
+     * is 'device_software_update' it is a software update status, if it is 'smart_scene' it is a smart scene state.
      *
-     * @return true, false, or empty.
+     * @return true, false, or null.
      */
-    public Optional<Boolean> getSmartSceneActive() {
-        if (ResourceType.SMART_SCENE == getType()) {
-            String state = this.state;
+    public @Nullable Boolean getSmartSceneActive() {
+        if (ResourceType.SMART_SCENE == getType() && (state instanceof JsonPrimitive statePrimitive)) {
+            String state = statePrimitive.getAsString();
             if (Objects.nonNull(state)) {
-                return Optional.of(SmartSceneState.ACTIVE == SmartSceneState.of(state));
+                return SmartSceneState.ACTIVE == SmartSceneState.of(state);
             }
         }
-        return Optional.empty();
+        return null;
     }
 
     /**
-     * If the getSmartSceneActive() optional result is empty return 'UnDefType.NULL'. Otherwise if the optional result
-     * is present and 'true' (i.e. the scene is active) return the smart scene name. Or finally (the optional result is
-     * present and 'false') return 'UnDefType.UNDEF'.
+     * Depending on the returned value from getSmartSceneActive() this method returns 'UnDefType.NULL' for 'null',
+     * 'UnDefType.UNDEF' for 'false' or when 'true' (i.e. the scene is active) return the scene name.
      *
-     * @return either 'UnDefType.NULL', a StringType containing the (active) scene name, or 'UnDefType.UNDEF'.
+     * @return either a StringType containing the (active) scene name, 'UnDefType.UNDEF' or 'UnDefType.NULL'.
      */
     public State getSmartSceneState() {
-        return getSmartSceneActive().map(a -> a ? new StringType(getName()) : UnDefType.UNDEF).orElse(UnDefType.NULL);
+        Boolean smartSceneActive = getSmartSceneActive();
+        return smartSceneActive != null ? smartSceneActive ? new StringType(getName()) : UnDefType.UNDEF
+                : UnDefType.NULL;
     }
 
     public List<ResourceReference> getServiceReferences() {
@@ -699,10 +752,9 @@ public class Resource {
         return new JsonObject();
     }
 
-    public State getTamperLastUpdatedState(ZoneId zoneId) {
+    public State getTamperLastUpdatedState() {
         TamperReport report = getTamperReportsLatest();
-        return Objects.nonNull(report) ? new DateTimeType(ZonedDateTime.ofInstant(report.getLastChanged(), zoneId))
-                : UnDefType.NULL;
+        return Objects.nonNull(report) ? new DateTimeType(report.getLastChanged()) : UnDefType.NULL;
     }
 
     /**
@@ -742,7 +794,7 @@ public class Resource {
         return new QuantityType<>(temperatureReport.getTemperature(), SIUnits.CELSIUS);
     }
 
-    public State getTemperatureLastUpdatedState(ZoneId zoneId) {
+    public State getTemperatureLastUpdatedState() {
         Temperature temperature = this.temperature;
         if (temperature == null) {
             return UnDefType.NULL;
@@ -755,7 +807,7 @@ public class Resource {
         if (Instant.EPOCH.equals(lastChanged)) {
             return UnDefType.UNDEF;
         }
-        return new DateTimeType(ZonedDateTime.ofInstant(lastChanged, zoneId));
+        return new DateTimeType(lastChanged);
     }
 
     public State getTemperatureValidState() {
@@ -785,21 +837,20 @@ public class Resource {
     }
 
     public boolean hasFullState() {
-        return !hasSparseData;
+        return ContentType.FULL_STATE == contentType;
+    }
+
+    public boolean hasName() {
+        MetaData metaData = getMetaData();
+        return Objects.nonNull(metaData) && Objects.nonNull(metaData.getName());
     }
 
     /**
-     * Mark that the resource has sparse data.
-     *
-     * @return this instance.
+     * Set the alerts parameter. Note: this method sets the 'alert' JSON element. The 'alert' JSON element is used for
+     * both alert and alerts settings, so this method should only be used when setting an alerts element.
      */
-    public Resource markAsSparse() {
-        hasSparseData = true;
-        return this;
-    }
-
     public Resource setAlerts(Alerts alert) {
-        this.alert = alert;
+        this.alert = GSON.toJsonTree(alert);
         return this;
     }
 
@@ -815,6 +866,11 @@ public class Resource {
 
     public Resource setContactReport(ContactReport contactReport) {
         this.contactReport = contactReport;
+        return this;
+    }
+
+    public Resource setContentType(ContentType contentType) {
+        this.contentType = contentType;
         return this;
     }
 
@@ -834,8 +890,8 @@ public class Resource {
     }
 
     public Resource setEnabled(Command command) {
-        if (command instanceof OnOffType) {
-            this.enabled = ((OnOffType) command) == OnOffType.ON;
+        if (command instanceof OnOffType onOffCommand) {
+            this.enabled = onOffCommand == OnOffType.ON;
         }
         return this;
     }
@@ -865,11 +921,9 @@ public class Resource {
      * @return this resource instance.
      */
     public Resource setOnOff(Command command) {
-        if (command instanceof OnOffType) {
-            OnOffType onOff = (OnOffType) command;
-            OnState on = this.on;
-            on = Objects.nonNull(on) ? on : new OnState();
-            on.setOn(OnOffType.ON.equals(onOff));
+        if (command instanceof OnOffType onOffCommand) {
+            OnState on = Objects.requireNonNullElse(this.on, new OnState());
+            on.setOn(OnOffType.ON.equals(onOffCommand));
             this.on = on;
         }
         return this;
@@ -881,20 +935,23 @@ public class Resource {
     }
 
     public Resource setRecallAction(SceneRecallAction recallAction) {
-        Recall recall = this.recall;
-        this.recall = ((Objects.nonNull(recall) ? recall : new Recall())).setAction(recallAction);
+        Recall recall = Objects.requireNonNullElse(this.recall, new Recall());
+        recall.setAction(recallAction);
+        this.recall = recall;
         return this;
     }
 
     public Resource setRecallAction(SmartSceneRecallAction recallAction) {
-        Recall recall = this.recall;
-        this.recall = ((Objects.nonNull(recall) ? recall : new Recall())).setAction(recallAction);
+        Recall recall = Objects.requireNonNullElse(this.recall, new Recall());
+        recall.setAction(recallAction);
+        this.recall = recall;
         return this;
     }
 
     public Resource setRecallDuration(Duration recallDuration) {
-        Recall recall = this.recall;
-        this.recall = ((Objects.nonNull(recall) ? recall : new Recall())).setDuration(recallDuration);
+        Recall recall = Objects.requireNonNullElse(this.recall, new Recall());
+        recall.setDuration(recallDuration);
+        this.recall = recall;
         return this;
     }
 
@@ -926,5 +983,96 @@ public class Resource {
         String id = this.id;
         return String.format("id:%s, type:%s", Objects.nonNull(id) ? id : "?" + " ".repeat(35),
                 getType().name().toLowerCase());
+    }
+
+    /**
+     * Get the speaker alarm sound.
+     */
+    public @Nullable Sound getAlarm() {
+        return alarm;
+    }
+
+    /**
+     * Get the speaker alert sound. We need to disambiguate between an alert setting and an alerts setting, because
+     * both are represented by the same 'alert' JSON element. If the JSON element contains a 'status' field it is
+     * an alert setting, if it contains an 'action' or 'action_values' field it is an alerts setting.
+     */
+    public @Nullable Sound getAlert() {
+        JsonElement alert = this.alert;
+        if (Objects.nonNull(alert) && alert.isJsonObject() && alert.getAsJsonObject().get("status") != null) {
+            return GSON.fromJson(alert, Sound.class);
+        }
+        return null;
+    }
+
+    /**
+     * Get the speaker chime sound.
+     */
+    public @Nullable Sound getChime() {
+        return chime;
+    }
+
+    /**
+     * Get the speaker mute state.
+     */
+    public @Nullable Mute getMute() {
+        return mute;
+    }
+
+    /**
+     * Get the software update status if any. Disambiguate between a software update status and a smart scene state,
+     * because both are represented by the 'state' JSON element. If the resource type is 'device_software_update' it
+     * is a software update status, if it is 'smart_scene' it is a smart scene state.
+     */
+    public @Nullable SoftwareUpdateStatusType getSoftwareUpdateStatus() {
+        if (ResourceType.DEVICE_SOFTWARE_UPDATE == getType() && (state instanceof JsonPrimitive statePrimitive)) {
+            String state = statePrimitive.getAsString();
+            if (Objects.nonNull(state)) {
+                return SoftwareUpdateStatusType.of(state);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Depending on the returned value from getSoftwareUpdateStatus() this method returns a StringType of the status
+     * name, or 'UnDefType.NULL' if there is no such status.
+     */
+    public State getSoftwareUpdateState() {
+        SoftwareUpdateStatusType softwareUpdateStatus = getSoftwareUpdateStatus();
+        return softwareUpdateStatus != null ? new StringType(softwareUpdateStatus.toString()) : UnDefType.NULL;
+    }
+
+    /**
+     * Set the speaker alarm sound.
+     */
+    public Resource setAlarm(@Nullable Sound alarm) {
+        this.alarm = alarm;
+        return this;
+    }
+
+    /**
+     * Set the speaker alert sound. Note: this method sets the 'alert' JSON element. The 'alert' JSON element is
+     * used for both alert and alerts settings, so this method should only be used when setting an alert sound.
+     */
+    public Resource setAlert(Sound alert) {
+        this.alert = GSON.toJsonTree(alert);
+        return this;
+    }
+
+    /**
+     * Set the speaker chime sound.
+     */
+    public Resource setChime(@Nullable Sound chime) {
+        this.chime = chime;
+        return this;
+    }
+
+    /**
+     * Set the speaker mute state.
+     */
+    public Resource setMute(@Nullable Mute mute) {
+        this.mute = mute;
+        return this;
     }
 }

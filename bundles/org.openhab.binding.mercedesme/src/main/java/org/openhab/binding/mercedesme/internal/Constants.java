@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -60,6 +60,8 @@ public class Constants {
     public static final String MB_KEY_CHARGE_COUPLER_DC_STATUS = "chargeCouplerDCStatus";
     public static final String MB_KEY_CHARGE_COUPLER_AC_STATUS = "chargeCouplerACStatus";
     public static final String MB_KEY_CHARGE_FLAP_DC_STATUS = "chargeFlapDCStatus";
+    public static final String MB_KEY_CHARGE_STATUS = "chargingstatus";
+    public static final String MB_KEY_CHARGE_ERROR = "chargingErrorDetails";
     public static final String MB_KEY_SERVICEINTERVALDAYS = "serviceintervaldays";
     public static final String MB_KEY_TIREWARNINGSRDK = "tirewarningsrdk";
     public static final String MB_KEY_STARTER_BATTERY_STATE = "starterBatteryState";
@@ -113,9 +115,11 @@ public class Constants {
     public static final String MB_KEY_DOORSTATUSFRONTLEFT = "doorstatusfrontleft";
     public static final String MB_KEY_DOORSTATUSFRONTRIGHT = "doorstatusfrontright";
     public static final String MB_KEY_TANKLEVELPERCENT = "tanklevelpercent";
+    public static final String MB_KEY_ADBLUELEVELPERCENT = "tankLevelAdBlue";
     public static final String MB_KEY_SOC = "soc";
     public static final String MB_KEY_TIRE_PRESS_MEAS_TIMESTAMP = "tirePressMeasTimestamp";
     public static final String MB_KEY_ENDOFCHARGETIME = "endofchargetime";
+    public static final String MB_KEY_ENDOFCHARGEDAY = "endofChargeTimeWeekday";
     public static final String MB_KEY_LIQUIDCONSUMPTIONRESET = "liquidconsumptionreset";
     public static final String MB_KEY_LIQUIDCONSUMPTIONSTART = "liquidconsumptionstart";
     public static final String MB_KEY_ELECTRICCONSUMPTIONRESET = "electricconsumptionreset";
@@ -148,6 +152,13 @@ public class Constants {
     public static final String MB_KEY_COMMAND_DOORS_LOCK = "commandDoorsLock";
     public static final String MB_KEY_COMMAND_WINDOWS_OPEN = "commandWindowsOpen";
     public static final String MB_KEY_COMMAND_ENGINE_START = "commandEngineStart";
+    public static final String MB_KEY_POSITION_ERROR = "vehiclePositionErrorCode";
+    public static final String MB_KEY_AUXILIARY_WARNINGS = "auxheatwarnings";
+    public static final String MB_KEY_PRECOND_NOW_ERROR = "precondNowError";
+    public static final String MB_KEY_ECOSCORE_ACCEL = "ecoscoreaccel";
+    public static final String MB_KEY_ECOSCORE_CONSTANT = "ecoscoreconst";
+    public static final String MB_KEY_ECOSCORE_COASTING = "ecoscorefreewhl";
+    public static final String MB_KEY_ECOSCORE_BONUS = "ecoscorebonusrange";
 
     public static final String GROUP_VEHICLE = "vehicle";
     public static final String GROUP_DOORS = "doors";
@@ -158,6 +169,7 @@ public class Constants {
     public static final String GROUP_RANGE = "range";
     public static final String GROUP_CHARGE = "charge";
     public static final String GROUP_TRIP = "trip";
+    public static final String GROUP_ECO = "eco";
     public static final String GROUP_POSITION = "position";
     public static final String GROUP_TIRES = "tires";
     public static final String GROUP_COMMAND = "command";
@@ -190,6 +202,7 @@ public class Constants {
     public static final String OH_CHANNEL_COUPLER_AC = "coupler-ac";
     public static final String OH_CHANNEL_CHARGE_FLAP = "charge-flap";
     public static final String OH_CHANNEL_FUEL_LEVEL = "fuel-level";
+    public static final String OH_CHANNEL_ADBLUE_LEVEL = "adblue-level";
     public static final String OH_CHANNEL_RANGE_HYBRID = "range-hybrid";
     public static final String OH_CHANNEL_RANGE_FUEL = "range-fuel";
     public static final String OH_CHANNEL_RANGE_ELECTRIC = "range-electric";
@@ -240,27 +253,35 @@ public class Constants {
     public static final String OH_CHANNEL_SOC = "soc";
     public static final String OH_CHANNEL_UNCHARGED = "uncharged";
     public static final String OH_CHANNEL_CHARGED = "charged";
+    public static final String OH_CHANNEL_ENERGY_TO_MAX_SOC = "energy-to-max-soc";
     public static final String OH_CHANNEL_TANK_OPEN = "tank-open";
     public static final String OH_CHANNEL_TANK_REMAIN = "tank-remain";
     public static final String OH_CHANNEL_HOME_DISTANCE = "home-distance";
     public static final String OH_CHANNEL_GPS = "gps";
     public static final String OH_CHANNEL_CONS_CONV_UNIT = "cons-conv-unit";
     public static final String OH_CHANNEL_CONS_EV_UNIT = "cons-ev-unit";
+    public static final String OH_CHANNEL_STATUS = "status";
+    public static final String OH_CHANNEL_ERROR = "error";
+    public static final String OH_CHANNEL_AC_STATUS = "ac-status";
+    public static final String OH_CHANNEL_AUX_STATUS = "aux-status";
+    public static final String OH_CHANNEL_ACCEL = "accel";
+    public static final String OH_CHANNEL_COASTING = "coasting";
+    public static final String OH_CHANNEL_CONSTANT = "constant";
+    public static final String OH_CHANNEL_BONUS_RANGE = "bonus";
 
-    public static final String CALLBACK_ENDPOINT = "/mb-auth";
     // https://developer.mercedes-benz.com/content-page/api_migration_guide
     public static final String IMAGE_BASE_URL = "https://api.mercedes-benz.com/vehicle_images/v2";
     public static final String IMAGE_EXTERIOR_RESOURCE_URL = IMAGE_BASE_URL + "/vehicles/%s";
 
-    public static final String STATUS_TEXT_PREFIX = "@text/mercedesme.";
-    public static final String STATUS_AUTH_NEEDED = ".status.authorization-needed";
-    public static final String STATUS_EMAIL_MISSING = ".status.email-missing";
-    public static final String STATUS_REGION_MISSING = ".status.region-missing";
-    public static final String STATUS_REFRESH_INVALID = ".status.refresh-invalid";
-    public static final String STATUS_IP_MISSING = ".status.ip-missing";
-    public static final String STATUS_PORT_MISSING = ".status.port-missing";
-    public static final String STATUS_SERVER_RESTART = ".status.server-restart";
-    public static final String STATUS_BRIDGE_MISSING = ".status.bridge-missing";
+    public static final String STATUS_CONFIG_EMAIL_MISSING = "@text/mercedesme.account.status.config.email-missing";
+    public static final String STATUS_CONFIG_PASSWORD_MISSING = "@text/mercedesme.account.status.config.password-missing";
+    public static final String STATUS_CONFIG_REGION_MISSING = "@text/mercedesme.account.status.config.region-missing";
+    public static final String STATUS_CONFIG_REFRESH_LOW = "@text/mercedesme.account.status.config.refresh-invalid";
+    public static final String STATUS_AUTH_FAILURE = "@text/mercedesme.account.status.auth-failure";
+    public static final String STATUS_API_FAILURE = "@text/mercedesme.account.status.api-failure";
+    public static final String STATUS_BIDNING_ERROR = "@text/mercedesme.account.status.binding-error";
+    public static final String STATUS_WEBSOCKET_FAILURE = "@text/mercedesme.account.status.websocket-failure";
+    public static final String STATUS_BRIDGE_MISSING = "@text/mercedesme.vehicle.status.bridge-missing";
 
     public static final String SPACE = " ";
     public static final String EMPTY = "";
@@ -293,39 +314,47 @@ public class Constants {
     public static final String REST_API_BASE_CN = "https://bff.cn-prod.mobilesdk.mercedes-benz.com";
     public static final String REST_API_BASE_NA = "https://bff.amap-prod.mobilesdk.mercedes-benz.com";
     public static final String REST_API_BASE_PA = "https://bff.amap-prod.mobilesdk.mercedes-benz.com";
-    public static final String WEBSOCKET_API_BASE = "wss://websocket.emea-prod.mobilesdk.mercedes-benz.com/ws";
-    public static final String WEBSOCKET_API_BASE_NA = "wss://websocket.amap-prod.mobilesdk.mercedes-benz.com/ws";
-    public static final String WEBSOCKET_API_BASE_PA = "wss://websocket.amap-prod.mobilesdk.mercedes-benz.com/ws";
-    public static final String WEBSOCKET_API_BASE_CN = "wss://websocket.cn-prod.mobilesdk.mercedes-benz.com/ws";
+    public static final String WEBSOCKET_API_BASE = "wss://websocket.emea-prod.mobilesdk.mercedes-benz.com/v2/ws";
+    public static final String WEBSOCKET_API_BASE_NA = "wss://websocket.amap-prod.mobilesdk.mercedes-benz.com/v2/ws";
+    public static final String WEBSOCKET_API_BASE_PA = "wss://websocket.amap-prod.mobilesdk.mercedes-benz.com/v2/ws";
+    public static final String WEBSOCKET_API_BASE_CN = "wss://websocket.cn-prod.mobilesdk.mercedes-benz.com/v2/ws";
+    public static final String WIDGET_API_BASE = "https://widget.emea-prod.mobilesdk.mercedes-benz.com";
+    public static final String WIDGET_API_BASE_NA = "https://widget.amap-prod.mobilesdk.mercedes-benz.com";
+    public static final String WIDGET_API_BASE_PA = "https://widget.amap-prod.mobilesdk.mercedes-benz.com";
+    public static final String WIDGET_API_BASE_CN = "https://widget.cn-prod.mobilesdk.mercedes-benz.com";
     public static final String WEBSOCKET_USER_AGENT = "MyCar/1.30.1 (com.daimler.ris.mercedesme.ece.ios; build:1819; iOS 16.5.0) Alamofire/5.4.0";
     public static final String WEBSOCKET_USER_AGENT_CN = "MyStarCN/1.27.0 (com.daimler.ris.mercedesme.cn.ios; build:1758; iOS 16.3.1) Alamofire/5.4.0";
     public static final String WEBSOCKET_USER_AGENT_PA = "mycar-store-ap v1.27.0, android 8.0.0, SDK 2.84.3";
 
-    public static final String RIS_APPLICATION_VERSION_NA = "3.40.0";
-    public static final String RIS_APPLICATION_VERSION_CN = "1.39.0";
-    public static final String RIS_APPLICATION_VERSION_PA = "1.40.0";
-    public static final String RIS_APPLICATION_VERSION = "1.42.0 (2168)";
-    public static final String RIS_SDK_VERSION = "2.114.0";
-    public static final String RIS_SDK_VERSION_CN = "2.109.2";
-    public static final String RIS_OS_VERSION = "17.4.1";
-    public static final String RIS_OS_NAME = "ios";
+    // version updates according to https://github.com/weymann/mbapi2020/commit/ede9ab60c1e18293b9436dab568b9195db6381b9
+    public static final String RIS_APPLICATION_VERSION_NA = "3.57.0";
+    public static final String RIS_APPLICATION_VERSION_CN = "1.57.0";
+    public static final String RIS_APPLICATION_VERSION_PA = "1.57.0";
+    public static final String RIS_APPLICATION_VERSION = "1.57.0";
+    public static final String RIS_SDK_VERSION = "3.55.0";
+    public static final String RIS_SDK_VERSION_CN = "2.132.2";
+    public static final String RIS_OS_VERSION = "10";
+    public static final String RIS_OS_NAME = "android";
     public static final String X_APPLICATIONNAME = "mycar-store-ece";
     public static final String X_APPLICATIONNAME_ECE = "mycar-store-ece";
     public static final String X_APPLICATIONNAME_CN = "mycar-store-cn";
     public static final String X_APPLICATIONNAME_US = "mycar-store-us";
     public static final String X_APPLICATIONNAME_AP = "mycar-store-ap";
 
+    public static final String AUTH_USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 15_8_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.6.6 Mobile/15E148 Safari/604.1";
+    public static final String AUTH_LANGUAGE = "de-DE,de;q=0.9";
+    public static final String AUTH_CLIENT_ID = "62778dc4-1de3-44f4-af95-115f06a3a008";
+    public static final String AUTH_REDIRECT_URI = "rismycar://login-callback";
+    public static final String AUTH_SCOPE = "email profile ciam-uid phone openid offline_access";
+
     public static final String REGION_EUROPE = "EU";
     public static final String REGION_NORAM = "NA";
     public static final String REGION_APAC = "AP";
     public static final String REGION_CHINA = "CN";
 
-    public static final String SCOPE = "openid email phone profile offline_access ciam-uid";
-
     public static final String MAX_SOC_KEY = "maxsoc";
     public static final String AUTO_UNLOCK_KEY = "autolock";
 
-    public static final String JUNIT_SERVER_ADDR = "http://999.999.999.999:99999/mb-auth";
-    public static final String JUNIT_TOKEN = "junitTestToken";
-    public static final String JUNIT_REFRESH_TOKEN = "junitRefreshToken";
+    public static final String FEATURE_APPENDIX = "-features";
+    public static final String COMMAND_APPENDIX = "-commands";
 }

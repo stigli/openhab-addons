@@ -1,14 +1,14 @@
 # ArgoClima Binding
 
-The binding provides support for [ArgoClima](https://argoclima.com/en/) Wi-Fi-enabled air conditioning devices which use ***Argo Web APP*** for control.
+The binding provides support for [ArgoClima](https://argoclima.com/en/) Wi-Fi-enabled air conditioning devices which use _Argo Web APP_ for control.
 Refer to [Argo Web APP details](#argo-web-app-details) section for an example.
 
-> ***IMPORTANT:***  The same vendor also manufactures HVAC devices supported by a [phone application](https://www.youtube.com/playlist?list=PLQiJByZqkxY-4IjmviF2U-Grg_qYTzpKn).
+> **IMPORTANT:**  The same vendor also manufactures HVAC devices supported by a [phone application](https://www.youtube.com/playlist?list=PLQiJByZqkxY-4IjmviF2U-Grg_qYTzpKn).
 >
-> These devices are using a different protocol and are ***not*** supported by this binding.
+> These devices are using a different protocol and are _not_ supported by this binding.
 > There are good chances these will be supported by the [Gree](https://www.openhab.org/addons/bindings/gree/) binding, though!
 
-The binding supports all HVAC remote functions (including built-in schedule and settings) except for ***iFeel*** (room) temperature which is not supported by the Argo remote protocol and has to be sent via infrared.
+The binding supports all HVAC remote functions (including built-in schedule and settings) except for _iFeel_ (room) temperature which is not supported by the Argo remote protocol and has to be sent via infrared.
 The binding can operate in local, remote and hybrid modes.
 Refer to [Connection Modes](#connection-modes) for more details.
 
@@ -17,7 +17,7 @@ See also [Argo protocol details](#argo-protocol-details) to find out more about 
 ## Supported Things
 
 - `remote`: Represents a HVAC device which is controlled remotely - through vendor's web application
-- `local`: Represents a locally available device, which openHAB interacts with directly *(or indirectly, through a stub server)*. Refer to [Connection Modes](#connection-modes) for more details.
+- `local`: Represents a locally available device, which openHAB interacts with directly _(or indirectly, through a stub server)_. Refer to [Connection Modes](#connection-modes) for more details.
 
 The binding has been primarily developed and tested using [Ulisse 13 DCI ECO Wi-Fi](https://argoclima.com/en/prodotti/argo-ulisse-eco/) device.
 
@@ -25,7 +25,7 @@ The binding has been primarily developed and tested using [Ulisse 13 DCI ECO Wi-
 
 The binding does not support device auto-discovery (as the devices don't announce themselves locally).
 
-- Note it is *technically* possible for the advanced mode with API stub to discover devices, but as it requires manual firewall reconfiguration, it won't be an "auto" anyway so was not implemented.
+- Note it is _technically_ possible for the advanced mode with API stub to discover devices, but as it requires manual firewall reconfiguration, it won't be an "auto" anyway so was not implemented.
 
 ## Thing Configuration
 
@@ -65,13 +65,13 @@ The same values apply to **both** `remote`  and `local`.
 | Name                   | Type            | Description                                                                                                                                                                                                                                                     | Default                              | Required | Advanced |
 |------------------------|-----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------|----------|----------|
 | schedule1DayOfWeek     | text(multiple)  | Days (set comprising of values  ```MON```, ```TUE```, ```WED```, ```THU```, ```FRI```, ```SAT```, ``SUN``), when Schedule Timer 1 actions should be performed. This is used only if ```active-timer``` [channel](#channels) is in ```SCHEDULE_TIMER_1``` mode.  | [MON, TUE, WED, THU, FRI, SAT, SUN]  | no       | yes      |
-| schedule1OnTime        | text            | The time of day (HH:MM) the device should turn **ON** *(in the last used mode)* on the ```schedule1DayOfWeek```-specified days. In effect only if ```active-timer``` [channel](#channels) is in ```SCHEDULE_TIMER_1``` mode                                     |  8:00                                | no       | yes      |
+| schedule1OnTime        | text            | The time of day (HH:MM) the device should turn **ON** _(in the last used mode)_ on the `schedule1DayOfWeek`-specified days. In effect only if `active-timer` [channel](#channels) is in `SCHEDULE_TIMER_1` mode                                     |  8:00                                | no       | yes      |
 | schedule1OffTime       | text            | The time of day (HH:MM) the device should turn **OFF** on the ```schedule1DayOfWeek```-specified days. In effect only if ```active-timer``` [channel](#channels) is in ```SCHEDULE_TIMER_1``` mode                                                              | 18:00                                | no       | yes      |
 | schedule2DayOfWeek     | text(multiple)  | Days (set comprising of values  ```MON```, ```TUE```, ```WED```, ```THU```, ```FRI```, ```SAT```, ``SUN``), when Schedule Timer 1 actions should be performed. This is used only if ```active-timer``` [channel](#channels) is in ```SCHEDULE_TIMER_1``` mode.  | [MON, TUE, WED, THU, FRI]            | no       | yes      |
-| schedule2OnTime        | text            | The time of day (HH:MM) the device should turn **ON** *(in the last used mode)* on the ```schedule2DayOfWeek```-specified days. In effect only if ```active-timer``` [channel](#channels) is in ```SCHEDULE_TIMER_2``` mode                                     | 15:00                                | no       | yes      |
+| schedule2OnTime        | text            | The time of day (HH:MM) the device should turn **ON** _(in the last used mode)_ on the ```schedule2DayOfWeek```-specified days. In effect only if ```active-timer``` [channel](#channels) is in ```SCHEDULE_TIMER_2``` mode                                     | 15:00                                | no       | yes      |
 | schedule2OffTime       | text            | The time of day (HH:MM) the device should turn **OFF** on the ```schedule2DayOfWeek```-specified days. In effect only if ```active-timer``` [channel](#channels) is in ```SCHEDULE_TIMER_2``` mode                                                              | 20:00                                | no       | yes      |
 | schedule3DayOfWeek     | text(multiple)  | Days (set comprising of values  ```MON```, ```TUE```, ```WED```, ```THU```, ```FRI```, ```SAT```, ``SUN``), when Schedule Timer 1 actions should be performed. This is used only if ```active-timer``` [channel](#channels) is in ```SCHEDULE_TIMER_1``` mode.  | [SAT, SUN]                           | no       | yes      |
-| schedule3OnTime        | text            | The time of day (HH:MM) the device should turn **ON** *(in the last used mode)* on the ```schedule3DayOfWeek```-specified days. In effect only if ```active-timer``` [channel](#channels) is in ```SCHEDULE_TIMER_3``` mode                                     | 11:00                                | no       | yes      |
+| schedule3OnTime        | text            | The time of day (HH:MM) the device should turn **ON** _(in the last used mode)_ on the ```schedule3DayOfWeek```-specified days. In effect only if ```active-timer``` [channel](#channels) is in ```SCHEDULE_TIMER_3``` mode                                     | 11:00                                | no       | yes      |
 | schedule3OffTime       | text            | The time of day (HH:MM) the device should turn **OFF** on the ```schedule3DayOfWeek```-specified days. In effect only if ```active-timer``` [channel](#channels) is in ```SCHEDULE_TIMER_3``` mode                                                              | 22:00                                | no       | yes      |
 | resetToFactoryDefaults | boolean(action) | When set, upon successful Thing initialization, the binding will issue a one-time factory reset request to the device (and flip this value back do OFF)                                                                                                         | false                                | no       | yes      |
 
@@ -89,8 +89,8 @@ Both thing types are functionally equivalent and support the same channels.
 | fan-speed                | String               | RW         | Fan mode. One of: ```AUTO```, ```LEVEL_1```, ```LEVEL_2```, ```LEVEL_3```, ```LEVEL_4```, ```LEVEL_5```, ```LEVEL_6```                                                                                                 |
 | - **Operation Modes** (#modes)                                                                                                                                                                                                                                                     ||||
 | eco-mode                 | Switch               | RW         | Economy (Energy Saving) Mode (cap device max power to the ```eco-power-limit```)                                                                                                                                       |
-| turbo-mode               | Switch               | RW         | Turbo mode (max power). *While the device API (similarly to original remote) allows enabling ```turbo``` **while** ```night``` and/or ```economy``` modes are **active**, actual effect of such a combo is unknown :)* |
-| night-mode               | Switch               | RW         | Night mode *(lowers device noise by lowering the fan speed and automatically raising the set temperature by 1°C after 60 minutes of enabling this option)*                                                             |
+| turbo-mode               | Switch               | RW         | Turbo mode (max power). _While the device API (similarly to original remote) allows enabling ```turbo``` **while** ```night``` and/or ```economy``` modes are **active**, actual effect of such a combo is unknown :)_ |
+| night-mode               | Switch               | RW         | Night mode _(lowers device noise by lowering the fan speed and automatically raising the set temperature by 1°C after 60 minutes of enabling this option)_                                                             |
 | - **Timers (advanced)** (#timers)                                                                                                                                                                                                                                                  ||||
 | active-timer             | String               | RW         | Active timer. One of ```NO_TIMER```, ```DELAY_TIMER```, ```SCHEDULE_TIMER_1```, ```SCHEDULE_TIMER_2```, ```SCHEDULE_TIMER_3```. See also [schedule configuration](#general-device-configuration-dynamic)               |
 | delay-timer              | Number:Time          |  W         | Delay timer value. In effect only if ```active-timer``` is in ```DELAY_TIMER``` mode. The delay timer toggles the current ```power``` (ex. OFF->ON) after the configured period elapses                                |
@@ -115,7 +115,6 @@ Thing argoclima:remote:argoHvacRemote "Argo HVAC (via Argo remote API)" @ "Livin
     password="<yourArgoPassword>"
 ]
 
-
 Thing argoclima:local:argoHvacLocalDirect "Argo HVAC (connected locally)" @ "Living Room" [
     hostname="192.168.0.3"
 ]
@@ -123,23 +122,23 @@ Thing argoclima:local:argoHvacLocalDirect "Argo HVAC (connected locally)" @ "Liv
 Thing argoclima:local:argoHvacLocalDirectEx "Argo HVAC (connected locally) - extended example (with explicit options)" [
     hostname="192.168.0.3",
     connectionMode="LOCAL_CONNECTION",
-    refreshInterval=30,    
+    refreshInterval=30,
     hvacListenPort=1001,
 
     // Schedule options (these are valid for all thing types)
-    schedule1DayOfWeek="[FRI, SAT, SUN, MON]", 
-    schedule1OnTime="7:35", 
+    schedule1DayOfWeek="[FRI, SAT, SUN, MON]",
+    schedule1OnTime="7:35",
     schedule1OffTime="18:00",
-    schedule2DayOfWeek="[MON, TUE, WED, THU, FRI]", 
+    schedule2DayOfWeek="[MON, TUE, WED, THU, FRI]",
     schedule2OnTime="15:00",
     schedule2OffTime="22:00",
     schedule3DayOfWeek="SUN","SAT", //Alternative syntax for the weekdays list
-    schedule3OnTime="11:00", 
-    schedule3OffTime="22:00"   
+    schedule3OnTime="11:00",
+    schedule3OffTime="22:00"
     //,resetToFactoryDefaults=true  //This triggers a one-shot command each time the thing
-                                    //  definition is (re)loaded from file.  
+                                    //  definition is (re)loaded from file.
                                     // Use only intermittently - it is not designed with prolonged
-                                    //  usage via Things text file in mind (mostly a MainUI feature!) 
+                                    //  usage via Things text file in mind (mostly a MainUI feature!)
 ]
 
 //ADVANCED MODES examples
@@ -149,32 +148,30 @@ Thing argoclima:local:argoHvacLocalWithPassthroughIndirect "Argo HVAC (accessibl
     useLocalConnection=false
 ]
 
-
 Thing argoclima:local:argoHvacLocalWithPassthroughPlusDirectEx "Argo HVAC (accessible both indirectly and directly, via pass-through mode, with explicit options)" [
     hostname="192.168.0.3",             // Direct address of the device (reachable from openHAB)
     connectionMode="REMOTE_API_PROXY",
-        
+
     hvacListenPort=1001,
     refreshInterval=30,
     useLocalConnection=true,
-    
+
     // Stub server-specific
-    stubServerPort=8240, 
-    stubServerListenAddresses="7d47:86bd:0bfe:0413:4688:4523:4284:5936","192.168.0.195",    
-    includeDeviceSidePasswordsInProperties="MASKED", 
-    matchAnyIncomingDeviceIp=false, 
+    stubServerPort=8240,
+    stubServerListenAddresses="7d47:86bd:0bfe:0413:4688:4523:4284:5936","192.168.0.195",
+    includeDeviceSidePasswordsInProperties="MASKED",
+    matchAnyIncomingDeviceIp=false,
     deviceCpuId="deadbeefdeadbeef",     // For direct match to a concrete device (optional)
     localDeviceIP="192.168.4.2",        // Address in local subnet (used for indirect request matching)
-    
+
     // Pass-through-specific
     oemServerAddress="uisetup.ddns.net",
     oemServerPort=80
 ]
 
-
 Thing argoclima:local:argoHvacLocalWithStub "Argo HVAC (accessible both indirectly and directly with a stub) - **RECOMMENDED MODE**" [
     hostname="192.168.0.3",           // Has to be reachable, since useLocalConnection is true (default)
-    connectionMode="REMOTE_API_STUB",    
+    connectionMode="REMOTE_API_STUB",
     localDeviceIP="192.168.4.2"       // Or use matchAnyIncomingDeviceIp=true
 ]
 ```
@@ -185,11 +182,11 @@ Thing argoclima:local:argoHvacLocalWithStub "Argo HVAC (accessible both indirect
 Group GArgoClimaHVACRemote "Ulisse 13 DCI ECO - remote mode" ["HVAC"]
 
 Switch  ArgoClimaHVACRemote_Power   "Power" <switch>   (GArgoClimaHVACRemote)  {
-    channel="argoclima:remote:argoHvacRemote:ac-controls#power"    
+    channel="argoclima:remote:argoHvacRemote:ac-controls#power"
 }
 
 String  ArgoClimaHVACRemote_Mode    "Mode"  <climate>  (GArgoClimaHVACRemote)  ["Control"] {
-    channel="argoclima:remote:argoHvacRemote:ac-controls#mode"    
+    channel="argoclima:remote:argoHvacRemote:ac-controls#mode"
 }
 
 Number:Temperature  ArgoClimaHVACRemote_SetTemperature  "Set Temperature"  <temperature> (GArgoClimaHVACRemote)  ["Temperature", "Setpoint"] {
@@ -201,27 +198,27 @@ Number:Temperature  ArgoClimaHVACRemote_SetTemperature  "Set Temperature"  <temp
 }
 
 Number:Temperature  ArgoClimaHVACRemote_CurrentTemperature  "Current Temperature" <temperature>   (GArgoClimaHVACRemote) ["Temperature", "Measurement"] {
-    channel="argoclima:remote:argoHvacRemote:ac-controls#current-temperature"    
+    channel="argoclima:remote:argoHvacRemote:ac-controls#current-temperature"
 }
 
 String  ArgoClimaHVACRemote_FanSpeed    "Fan Speed" <fan> (GArgoClimaHVACRemote) {
-    channel="argoclima:remote:argoHvacRemote:ac-controls#fan-speed"    
+    channel="argoclima:remote:argoHvacRemote:ac-controls#fan-speed"
 }
 
 Switch  ArgoClimaHVACRemote_EcoMode "Eco Mode"   <vacation> (GArgoClimaHVACRemote) {
-    channel="argoclima:remote:argoHvacRemote:modes#eco-mode"    
+    channel="argoclima:remote:argoHvacRemote:modes#eco-mode"
 }
 
 Switch  ArgoClimaHVACRemote_TurboMode   "Turbo Mode"  <party> (GArgoClimaHVACRemote) {
-    channel="argoclima:remote:argoHvacRemote:modes#turbo-mode"    
+    channel="argoclima:remote:argoHvacRemote:modes#turbo-mode"
 }
 
 Switch  ArgoClimaHVACRemote_NightMode       "Night Mode"  <moon> (GArgoClimaHVACRemote) {
-    channel="argoclima:remote:argoHvacRemote:modes#night-mode"    
+    channel="argoclima:remote:argoHvacRemote:modes#night-mode"
 }
 
 String  ArgoClimaHVACRemote_ActiveTimer "Active timer"  <calendar> (GArgoClimaHVACRemote) {
-    channel="argoclima:remote:argoHvacRemote:timers#active-timer"    
+    channel="argoclima:remote:argoHvacRemote:timers#active-timer"
 }
 
 Number:Time ArgoClimaHVACRemote_DelayTimer  "Delay timer value"  <time> (GArgoClimaHVACRemote) ["Setpoint"] {
@@ -233,17 +230,17 @@ Number:Time ArgoClimaHVACRemote_DelayTimer  "Delay timer value"  <time> (GArgoCl
 }
 
 Switch  ArgoClimaHVACRemote_IFeelEnabled    "Use iFeel Temperature"  <network>  (GArgoClimaHVACRemote) {
-    channel="argoclima:remote:argoHvacRemote:settings#ifeel-enabled"    
+    channel="argoclima:remote:argoHvacRemote:settings#ifeel-enabled"
 }
 
 Switch  ArgoClimaHVACRemote_DeviceLights    "Device Lights" <light> (GArgoClimaHVACRemote) {
-    channel="argoclima:remote:argoHvacRemote:settings#device-lights"    
+    channel="argoclima:remote:argoHvacRemote:settings#device-lights"
 }
 
 String  ArgoClimaHVACRemote_TemperatureDisplayUnit  "Temperature Display Unit []"   <settings>  (GArgoClimaHVACRemote) {
     stateDescription="" [ options="SCALE_CELSIUS=°C,SCALE_FAHRENHEIT=°F" ],
     commandDescription="" [ options="SCALE_CELSIUS=°C,SCALE_FAHRENHEIT=°F" ],
-    channel="argoclima:remote:argoHvacRemote:settings#temperature-display-unit"    
+    channel="argoclima:remote:argoHvacRemote:settings#temperature-display-unit"
 }
 
 Number:Dimensionless    ArgoClimaHVACRemote_EcoPowerLimit    "Power limit in eco mode"  <price>   (GArgoClimaHVACRemote) ["Setpoint"] {
@@ -255,21 +252,21 @@ Number:Dimensionless    ArgoClimaHVACRemote_EcoPowerLimit    "Power limit in eco
 }
 
 String  ArgoClimaHVACRemote_ModeEx  "Extended Mode"   <heating>  (GArgoClimaHVACRemote) {
-    channel="argoclima:remote:argoHvacRemote:unsupported#mode-ex"    
+    channel="argoclima:remote:argoHvacRemote:unsupported#mode-ex"
 }
 
 String  ArgoClimaHVACRemote_SwingMode   "Airflow Direction"   <flow>  (GArgoClimaHVACRemote) {
-    channel="argoclima:remote:argoHvacRemote:unsupported#swing-mode"    
+    channel="argoclima:remote:argoHvacRemote:unsupported#swing-mode"
 }
 
 Switch  ArgoClimaHVACRemote_FilterMode  "Filter Mode"    <switch> (GArgoClimaHVACRemote) {
-    channel="argoclima:remote:argoHvacRemote:unsupported#filter-mode"    
+    channel="argoclima:remote:argoHvacRemote:unsupported#filter-mode"
 }
 ```
 
 ### argoclima.sitemap
 
-```java
+```perl
 // All things in all modes expose the same channels
 Frame label="❄ HVAC Control" {
     Switch item=ArgoClimaHVACRemote_Power
@@ -284,7 +281,7 @@ Frame label="❄ HVAC Control" {
     Default item=GArgoClimaHVACRemote label="All settings"
 }
 Frame label="⛄ HVAC Modes"
-{        
+{
     Switch item=ArgoClimaHVACRemote_TurboMode
     Switch item=ArgoClimaHVACRemote_NightMode
     Switch item=ArgoClimaHVACRemote_EcoMode
@@ -294,7 +291,7 @@ Frame label="⛄ HVAC Modes"
 }
 Frame label="⏲ HVAC timers" {
     Selection item=ArgoClimaHVACRemote_ActiveTimer mappings=[
-        NO_TIMER="No Timer", DELAY_TIMER="Delay Timer", 
+        NO_TIMER="No Timer", DELAY_TIMER="Delay Timer",
         SCHEDULE_TIMER_1="Schedule 1", SCHEDULE_TIMER_2="Schedule 2", SCHEDULE_TIMER_3="Schedule 3"
     ]
     Setpoint item=ArgoClimaHVACRemote_DelayTimer minValue=10 maxValue=1190 step=10
@@ -350,7 +347,7 @@ Please note this forwarding rule would need to be accompanied with other traffic
 In this mode openHAB is acting as an **almost** transparent proxy, and does a pass-through of device-side messages and remote-side responses (a man-in-the-middle).
 This allows to have the device fully controllable via openHAB **as well as** vendor's application (at the expense of security!).
 Possible other use of this mode is for firmware update or ad-hoc controlling some settings which are not easily accessible via openHAB.
-> ***IMPORTANT***: Most of the time, openHAB serves as a fully transparent proxy, not interfering with the traffic, **except for** cases when cloud has no updates for the device while openHAB **has** a command pending send to the device.
+> **IMPORTANT:** Most of the time, openHAB serves as a fully transparent proxy, not interfering with the traffic, _except for_ cases when cloud has no updates for the device while openHAB _has_ a command pending send to the device.
 > In such case, the binding injects it into the communication flow as-if it was cloud-issued!
 
 ![Advanced local connection diagram: REMOTE_API_PROXY mode](doc/Argoclima_connection_Advanced_REMOTE_API_PROXY.png)
@@ -369,14 +366,14 @@ The HVAC device accepts multiple command in one request (similarly to how the re
 Dual APIs (local and remote) are exposed:
 
 - The **local** API uses direct HTTP communication (all requests are ```HTTP GET```) and polling for getting the device state.
-  Sending any command through this interface effects an *immediate* change, and audible confirmation (beep).
+  Sending any command through this interface effects an _immediate_ change, and audible confirmation (beep).
 - The **remote** API involves the device periodically (for example, every minute) reaching out to manufacturer's server, and getting any withstanding commands.
-  Commands sent through this interface will be *delayed*, and not yield an audible confirmation (no beep).
+  Commands sent through this interface will be _delayed_, and not yield an audible confirmation (no beep).
 
-**IMPORTANT**: The Argo HVAC device ***has to*** be connected to Wi-Fi and communicating with a vendor (or vendor-like) server for either of its APIs to work.
+**IMPORTANT:** The Argo HVAC device has to be connected to Wi-Fi and communicating with a vendor (or vendor-like) server for either of its APIs to work.
 This is true even if the device is desired to be controlled via local APIs only!
 
-> ***A NOTE ON SECURITY:***  The device protocol is plain HTTP (no TLS), and it transmits all the device secrets to the cloud service in cleartext (that includes device password as well as **your Wi-Fi password**!)
+> **A NOTE ON SECURITY:**  The device protocol is plain HTTP (no TLS), and it transmits all the device secrets to the cloud service in cleartext (that includes device password as well as your Wi-Fi password!)
 >
 > Hence, security-savvy users may choose to not only connect it to a dedicated ```IOT```-specific Wi-Fi network, but also deny its Internet access (ex. to prevent a malicious firmware update converting it to a network backdoor).
 > While the device needs to communicate with **a** protocol-compatible server to work, this binding provides a convenient simulated server exactly for this purpose!

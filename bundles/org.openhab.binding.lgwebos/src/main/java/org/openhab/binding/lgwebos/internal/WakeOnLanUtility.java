@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,7 +12,9 @@
  */
 package org.openhab.binding.lgwebos.internal;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -20,8 +22,10 @@ import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.time.Duration;
 import java.util.Enumeration;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -46,11 +50,11 @@ public class WakeOnLanUtility {
 
     private static final String COMMAND;
     static {
-        String os = System.getProperty("os.name").toLowerCase();
+        String os = Objects.requireNonNullElse(System.getProperty("os.name"), "").toLowerCase();
         LOGGER.debug("os: {}", os);
-        if ((os.contains("win"))) {
+        if (os.contains("win")) {
             COMMAND = "arp -a %s";
-        } else if ((os.contains("mac"))) {
+        } else if (os.contains("mac")) {
             COMMAND = "arp %s";
         } else { // linux
             if (checkIfLinuxCommandExists("arp")) {
@@ -136,6 +140,30 @@ public class WakeOnLanUtility {
     }
 
     /**
+     * Send single WOL (Wake On Lan) package on specific interface
+     *
+     * @param macAddress MAC address to send WOL package to
+     * @param broadcastAddress Broadcast address to send WOL package to
+     */
+    public static void sendWOLPacket(String macAddress, String broadcastAddress) {
+        byte[] bytes = getWOLPackage(macAddress);
+
+        try {
+            InetAddress broadcast = InetAddress.getByName(broadcastAddress);
+
+            DatagramPacket packet = new DatagramPacket(bytes, bytes.length, broadcast, 9);
+            try (DatagramSocket socket = new DatagramSocket()) {
+                socket.send(packet);
+                LOGGER.trace("Sent WOL packet to {} {}", broadcast, macAddress);
+            } catch (IOException e) {
+                LOGGER.warn("Problem sending WOL packet to {} {}", broadcast, macAddress);
+            }
+        } catch (IOException e) {
+            LOGGER.warn("Problem with interface while sending WOL packet to {} / {}", macAddress, broadcastAddress);
+        }
+    }
+
+    /**
      * Create WOL UDP package: 6 bytes 0xff and then 16 times the 6 byte mac address repeated
      *
      * @param macStr String representation of the MAC address (either with : or -)
@@ -169,7 +197,16 @@ public class WakeOnLanUtility {
 
     private static boolean checkIfLinuxCommandExists(String cmd) {
         try {
-            return 0 == Runtime.getRuntime().exec(String.format("which %s", cmd)).waitFor();
+            Process process = new ProcessBuilder("which", cmd).redirectErrorStream(true).start();
+
+            if (LOGGER.isDebugEnabled()) {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                    String output = reader.lines().collect(Collectors.joining("\n"));
+                    LOGGER.debug("Command 'which {}' returned {}", cmd, output);
+                }
+            }
+
+            return process.waitFor() == 0;
         } catch (InterruptedException | IOException e) {
             LOGGER.debug("Error trying to check if command {} exists: {}", cmd, e.getMessage());
         }

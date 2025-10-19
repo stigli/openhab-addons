@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -18,10 +18,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -99,7 +97,7 @@ public class BoschIndegoHandler extends BaseThingHandler implements Authorizatio
     private @Nullable ScheduledFuture<?> statePollFuture;
     private @Nullable ScheduledFuture<?> cuttingTimePollFuture;
     private @Nullable ScheduledFuture<?> cuttingTimeFuture;
-    private Optional<Integer> previousStateCode = Optional.empty();
+    private @Nullable Integer previousStateCode;
     private @Nullable RawType cachedMap;
     private Instant cachedMapTimestamp = Instant.MIN;
     private Instant operatingDataTimestamp = Instant.MIN;
@@ -145,7 +143,7 @@ public class BoschIndegoHandler extends BaseThingHandler implements Authorizatio
         controller = new IndegoDeviceController(httpClient, authorizationProvider, config.serialNumber);
 
         updateStatus(ThingStatus.UNKNOWN);
-        previousStateCode = Optional.empty();
+        previousStateCode = null;
         rescheduleStatePoll(0, stateInactiveRefreshIntervalSeconds, false);
         this.cuttingTimePollFuture = scheduler.scheduleWithFixedDelay(this::refreshCuttingTimesWithExceptionHandling, 0,
                 config.cuttingTimeRefresh, TimeUnit.MINUTES);
@@ -347,8 +345,9 @@ public class BoschIndegoHandler extends BaseThingHandler implements Authorizatio
 
         int previousState;
         DeviceStatus previousDeviceStatus;
-        if (previousStateCode.isPresent()) {
-            previousState = previousStateCode.get();
+        Integer previousStateCode = this.previousStateCode;
+        if (previousStateCode != null) {
+            previousState = previousStateCode;
             previousDeviceStatus = DeviceStatus.fromCode(previousState);
             if (state.state != previousState
                     && ((!previousDeviceStatus.isDocked() && deviceStatus.isDocked()) || deviceStatus.isCompleted())) {
@@ -361,7 +360,7 @@ public class BoschIndegoHandler extends BaseThingHandler implements Authorizatio
             previousState = state.state;
             previousDeviceStatus = DeviceStatus.fromCode(previousState);
         }
-        previousStateCode = Optional.of(state.state);
+        this.previousStateCode = state.state;
 
         refreshOperatingDataConditionally(
                 previousDeviceStatus.isCharging() || deviceStatus.isCharging() || deviceStatus.isActive());
@@ -448,12 +447,7 @@ public class BoschIndegoHandler extends BaseThingHandler implements Authorizatio
     private void refreshLastCuttingTime() throws IndegoAuthenticationException, IndegoException {
         if (isLinked(LAST_CUTTING)) {
             Instant lastCutting = controller.getPredictiveLastCutting();
-            if (lastCutting != null) {
-                updateState(LAST_CUTTING,
-                        new DateTimeType(ZonedDateTime.ofInstant(lastCutting, timeZoneProvider.getTimeZone())));
-            } else {
-                updateState(LAST_CUTTING, UnDefType.UNDEF);
-            }
+            updateState(LAST_CUTTING, lastCutting == null ? UnDefType.UNDEF : new DateTimeType(lastCutting));
         }
     }
 
@@ -472,8 +466,7 @@ public class BoschIndegoHandler extends BaseThingHandler implements Authorizatio
         if (isLinked(NEXT_CUTTING)) {
             Instant nextCutting = controller.getPredictiveNextCutting();
             if (nextCutting != null) {
-                updateState(NEXT_CUTTING,
-                        new DateTimeType(ZonedDateTime.ofInstant(nextCutting, timeZoneProvider.getTimeZone())));
+                updateState(NEXT_CUTTING, new DateTimeType(nextCutting));
                 scheduleCuttingTimesRefresh(nextCutting);
             } else {
                 updateState(NEXT_CUTTING, UnDefType.UNDEF);

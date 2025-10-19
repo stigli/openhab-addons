@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -81,6 +81,7 @@ public class ShellyChannelDefinitions {
     public static final String ITEMT_ENERGY = "Number:Energy";
     public static final String ITEMT_VOLT = "Number:ElectricPotential";
     public static final String ITEMT_AMP = "Number:ElectricCurrent";
+    public static final String ITEMT_FREQ = "Number:Frequency";
     public static final String ITEMT_ANGLE = "Number:Angle";
     public static final String ITEMT_DISTANCE = "Number:Length";
     public static final String ITEMT_SPEED = "Number:Speed";
@@ -133,6 +134,7 @@ public class ShellyChannelDefinitions {
                 .add(new ShellyChannel(m, CHGR_DEVST, CHANNEL_DEVST_WAKEUP, "sensorWakeup", ITEMT_STRING))
                 .add(new ShellyChannel(m, CHGR_DEVST, CHANNEL_DEVST_ACCUWATTS, "meterAccuWatts", ITEMT_POWER))
                 .add(new ShellyChannel(m, CHGR_DEVST, CHANNEL_DEVST_ACCUTOTAL, "meterAccuTotal", ITEMT_ENERGY))
+                .add(new ShellyChannel(m, CHGR_DEVST, CHANNEL_DEVST_TOTALKWH, "totalKWH", ITEMT_ENERGY))
                 .add(new ShellyChannel(m, CHGR_DEVST, CHANNEL_DEVST_ACCURETURNED, "meterAccuReturned", ITEMT_ENERGY))
                 .add(new ShellyChannel(m, CHGR_DEVST, CHANNEL_DEVST_RESETTOTAL, "meterResetTotals", ITEMT_SWITCH))
                 .add(new ShellyChannel(m, CHGR_DEVST, CHANNEL_DEVST_VOLTAGE, "supplyVoltage", ITEMT_VOLT))
@@ -144,6 +146,7 @@ public class ShellyChannelDefinitions {
                 .add(new ShellyChannel(m, CHGR_DEVST, CHANNEL_DEVST_HEARTBEAT, "heartBeat", ITEMT_DATETIME))
                 .add(new ShellyChannel(m, CHGR_DEVST, CHANNEL_DEVST_UPDATE, "updateAvailable", ITEMT_SWITCH))
                 .add(new ShellyChannel(m, CHGR_DEVST, CHANNEL_DEVST_CALIBRATED, "calibrated", ITEMT_SWITCH))
+                .add(new ShellyChannel(m, CHGR_DEVST, CHANNEL_DEVST_FIRMWARE, "deviceFirmware", ITEMT_STRING))
 
                 // Relay
                 .add(new ShellyChannel(m, CHGR_RELAY, CHANNEL_OUTPUT_NAME, "outputName", ITEMT_STRING))
@@ -204,6 +207,7 @@ public class ShellyChannelDefinitions {
                 .add(new ShellyChannel(m, CHGR_METER, CHANNEL_EMETER_VOLTAGE, "meterVoltage", ITEMT_VOLT))
                 .add(new ShellyChannel(m, CHGR_METER, CHANNEL_EMETER_CURRENT, "meterCurrent", ITEMT_AMP))
                 .add(new ShellyChannel(m, CHGR_METER, CHANNEL_EMETER_PFACTOR, "meterPowerFactor", ITEMT_NUMBER))
+                .add(new ShellyChannel(m, CHGR_METER, CHANNEL_EMETER_FREQUENCY, "meterFrequency", ITEMT_FREQ))
                 .add(new ShellyChannel(m, CHGR_METER, CHANNEL_EMETER_RESETTOTAL, "meterResetTotals", ITEMT_SWITCH))
 
                 // 3EM: neutral current (emeter_n)
@@ -236,6 +240,15 @@ public class ShellyChannelDefinitions {
                 .add(new ShellyChannel(m, CHGR_SENSOR, CHANNEL_LAST_UPDATE, "lastUpdate", ITEMT_DATETIME))
                 .add(new ShellyChannel(m, CHGR_SENSOR, CHANNEL_SENSOR_SLEEPTIME, "sensorSleepTime", ITEMT_NUMBER))
                 .add(new ShellyChannel(m, CHGR_SENSOR, CHANNEL_SENSE_KEY, "senseKey", ITEMT_STRING)) // Sense
+
+                // BLU Remote
+                .add(new ShellyChannel(m, CHGR_SENSOR, CHANNEL_SENSOR_CHANNEL, "sensorChannel", ITEMT_NUMBER))
+                .add(new ShellyChannel(m, CHGR_SENSOR, CHANNEL_SENSOR_ROTATIONX, "sensorRotationX", ITEMT_ANGLE))
+                .add(new ShellyChannel(m, CHGR_SENSOR, CHANNEL_SENSOR_ROTATIONY, "sensorRotationY", ITEMT_ANGLE))
+                .add(new ShellyChannel(m, CHGR_SENSOR, CHANNEL_SENSOR_ROTATIONZ, "sensorRotationZ", ITEMT_ANGLE))
+                .add(new ShellyChannel(m, CHGR_SENSOR, CHANNEL_SENSOR_DIRECTION, "sensorDirection", ITEMT_STRING))
+                .add(new ShellyChannel(m, CHGR_SENSOR, CHANNEL_SENSOR_STEPS, "sensorSteps", ITEMT_NUMBER))
+                .add(new ShellyChannel(m, CHGR_SENSOR, CHANNEL_SENSOR_DISTANCE, "sensorDistance", ITEMT_DISTANCE))
 
                 // Button/ix3
                 .add(new ShellyChannel(m, CHGR_STATUS, CHANNEL_INPUT, "inputState", ITEMT_SWITCH))
@@ -310,6 +323,8 @@ public class ShellyChannelDefinitions {
             final ShellySettingsStatus status) {
         Map<String, Channel> add = new LinkedHashMap<>();
 
+        addChannel(thing, add, !profile.fwVersion.isEmpty() || profile.isBlu, CHGR_DEVST, CHANNEL_DEVST_FIRMWARE);
+
         addChannel(thing, add, profile.settings.name != null, CHGR_DEVST, CHANNEL_DEVST_NAME);
         addChannel(thing, add, !profile.gateway.isEmpty() || profile.isBlu, CHGR_DEVST, CHANNEL_DEVST_GATEWAY);
 
@@ -332,6 +347,7 @@ public class ShellyChannelDefinitions {
                 || (profile.hasRelays && profile.numMeters > 1 && !profile.isRoller && !profile.isRGBW2);
         addChannel(thing, add, accuChannel, CHGR_DEVST, CHANNEL_DEVST_ACCUWATTS);
         addChannel(thing, add, accuChannel, CHGR_DEVST, CHANNEL_DEVST_ACCUTOTAL);
+        addChannel(thing, add, accuChannel, CHGR_DEVST, CHANNEL_DEVST_TOTALKWH);
         addChannel(thing, add, accuChannel && (status.emeters != null), CHGR_DEVST, CHANNEL_DEVST_ACCURETURNED);
         addChannel(thing, add, profile.is3EM, CHGR_DEVST, CHANNEL_DEVST_RESETTOTAL); // 3EM
         addChannel(thing, add, status.voltage != null || profile.settings.supplyVoltage != null, CHGR_DEVST,
@@ -339,12 +355,14 @@ public class ShellyChannelDefinitions {
         addChannel(thing, add,
                 profile.status.uptime != null && (!profile.hasBattery || profile.isMotion || profile.isTRV), CHGR_DEVST,
                 CHANNEL_DEVST_UPTIME);
-        addChannel(thing, add, true, CHGR_DEVST, CHANNEL_DEVST_UPDATE);
         addChannel(thing, add, true, CHGR_DEVST, CHANNEL_DEVST_HEARTBEAT);
         addChannel(thing, add, profile.settings.ledPowerDisable != null, CHGR_DEVST, CHANNEL_LED_POWER_DISABLE);
         addChannel(thing, add, profile.settings.ledStatusDisable != null, CHGR_DEVST, CHANNEL_LED_STATUS_DISABLE); // WiFi
         addChannel(thing, add, profile.settings.calibrated != null, CHGR_DEVST, CHANNEL_DEVST_CALIBRATED);
 
+        if (!profile.isBlu) { // currently not supported for BLU devices
+            addChannel(thing, add, true, CHGR_DEVST, CHANNEL_DEVST_UPDATE);
+        }
         return add;
     }
 
@@ -358,8 +376,9 @@ public class ShellyChannelDefinitions {
         Map<String, Channel> add = new LinkedHashMap<>();
         String group = profile.getControlGroup(idx);
 
-        if (profile.settings.relays != null) {
-            ShellySettingsRelay rs = profile.settings.relays.get(idx);
+        List<ShellySettingsRelay> relays = profile.settings.relays;
+        if (relays != null) {
+            ShellySettingsRelay rs = relays.get(idx);
             addChannel(thing, add, rs.ison != null, group, CHANNEL_OUTPUT);
             addChannel(thing, add, rs.name != null, group, CHANNEL_OUTPUT_NAME);
 
@@ -406,8 +425,9 @@ public class ShellyChannelDefinitions {
         // Shelly Dimmer has an additional brightness channel
         addChannel(thing, add, profile.isDimmer, group, CHANNEL_BRIGHTNESS);
 
-        if (profile.settings.dimmers != null) {
-            ShellySettingsDimmer ds = profile.settings.dimmers.get(idx);
+        List<ShellySettingsDimmer> dimmers = profile.settings.dimmers;
+        if (dimmers != null) {
+            ShellySettingsDimmer ds = dimmers.get(idx);
             addChannel(thing, add, ds.name != null, group, CHANNEL_OUTPUT_NAME);
             addChannel(thing, add, ds.autoOn != null, group, CHANNEL_TIMER_AUTOON);
             addChannel(thing, add, ds.autoOff != null, group, CHANNEL_TIMER_AUTOOFF);
@@ -422,16 +442,17 @@ public class ShellyChannelDefinitions {
         Map<String, Channel> add = new LinkedHashMap<>();
         String group = profile.getControlGroup(idx);
 
-        if (profile.settings.lights != null) {
-            ShellySettingsRgbwLight light = profile.settings.lights.get(idx);
-            String whiteGroup = profile.isRGBW2 ? group : CHANNEL_GROUP_WHITE_CONTROL;
+        List<ShellySettingsRgbwLight> lights = profile.settings.lights;
+        if (lights != null) {
+            ShellySettingsRgbwLight light = lights.get(idx);
+            String whiteGroup = profile.isRGBW2 && !profile.isGen2 ? group : CHANNEL_GROUP_WHITE_CONTROL;
             // Create power channel in color mode and brightness channel in white mode
             addChannel(thing, add, profile.inColor, group, CHANNEL_LIGHT_POWER);
             addChannel(thing, add, light.autoOn != null, group, CHANNEL_TIMER_AUTOON);
             addChannel(thing, add, light.autoOff != null, group, CHANNEL_TIMER_AUTOOFF);
             addChannel(thing, add, status.hasTimer != null, group, CHANNEL_TIMER_ACTIVE);
-            addChannel(thing, add, light.brightness != null, whiteGroup, CHANNEL_BRIGHTNESS);
-            addChannel(thing, add, light.temp != null, whiteGroup, CHANNEL_COLOR_TEMP);
+            addChannel(thing, add, status.brightness != null, whiteGroup, CHANNEL_BRIGHTNESS);
+            addChannel(thing, add, status.temp != null, whiteGroup, CHANNEL_COLOR_TEMP);
         }
 
         return add;
@@ -446,7 +467,8 @@ public class ShellyChannelDefinitions {
             for (int i = 0; i < profile.numInputs; i++) {
                 String group = profile.getInputGroup(i);
                 String suffix = profile.getInputSuffix(i); // multi ? String.valueOf(i + 1) : "";
-                addChannel(thing, add, !profile.isButton, group, CHANNEL_INPUT + suffix);
+                addChannel(thing, add, !profile.isBlu && !profile.isButton && !profile.isMultiButton, group,
+                        CHANNEL_INPUT + suffix);
                 addChannel(thing, add, true, group,
                         (!profile.isRoller ? CHANNEL_BUTTON_TRIGGER + suffix : CHANNEL_EVENT_TRIGGER));
                 if (profile.inButtonMode(i)) {
@@ -506,6 +528,7 @@ public class ShellyChannelDefinitions {
         addChannel(thing, newChannels, emeter.reactive != null, group, CHANNEL_EMETER_REACTWATTS);
         addChannel(thing, newChannels, emeter.voltage != null, group, CHANNEL_EMETER_VOLTAGE);
         addChannel(thing, newChannels, emeter.current != null, group, CHANNEL_EMETER_CURRENT);
+        addChannel(thing, newChannels, emeter.frequency != null, group, CHANNEL_EMETER_FREQUENCY);
         addChannel(thing, newChannels, emeter.pf != null, group, CHANNEL_EMETER_PFACTOR); // EM has no PF. but power
         addChannel(thing, newChannels, true, group, CHANNEL_LAST_UPDATE);
         ShellyThingInterface handler = (ShellyThingInterface) thing.getHandler();
@@ -553,9 +576,19 @@ public class ShellyChannelDefinitions {
             addChannel(thing, newChannels, sdata.sensor.vibration != null, CHANNEL_GROUP_SENSOR,
                     CHANNEL_SENSOR_VIBRATION);
         }
-        // Create tilt for DW/DW2, for BLU DW create channel even tilt is currently not reported
+
+        // Shelly DW/DW2/BLU DW
+        // Depending on timing the device only reports tilt or illuminance in the 1st packet only distance or vibration
+        // In this case create both channels, also if only one is included in the first packet
         if (sdata.accel != null || (profile.isBlu && profile.isDW && sdata.lux != null)) {
-            addChannel(thing, newChannels, sdata.accel.tilt != null, CHANNEL_GROUP_SENSOR, CHANNEL_SENSOR_TILT);
+            addChannel(thing, newChannels, sdata.lux != null || sdata.accel.tilt != null, CHANNEL_GROUP_SENSOR,
+                    CHANNEL_SENSOR_TILT);
+        }
+
+        // Depending on timing Shelly BLU distance reports in the 1st packet only distance or vibration
+        // In this case create both channels, also if only one is included in the first packet
+        if (sdata.distance != null || profile.isDistance) {
+            addChannel(thing, newChannels, sdata.distance != null, CHANNEL_GROUP_SENSOR, CHANNEL_SENSOR_DISTANCE);
         }
 
         // Gas
@@ -572,6 +605,16 @@ public class ShellyChannelDefinitions {
 
         // Sense
         addChannel(thing, newChannels, profile.isSense, CHANNEL_GROUP_SENSOR, CHANNEL_SENSE_KEY);
+
+        // BLU Remote
+        if (profile.isRemote) {
+            addChannel(thing, newChannels, true, CHANNEL_GROUP_SENSOR, CHANNEL_SENSOR_CHANNEL);
+            addChannel(thing, newChannels, true, CHANNEL_GROUP_SENSOR, CHANNEL_SENSOR_ROTATIONX);
+            addChannel(thing, newChannels, true, CHANNEL_GROUP_SENSOR, CHANNEL_SENSOR_ROTATIONY);
+            addChannel(thing, newChannels, true, CHANNEL_GROUP_SENSOR, CHANNEL_SENSOR_ROTATIONZ);
+            addChannel(thing, newChannels, true, CHANNEL_GROUP_SENSOR, CHANNEL_SENSOR_DIRECTION);
+            addChannel(thing, newChannels, true, CHANNEL_GROUP_SENSOR, CHANNEL_SENSOR_STEPS);
+        }
 
         // UNI
         addChannel(thing, newChannels, sdata.adcs != null, CHANNEL_GROUP_SENSOR, CHANNEL_SENSOR_VOLTAGE);

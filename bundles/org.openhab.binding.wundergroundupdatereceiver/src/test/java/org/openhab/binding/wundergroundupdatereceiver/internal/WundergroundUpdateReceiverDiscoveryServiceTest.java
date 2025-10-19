@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -134,7 +134,7 @@ class WundergroundUpdateReceiverDiscoveryServiceTest {
     }
 
     @Test
-    void aRequestWithAnUnregisteredStationidIsAddedToTheQueueOnce()
+    void aRequestWithAnUnregisteredStationIdIsAddedToTheQueueOnce()
             throws ServletException, NamespaceException, IOException {
         // Given
         final String queryString = """
@@ -522,7 +522,6 @@ class WundergroundUpdateReceiverDiscoveryServiceTest {
         protected final ChannelTypeProvider provider;
 
         AbstractTestChannelTypeRegistry(ChannelTypeProvider mock) {
-            super();
             this.provider = mock;
             when(provider.getChannelType(eq(SOFTWARETYPE_CHANNELTYPEUID), any())).thenReturn(
                     new StateChannelTypeBuilderImpl(SOFTWARETYPE_CHANNELTYPEUID, "Software type", "String").build());

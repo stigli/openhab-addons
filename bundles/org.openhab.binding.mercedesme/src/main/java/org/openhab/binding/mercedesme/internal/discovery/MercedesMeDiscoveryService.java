@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -29,9 +29,11 @@ import org.osgi.service.component.annotations.Component;
  * associated vehicles and provides DiscoveryResults
  *
  * @author Bernd Weymann - Initial Contribution
+ * @author Bernd Weymann - Add vin as representation property
  */
 @NonNullByDefault
-@Component(service = DiscoveryService.class, configurationPid = "discovery.mercedesme")
+@Component(service = { DiscoveryService.class,
+        MercedesMeDiscoveryService.class }, configurationPid = "discovery.mercedesme")
 public class MercedesMeDiscoveryService extends AbstractDiscoveryService {
 
     public MercedesMeDiscoveryService() {
@@ -56,8 +58,9 @@ public class MercedesMeDiscoveryService extends AbstractDiscoveryService {
                 break;
         }
         if (ttuid != null) {
+            properties.put("vin", vin);
             thingDiscovered(DiscoveryResultBuilder.create(new ThingUID(ttuid, ac.getThing().getUID(), vin))
-                    .withBridge(ac.getThing().getUID()).withProperties(properties)
+                    .withBridge(ac.getThing().getUID()).withProperties(properties).withRepresentationProperty("vin")
                     .withLabel("Mercedes Benz " + ttuid.getId().toUpperCase()).build());
         }
     }

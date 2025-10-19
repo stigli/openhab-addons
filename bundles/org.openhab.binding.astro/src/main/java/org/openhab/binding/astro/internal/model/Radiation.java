@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,6 +12,7 @@
  */
 package org.openhab.binding.astro.internal.model;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.core.library.dimension.Intensity;
 import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.unit.Units;
@@ -22,6 +23,7 @@ import org.openhab.core.library.unit.Units;
  * @author Gaël L'hopital - Initial contribution
  * @author Christoph Weitkamp - Introduced UoM
  */
+@NonNullByDefault
 public class Radiation {
 
     private double direct;

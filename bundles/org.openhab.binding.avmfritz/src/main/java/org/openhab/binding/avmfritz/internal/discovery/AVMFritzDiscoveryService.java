@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -13,7 +13,6 @@
 package org.openhab.binding.avmfritz.internal.discovery;
 
 import static org.openhab.binding.avmfritz.internal.AVMFritzBindingConstants.*;
-import static org.openhab.core.thing.Thing.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,9 +29,16 @@ import org.openhab.core.config.discovery.AbstractThingHandlerDiscoveryService;
 import org.openhab.core.config.discovery.DiscoveryResult;
 import org.openhab.core.config.discovery.DiscoveryResultBuilder;
 import org.openhab.core.config.discovery.DiscoveryService;
+import org.openhab.core.i18n.LocaleProvider;
+import org.openhab.core.i18n.TranslationProvider;
+import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingTypeUID;
 import org.openhab.core.thing.ThingUID;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,12 +54,20 @@ import org.slf4j.LoggerFactory;
 public class AVMFritzDiscoveryService extends AbstractThingHandlerDiscoveryService<AVMFritzBaseBridgeHandler>
         implements FritzAhaStatusListener, DiscoveryService {
     private final Logger logger = LoggerFactory.getLogger(AVMFritzDiscoveryService.class);
+    private final Bundle bundle;
 
-    public AVMFritzDiscoveryService() {
-        super(AVMFritzBaseBridgeHandler.class, Stream
-                .of(SUPPORTED_LIGHTING_THING_TYPES, SUPPORTED_BUTTON_THING_TYPES_UIDS, SUPPORTED_HEATING_THING_TYPES,
-                        SUPPORTED_DEVICE_THING_TYPES_UIDS, SUPPORTED_GROUP_THING_TYPES_UIDS)
-                .flatMap(Set::stream).collect(Collectors.toUnmodifiableSet()), 30);
+    @Activate
+    public AVMFritzDiscoveryService(final @Reference LocaleProvider localeProvider,
+            final @Reference TranslationProvider i18nProvider) {
+        super(AVMFritzBaseBridgeHandler.class,
+                Stream.of(SUPPORTED_LIGHTING_THING_TYPES, SUPPORTED_BUTTON_THING_TYPES_UIDS,
+                        SUPPORTED_HEATING_THING_TYPES, SUPPORTED_POWER_METER_THING_TYPES,
+                        SUPPORTED_DEVICE_THING_TYPES_UIDS, SUPPORTED_GROUP_THING_TYPES_UIDS).flatMap(Set::stream)
+                        .collect(Collectors.toUnmodifiableSet()),
+                30);
+        this.localeProvider = localeProvider;
+        this.i18nProvider = i18nProvider;
+        this.bundle = FrameworkUtil.getBundle(AVMFritzDiscoveryService.class);
     }
 
     @Override
@@ -107,18 +121,25 @@ public class AVMFritzDiscoveryService extends AbstractThingHandlerDiscoveryServi
         if (device.getPresent() == 1) {
             Map<String, Object> properties = new HashMap<>();
             properties.put(CONFIG_AIN, device.getIdentifier());
-            properties.put(PROPERTY_VENDOR, device.getManufacturer());
-            properties.put(PRODUCT_NAME, device.getProductName());
-            properties.put(PROPERTY_SERIAL_NUMBER, device.getIdentifier());
-            properties.put(PROPERTY_FIRMWARE_VERSION, device.getFirmwareVersion());
+            properties.put(PROPERTY_DEVICE_ID, device.getDeviceId());
+            properties.put(Thing.PROPERTY_VENDOR, device.getManufacturer());
+            properties.put(PROPERTY_PRODUCT_NAME, device.getProductName());
+            properties.put(Thing.PROPERTY_SERIAL_NUMBER, device.getIdentifier());
+            properties.put(Thing.PROPERTY_FIRMWARE_VERSION, device.getFirmwareVersion());
             if (device instanceof GroupModel model && model.getGroupinfo() != null) {
                 properties.put(PROPERTY_MASTER, model.getGroupinfo().getMasterdeviceid());
                 properties.put(PROPERTY_MEMBERS, model.getGroupinfo().getMembers());
             }
 
+            String label = device.getName();
+            if (thingUID.getAsString().contains(DEVICE_HAN_FUN_HOST)) {
+                label = i18nProvider.getText(bundle, "host.thing.label", "Host Thing for", localeProvider.getLocale())
+                        + " " + label;
+            }
+
             DiscoveryResult discoveryResult = DiscoveryResultBuilder.create(thingUID).withProperties(properties)
                     .withRepresentationProperty(CONFIG_AIN).withBridge(thingHandler.getThing().getUID())
-                    .withLabel(device.getName()).build();
+                    .withLabel(label).build();
 
             thingDiscovered(discoveryResult);
         } else {

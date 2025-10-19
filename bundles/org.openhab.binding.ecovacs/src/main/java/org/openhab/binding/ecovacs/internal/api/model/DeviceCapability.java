@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -35,6 +35,8 @@ public enum DeviceCapability {
     CUSTOM_AREA_CLEANING,
     @SerializedName("single_room_cleaning")
     SINGLE_ROOM_CLEANING,
+    @SerializedName("scenario_cleaning")
+    SCENARIO_CLEANING,
     @SerializedName("clean_speed_control")
     CLEAN_SPEED_CONTROL,
     @SerializedName("mapping")

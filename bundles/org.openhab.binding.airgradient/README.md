@@ -2,9 +2,9 @@
 
 AirGradient provides open source and open hardware air quality monitors.
 
-This binding reads air quality data from the AirGradient (https://www.airgradient.com/) API.
+This binding reads air quality data from the [AirGradient](https://www.airgradient.com/) API.
 
-This API is documented at https://api.airgradient.com/public/docs/api/v1/
+This API is documented at the [AirGradient API documentation](https://api.airgradient.com/public/docs/api/v1/).
 
 ## Supported Things
 
@@ -30,31 +30,31 @@ The binding will adapt to the content type of the returned content to support di
 
 | Name              | Hostname                                                        | Content-Type                 | Parser |
 |-------------------|-----------------------------------------------------------------|------------------------------|--------|
-| API               | Hostnames without any path (e.g., https://api.airgradient.com/) | application/json             | JSON parser for the AirGradient API, correct paths will be appended to the calls |
-| Local OpenMetrics | Hostnames with path (e.g., http://192.168.x.x/metrics)          | application/openmetrics-text | OpenMetrics parser |
-| Local Web         | Hostnames with path (e.g., http://192.168.x.x/measures/current) | application/json             | JSON parser for the AirGradient API, as if you returned the value of sendToServer() payload |
-| Local Prometheus  | Hostnames with path (e.g., http://192.168.x.x/measures)         | text/plain                   | Prometheus parser for [Prometheus format](https://prometheus.io/docs/instrumenting/exposition_formats/) |
+| API               | Hostnames without any path (e.g., `https://api.airgradient.com/`) | application/json             | JSON parser for the AirGradient API, correct paths will be appended to the calls |
+| Local OpenMetrics | Hostnames with path (e.g., `http://192.168.x.x/metrics`)          | application/openmetrics-text | OpenMetrics parser |
+| Local Web         | Hostnames with path (e.g., `http://192.168.x.x/measures/current`) | application/json             | JSON parser for the AirGradient API, as if you returned the value of sendToServer() payload |
+| Local Prometheus  | Hostnames with path (e.g., `http://192.168.x.x/measures`)         | text/plain                   | Prometheus parser for [Prometheus format](https://prometheus.io/docs/instrumenting/exposition_formats/) |
 
 ### AirGradient API
 
 The connection to the API needs setup and configuration
 
-1. Log in to the AirGradient Dashboard: https://app.airgradient.com/dashboard
-2. Navigate to Place->Connectivity Settings from the upper left hamburger menu.
-3. Enable API access, and take a copy of the Token, which will be used in the token setting to configure the connection to the API.
+1. Log in to the [AirGradient Dashboard](https://app.airgradient.com/dashboard)
+1. Navigate to Place->Connectivity Settings from the upper left hamburger menu.
+1. Enable API access, and take a copy of the Token, which will be used in the token setting to configure the connection to the API.
 
 To add a location, you need to know the location ID. To get the location ID, you
 
-1. Log in to the AirGradient Dashboard: https://app.airgradient.com/dashboard
-2. Navigate to Locations from the upper left hamburger menu.
-3. Here you will find a list of all of your sensors, with a location ID in the left column. Use that id when you add new Location things.
+1. Log in to the [AirGradient Dashboard](https://app.airgradient.com/dashboard)
+1. Navigate to Locations from the upper left hamburger menu.
+1. Here you will find a list of all of your sensors, with a location ID in the left column. Use that id when you add new Location things.
 
 ### `API` Thing Configuration
 
 | Name            | Type    | Description                           | Default                      | Required | Advanced |
 |-----------------|---------|---------------------------------------|------------------------------|----------|----------|
 | token           | text    | Token to access the device            | N/A                          | yes      | no       |
-| hostname        | text    | Hostname or IP address of the API     | https://api.airgradient.com/ | no       | yes      |
+| hostname        | text    | Hostname or IP address of the API     | `https://api.airgradient.com/` | no       | yes      |
 | refreshInterval | integer | Interval the device is polled in sec. | 600                          | no       | yes      |
 
 ### `Location` Thing Configuration
@@ -65,7 +65,7 @@ To add a location, you need to know the location ID. To get the location ID, you
 
 ## Channels
 
-For more information about the data in the channels, please refer to the models in https://api.airgradient.com/public/docs/api/v1/
+For more information about the data in the channels, please refer to the [models in the AirGradient API documentation](https://api.airgradient.com/public/docs/api/v1/).
 
 | Channel            | Type                 | Read/Write | Description                                                                      |
 |--------------------|----------------------|------------|----------------------------------------------------------------------------------|
@@ -77,7 +77,7 @@ For more information about the data in the channels, please refer to the models 
 | tvoc               | Number:Density       | Read       | Total Volatile Organic Compounds                                                 |
 | atmp               | Number:Temperature   | Read       | Ambient Temperature                                                              |
 | rhum               | Number:Dimensionless | Read       | Relative Humidity Percentage                                                     |
-| wifi               | Number               | Read       | Received signal strength indicator                                               |
+| wifi               | Number:Power         | Read       | Received signal strength indicator                                               |
 | uploads-since-boot | Number:Dimensionless | Read       | Number of measure uploads since last reboot (boot)                               |
 | leds               | String               | Read/Write | Sets the leds mode (off/co2/pm)                                                  |
 | calibration        | String               | Write      | Triggers co2 calibration on the device                                           |
@@ -101,10 +101,9 @@ These configuration settings needs AirGradient firmware on the sensor of version
 | model                 | String               | Read/Write | The model of the device (can be changed e.g. if you change sensors)              |
 | led-bar-test          | String               | Write      | Trigger test of LED bar                                                          |
 
-
 ## Full Example
 
-### Thing Configuration
+### Things Configuration
 
 ```java
 Bridge airgradient:airgradient-api:home "My Home" [ token="abc123...." ] {
@@ -118,5 +117,3 @@ Bridge airgradient:airgradient-api:home "My Home" [ token="abc123...." ] {
 Number:Density      AirGradient_Location_PM2        "%.0f kg/m³"                         <density>       {channel="airgradient:location:654321:pm2"}"
 Number:Temperature  AirGradient_Location_PM2        "Temperature [%.1f °C]"              <temperature>   {channel="airgradient:location:654321:atmp"}"
 ```
-
-

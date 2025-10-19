@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -25,10 +25,8 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 public class AccountConfiguration {
 
     public String email = NOT_SET;
+    public String password = NOT_SET;
     public String region = NOT_SET;
     public String pin = NOT_SET;
     public int refreshInterval = 15;
-
-    public String callbackIP = NOT_SET;
-    public int callbackPort = -1;
 }

@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -72,9 +72,10 @@ public abstract class AbstractHomekitAccessoryImpl implements HomekitAccessory {
     private final Map<Class<? extends Characteristic>, Characteristic> rawCharacteristics;
     private boolean isLinkedService = false;
 
-    public AbstractHomekitAccessoryImpl(HomekitTaggedItem accessory, List<HomekitTaggedItem> characteristics,
-            HomekitAccessoryUpdater updater, HomekitSettings settings) {
-        this.characteristics = characteristics;
+    public AbstractHomekitAccessoryImpl(HomekitTaggedItem accessory, List<HomekitTaggedItem> mandatoryCharacteristics,
+            List<Characteristic> mandatoryRawCharacteristics, HomekitAccessoryUpdater updater,
+            HomekitSettings settings) {
+        this.characteristics = mandatoryCharacteristics;
         this.accessory = accessory;
         this.updater = updater;
         this.services = new ArrayList<>();
@@ -86,6 +87,15 @@ public abstract class AbstractHomekitAccessoryImpl implements HomekitAccessory {
             // not all mandatory characteristics are creatable via HomekitCharacteristicFactory (yet)
             if (rawCharacteristic != null) {
                 rawCharacteristics.put(rawCharacteristic.getClass(), rawCharacteristic);
+            }
+        });
+        mandatoryRawCharacteristics.forEach(c -> {
+            if (rawCharacteristics.get(c.getClass()) != null) {
+                logger.warn(
+                        "Accessory {} already has a characteristic of type {}; ignoring additional definition from metadata.",
+                        accessory.getName(), c.getClass().getSimpleName());
+            } else {
+                rawCharacteristics.put(c.getClass(), c);
             }
         });
     }
@@ -228,6 +238,26 @@ public abstract class AbstractHomekitAccessoryImpl implements HomekitAccessory {
         return this.services;
     }
 
+    public void addService(Service service) {
+        services.add(service);
+
+        var serviceClass = service.getClass();
+        rawCharacteristics.values().stream().sorted((lhs, rhs) -> lhs.getType().compareTo(rhs.getType()))
+                .forEach(characteristic -> {
+                    // belongs on the accessory information service
+                    if (characteristic.getClass() == NameCharacteristic.class) {
+                        return;
+                    }
+                    try {
+                        // if the service supports adding this characteristic as optional, add it!
+                        serviceClass.getMethod("addOptionalCharacteristic", characteristic.getClass()).invoke(service,
+                                characteristic);
+                    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                        // the service doesn't support this optional characteristic; ignore it
+                    }
+                });
+    }
+
     protected HomekitAccessoryUpdater getUpdater() {
         return updater;
     }
@@ -343,19 +373,19 @@ public abstract class AbstractHomekitAccessoryImpl implements HomekitAccessory {
     }
 
     @NonNullByDefault
-    protected <T extends Enum<T> & CharacteristicEnum> Map<T, String> createMapping(
+    protected <T extends Enum<T> & CharacteristicEnum> Map<T, Object> createMapping(
             HomekitCharacteristicType characteristicType, Class<T> klazz) {
         return createMapping(characteristicType, klazz, null, false);
     }
 
     @NonNullByDefault
-    protected <T extends Enum<T> & CharacteristicEnum> Map<T, String> createMapping(
+    protected <T extends Enum<T> & CharacteristicEnum> Map<T, Object> createMapping(
             HomekitCharacteristicType characteristicType, Class<T> klazz, boolean inverted) {
         return createMapping(characteristicType, klazz, null, inverted);
     }
 
     @NonNullByDefault
-    protected <T extends Enum<T> & CharacteristicEnum> Map<T, String> createMapping(
+    protected <T extends Enum<T> & CharacteristicEnum> Map<T, Object> createMapping(
             HomekitCharacteristicType characteristicType, Class<T> klazz, @Nullable List<T> customEnumList) {
         return createMapping(characteristicType, klazz, customEnumList, false);
     }
@@ -369,7 +399,7 @@ public abstract class AbstractHomekitAccessoryImpl implements HomekitAccessory {
      * @return mapping of enum values to custom string values
      */
     @NonNullByDefault
-    protected <T extends Enum<T> & CharacteristicEnum> Map<T, String> createMapping(
+    protected <T extends Enum<T> & CharacteristicEnum> Map<T, Object> createMapping(
             HomekitCharacteristicType characteristicType, Class<T> klazz, @Nullable List<T> customEnumList,
             boolean inverted) {
         HomekitTaggedItem item = getCharacteristic(characteristicType).get();
@@ -387,11 +417,12 @@ public abstract class AbstractHomekitAccessoryImpl implements HomekitAccessory {
      * @return key for the value
      */
     @NonNullByDefault
-    public <T> T getKeyFromMapping(HomekitCharacteristicType characteristicType, Map<T, String> mapping,
+    public <T> T getKeyFromMapping(HomekitCharacteristicType characteristicType, Map<T, Object> mapping,
             T defaultValue) {
         final Optional<HomekitTaggedItem> c = getCharacteristic(characteristicType);
         if (c.isPresent()) {
-            return HomekitCharacteristicFactory.getKeyFromMapping(c.get(), mapping, defaultValue);
+            return HomekitCharacteristicFactory.getKeyFromMapping(c.get(), c.get().getItem().getState(), mapping,
+                    defaultValue);
         }
         return defaultValue;
     }
@@ -421,6 +452,10 @@ public abstract class AbstractHomekitAccessoryImpl implements HomekitAccessory {
             return;
         }
         rawCharacteristics.put(characteristic.getClass(), characteristic);
+        // belongs on the accessory information service
+        if (characteristic.getClass() == NameCharacteristic.class) {
+            return;
+        }
         var service = getPrimaryService();
         if (service != null) {
             // find the corresponding add method at service and call it.
@@ -531,33 +566,32 @@ public abstract class AbstractHomekitAccessoryImpl implements HomekitAccessory {
         serviceBuilder.add("type", service.getType());
         var characteristics = Json.createArrayBuilder();
 
-        service.getCharacteristics().stream().sorted((l, r) -> l.getClass().getName().compareTo(r.getClass().getName()))
-                .forEach(c -> {
-                    try {
-                        var cJson = c.toJson(0).get();
-                        var cBuilder = Json.createObjectBuilder();
-                        // Need to copy over everything except the current value, which we instead
-                        // reach in and get the default value
-                        cJson.forEach((k, v) -> {
-                            if ("value".equals(k)) {
-                                Object defaultValue = ((BaseCharacteristic) c).getDefault();
-                                if (defaultValue instanceof Boolean) {
-                                    cBuilder.add("value", (boolean) defaultValue);
-                                } else if (defaultValue instanceof Integer) {
-                                    cBuilder.add("value", (int) defaultValue);
-                                } else if (defaultValue instanceof Double) {
-                                    cBuilder.add("value", (double) defaultValue);
-                                } else {
-                                    cBuilder.add("value", defaultValue.toString());
-                                }
-                            } else {
-                                cBuilder.add(k, v);
-                            }
-                        });
-                        characteristics.add(cBuilder.build());
-                    } catch (InterruptedException | ExecutionException e) {
+        service.getCharacteristics().forEach(c -> {
+            try {
+                var cJson = c.toJson(0).get();
+                var cBuilder = Json.createObjectBuilder();
+                // Need to copy over everything except the current value, which we instead
+                // reach in and get the default value
+                cJson.forEach((k, v) -> {
+                    if ("value".equals(k)) {
+                        Object defaultValue = ((BaseCharacteristic) c).getDefault();
+                        if (defaultValue instanceof Boolean) {
+                            cBuilder.add("value", (boolean) defaultValue);
+                        } else if (defaultValue instanceof Integer) {
+                            cBuilder.add("value", (int) defaultValue);
+                        } else if (defaultValue instanceof Double) {
+                            cBuilder.add("value", (double) defaultValue);
+                        } else {
+                            cBuilder.add("value", defaultValue.toString());
+                        }
+                    } else {
+                        cBuilder.add(k, v);
                     }
                 });
+                characteristics.add(cBuilder.build());
+            } catch (InterruptedException | ExecutionException e) {
+            }
+        });
         serviceBuilder.add("c", characteristics);
 
         if (!service.getLinkedServices().isEmpty()) {

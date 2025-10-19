@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -96,8 +96,8 @@ public class Eclipse {
     }
 
     public void set(EclipseKind eclipseKind, Calendar eclipseDate, @Nullable Position position) {
-        entries.put(eclipseKind,
-                new SimpleEntry<>(eclipseDate, position != null ? position.getElevationAsDouble() : null));
+        entries.put(eclipseKind, new SimpleEntry<Calendar, @Nullable Double>(eclipseDate,
+                position != null ? position.getElevationAsDouble() : null));
     }
 
     public void setElevations(AstroThingHandler astroHandler, TimeZoneProvider timeZoneProvider) {
