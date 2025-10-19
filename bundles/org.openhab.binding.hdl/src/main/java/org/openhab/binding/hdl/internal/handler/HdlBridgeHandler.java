@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -34,7 +34,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.commons.lang3.StringUtils;
 import org.openhab.binding.hdl.HdlBindingConstants;
 import org.openhab.binding.hdl.internal.device.Device;
 import org.openhab.binding.hdl.internal.device.DeviceConfiguration;
@@ -124,7 +123,7 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
 
     protected void onRead(ByteBuffer byteBuffer, DatagramChannel datagramChannel) {
         String response = new String(byteBuffer.array(), 0, byteBuffer.limit());
-        response = StringUtils.chomp(response);
+        response = response.replaceAll("[\\r\\n]+$", "");
 
         HdlPacket p = HdlPacket.parse(byteBuffer.array(), byteBuffer.position());
 
@@ -280,7 +279,7 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
                             try {
                                 InetSocketAddress clientAddress = (InetSocketAddress) theChannel.receive(readBuffer);
                                 if (clientAddress.getAddress().equals(permittedClientAddress)) {
-                                    logger.warn("Received {} on the listener port from {}",
+                                    logger.debug("Received {} on the listener port from {}",
                                             new String(readBuffer.array()), clientAddress);
                                     numberBytesRead = readBuffer.position();
                                 } else {

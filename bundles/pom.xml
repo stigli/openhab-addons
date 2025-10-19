@@ -191,6 +191,7 @@
     <module>org.openhab.binding.haywardomnilogic</module>
     <module>org.openhab.binding.hccrubbishcollection</module>
     <module>org.openhab.binding.hdanywhere</module>
+	<module>org.openhab.binding.hdl</module>
     <module>org.openhab.binding.hdpowerview</module>
     <module>org.openhab.binding.helios</module>
     <module>org.openhab.binding.heliosventilation</module>

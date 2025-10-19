@@ -1,5 +1,5 @@
-/**
- * Copyright (c) 2010-2024 Contributors to the openHAB project
+/*
+ * Copyright (c) 2010-2025 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -46,13 +46,22 @@ public abstract class Device {
     public abstract DeviceType getType();
 
     public static Device create(String serialNr, List<DeviceConfiguration> configurations) {
-        Device returnValue = null;
+        if (serialNr == null || configurations == null) {
+            LOGGER.debug("Device.create called with null serial or configurations (serial={}, configs={})", serialNr,
+                    configurations == null ? 0 : configurations.size());
+            return null;
+        }
+        String incoming = serialNr.trim();
         for (DeviceConfiguration c : configurations) {
-            if (c.getSerialNr().toUpperCase().equals(serialNr.toUpperCase())) {
+            String cSerial = c == null ? null : c.getSerialNr();
+            LOGGER.debug("Comparing incoming serial '{}' with config serial '{}'", incoming, cSerial);
+            if (cSerial != null && cSerial.trim().equalsIgnoreCase(incoming)) {
+                LOGGER.debug("Match found for serial '{}'", incoming);
                 return create(c);
             }
         }
-        return returnValue;
+        LOGGER.debug("No matching configuration found for serial '{}'", incoming);
+        return null;
     }
 
     public static Device create(HdlPacket p, List<DeviceConfiguration> configurations) {
