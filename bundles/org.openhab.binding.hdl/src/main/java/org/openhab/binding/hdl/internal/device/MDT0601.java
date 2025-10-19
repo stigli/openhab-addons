@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.hdl.internal.device;
 
+import java.util.Objects;
+
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 import org.openhab.core.library.types.PercentType;
 
@@ -96,7 +98,7 @@ public class MDT0601 extends Device {
     }
 
     public void setDimChannel1(PercentType DimChannel1) {
-        if (!this.dimChannel1.equals(DimChannel1)) {
+        if (!Objects.equals(this.dimChannel1, DimChannel1)) {
             setUpdated(true);
         }
         this.dimChannel1 = DimChannel1;
@@ -107,7 +109,7 @@ public class MDT0601 extends Device {
     }
 
     public void setDimChannel2(PercentType DimChannel2) {
-        if (!this.dimChannel2.equals(DimChannel2)) {
+        if (!Objects.equals(this.dimChannel2, DimChannel2)) {
             setUpdated(true);
         }
         this.dimChannel2 = DimChannel2;
@@ -118,7 +120,7 @@ public class MDT0601 extends Device {
     }
 
     public void setDimChannel3(PercentType DimChannel3) {
-        if (!this.dimChannel3.equals(DimChannel3)) {
+        if (!Objects.equals(this.dimChannel3, DimChannel3)) {
             setUpdated(true);
         }
         this.dimChannel3 = DimChannel3;
@@ -129,7 +131,7 @@ public class MDT0601 extends Device {
     }
 
     public void setDimChannel4(PercentType DimChannel4) {
-        if (!this.dimChannel4.equals(DimChannel4)) {
+        if (!Objects.equals(this.dimChannel4, DimChannel4)) {
             setUpdated(true);
         }
         this.dimChannel4 = DimChannel4;
@@ -140,7 +142,7 @@ public class MDT0601 extends Device {
     }
 
     public void setDimChannel5(PercentType DimChannel5) {
-        if (!this.dimChannel5.equals(DimChannel5)) {
+        if (!Objects.equals(this.dimChannel5, DimChannel5)) {
             setUpdated(true);
         }
         this.dimChannel5 = DimChannel5;
@@ -151,7 +153,7 @@ public class MDT0601 extends Device {
     }
 
     public void setDimChannel6(PercentType DimChannel6) {
-        if (!this.dimChannel6.equals(DimChannel6)) {
+        if (!Objects.equals(this.dimChannel6, DimChannel6)) {
             setUpdated(true);
         }
         this.dimChannel6 = DimChannel6;

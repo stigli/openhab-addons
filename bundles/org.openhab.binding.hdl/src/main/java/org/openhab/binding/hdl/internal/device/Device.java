@@ -111,7 +111,7 @@ public abstract class Device {
             case MW02_231:
                 return new MW02(c);
             default:
-                LOGGER.debug("In HDLPacket Type: {} but unhandled device.", c.getDeviceType());
+                LOGGER.warn("In HDLPacket Type: {} but unhandled device.", c.getDeviceType());
                 return new UnsupportedDevice(c);
         }
     }

@@ -13,6 +13,7 @@
 package org.openhab.binding.hdl.internal.device;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 import org.openhab.binding.hdl.HdlBindingConstants.EnumFHMode;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
@@ -379,7 +380,7 @@ public class MPL848FH extends Device {
     }
 
     public void setFloorHeatingTemperaturType(String FloorHeatingTemperaturType) {
-        if (!this.floorHeatingTemperaturType.equals(FloorHeatingTemperaturType)) {
+        if (!Objects.equals(this.floorHeatingTemperaturType, FloorHeatingTemperaturType)) {
             setUpdated(true);
         }
         this.floorHeatingTemperaturType = FloorHeatingTemperaturType;
@@ -402,7 +403,7 @@ public class MPL848FH extends Device {
     }
 
     public void setFloorHeatingStatus(OnOffType FloorHeatingStatus) {
-        if (!this.floorHeatingStatus.equals(FloorHeatingStatus)) {
+        if (!Objects.equals(this.floorHeatingStatus, FloorHeatingStatus)) {
             setUpdated(true);
         }
         this.floorHeatingStatus = FloorHeatingStatus;
@@ -496,7 +497,7 @@ public class MPL848FH extends Device {
     }
 
     public void setFloorHeatingTimer(String FloorHeatingTimer) {
-        if (!this.floorHeatingTimer.equals(FloorHeatingTimer)) {
+        if (!Objects.equals(this.floorHeatingTimer, FloorHeatingTimer)) {
             setUpdated(true);
         }
         this.floorHeatingTimer = FloorHeatingTimer;
@@ -509,7 +510,7 @@ public class MPL848FH extends Device {
     // AC
 
     public void setACFanSpeed(String ACFanSpeed) {
-        if (!this.acFanSpeed.equals(ACFanSpeed)) {
+        if (!Objects.equals(this.acFanSpeed, ACFanSpeed)) {
             setUpdated(true);
         }
         this.acFanSpeed = ACFanSpeed;
@@ -520,7 +521,7 @@ public class MPL848FH extends Device {
     }
 
     public void setACMode(String ACMode) {
-        if (!this.acMode.equals(ACMode)) {
+        if (!Objects.equals(this.acMode, ACMode)) {
             setUpdated(true);
         }
         this.acMode = ACMode;
