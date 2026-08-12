@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -34,7 +34,6 @@ import org.openhab.automation.pythonscripting.internal.console.handler.InfoCmd;
 import org.openhab.automation.pythonscripting.internal.console.handler.TypingCmd;
 import org.openhab.automation.pythonscripting.internal.console.handler.UpdateCmd;
 import org.openhab.core.automation.module.script.ScriptEngineContainer;
-import org.openhab.core.automation.module.script.ScriptEngineFactory;
 import org.openhab.core.automation.module.script.ScriptEngineManager;
 import org.openhab.core.config.core.ConfigDescriptionRegistry;
 import org.openhab.core.io.console.Console;
@@ -175,7 +174,8 @@ public class PythonConsoleCommandExtension extends AbstractConsoleCommandExtensi
     }
 
     private void info(Console console) {
-        new InfoCmd(pythonScriptEngineConfiguration, console).show(configDescriptionRegistry);
+        new InfoCmd(pythonScriptEngineConfiguration, console, this.pythonScriptEngineFactory.getLanguage())
+                .show(configDescriptionRegistry);
     }
 
     private void startConsole(Console console, String[] args) {
@@ -243,7 +243,7 @@ public class PythonConsoleCommandExtension extends AbstractConsoleCommandExtensi
             console.println("Unknown pip action '" + args[1] + "'");
             console.printUsage(getPipUsage());
         } else {
-            ArrayList<String> params = new ArrayList<String>(Arrays.asList(args));
+            List<String> params = new ArrayList<>(Arrays.asList(args));
 
             if (PIP_UNINSTALL.equals(args[0]) && args.length >= 2) {
                 if (!confirmAction(console, "You are uninstalling python modules.")) {
@@ -298,11 +298,7 @@ public class PythonConsoleCommandExtension extends AbstractConsoleCommandExtensi
                     engine = container.getScriptEngine();
                 }
             } else {
-                engine = pythonScriptEngineFactory.createScriptEngine(scriptType);
-                if (engine != null) {
-                    engine.getContext().setAttribute(ScriptEngineFactory.CONTEXT_KEY_ENGINE_IDENTIFIER,
-                            scriptIdentifier, ScriptContext.ENGINE_SCOPE);
-                }
+                engine = pythonScriptEngineFactory.createScriptEngine(scriptType, scriptIdentifier);
             }
 
             if (engine == null) {

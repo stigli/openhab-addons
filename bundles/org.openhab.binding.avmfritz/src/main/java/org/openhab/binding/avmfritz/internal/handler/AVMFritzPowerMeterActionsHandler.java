@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -37,8 +37,9 @@ public interface AVMFritzPowerMeterActionsHandler extends ThingHandler {
      * Enables high refresh polling for this power meter.
      *
      * @param deviceId Id of the device.
+     * @param pollingInterval The interval for polling.
      */
-    void enablePowerMeterHighRefresh(long deviceId);
+    void enablePowerMeterHighRefresh(long deviceId, long pollingInterval);
 
     /**
      * Disables high refresh polling for this power meter.

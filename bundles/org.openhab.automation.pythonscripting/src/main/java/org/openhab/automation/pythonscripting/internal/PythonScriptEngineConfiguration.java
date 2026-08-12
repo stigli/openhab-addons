@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -22,13 +22,13 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.graalvm.polyglot.Context;
 import org.openhab.core.OpenHAB;
-import org.openhab.core.automation.module.script.ScriptEngineFactory;
 import org.openhab.core.config.core.Configuration;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.component.annotations.Activate;
@@ -49,7 +49,7 @@ public class PythonScriptEngineConfiguration {
     private final Logger logger = LoggerFactory.getLogger(PythonScriptEngineConfiguration.class);
 
     private static final String SYSTEM_PROPERTY_POLYGLOT_ENGINE_USERRESOURCECACHE = "polyglot.engine.userResourceCache";
-
+    private static final String SYSTEM_PROPERTY_ATTACH_LIBRARY_FAILURE_ACTION = "polyglotimpl.AttachLibraryFailureAction";
     private static final String SYSTEM_PROPERTY_JAVA_IO_TMPDIR = "java.io.tmpdir";
 
     public static final String PATH_SEPARATOR = FileSystems.getDefault().getSeparator();
@@ -63,20 +63,26 @@ public class PythonScriptEngineConfiguration {
     public static final Path PYTHON_WRAPPER_FILE_PATH = PYTHON_OPENHAB_LIB_PATH.resolve("__wrapper__.py");
     public static final Path PYTHON_INIT_FILE_PATH = PYTHON_OPENHAB_LIB_PATH.resolve("__init__.py");
 
-    public static final int INJECTION_DISABLED = 0;
-    public static final int INJECTION_ENABLED_FOR_ALL_SCRIPTS = 1;
-    public static final int INJECTION_ENABLED_FOR_NON_FILE_BASED_SCRIPTS = 2;
+    private static final int INJECTION_DISABLED = 1;
+    private static final int INJECTION_ENABLED_FOR_SCRIPT_MODULES_ONLY = 2;
+    private static final int INJECTION_ENABLED_FOR_SCRIPT_MODULES_AND_TRANSFORMATIONS = 3;
+    private static final int INJECTION_ENABLED_FOR_ALL_SCRIPTS = 4;
+
+    private static final int DEBUGGER_PORT_DEFAULT = 9230;
+
+    /** The default lock acquisition timeout in seconds */
+    private static final long LOCK_ACQUISITION_TIMEOUT_DEFAULT = 5L;
 
     // The variable names must match the configuration keys in config.xml
     public static class PythonScriptingConfiguration {
-        public boolean scopeEnabled = true;
-        public boolean helperEnabled = true;
-        public int injectionEnabled = INJECTION_ENABLED_FOR_NON_FILE_BASED_SCRIPTS;
+        public int injectionEnabled = INJECTION_ENABLED_FOR_SCRIPT_MODULES_ONLY;
         public boolean dependencyTrackingEnabled = true;
         public boolean cachingEnabled = true;
         public boolean jythonEmulation = false;
-        public boolean nativeModules = false;
+        public boolean debuggerEnabled = false;
+        public int debuggerPort = DEBUGGER_PORT_DEFAULT;
         public String pipModules = "";
+        public long lockAcquisitionTimeout = LOCK_ACQUISITION_TIMEOUT_DEFAULT;
     }
 
     private PythonScriptingConfiguration configuration = new PythonScriptingConfiguration();
@@ -97,8 +103,13 @@ public class PythonScriptEngineConfiguration {
         return Version.parse(version != null && version.startsWith("v") ? version.substring(1) : version);
     }
 
+    static {
+        // disable warning about missing TruffleAttach library (is only available in graalvm)
+        System.getProperties().setProperty(SYSTEM_PROPERTY_ATTACH_LIBRARY_FAILURE_ACTION, "ignore");
+    }
+
     @Activate
-    public PythonScriptEngineConfiguration(Map<String, Object> config, PythonScriptEngineFactory factory) {
+    public PythonScriptEngineConfiguration(Map<String, Object> config) {
         Path userdataDir = Paths.get(OpenHAB.getUserDataFolder());
 
         String tmpDir = System.getProperty(SYSTEM_PROPERTY_JAVA_IO_TMPDIR);
@@ -123,12 +134,14 @@ public class PythonScriptEngineConfiguration {
             throw new IllegalArgumentException("Unable to load build.properties");
         }
 
+        Properties props = System.getProperties();
+        props.setProperty(SYSTEM_PROPERTY_POLYGLOT_ENGINE_USERRESOURCECACHE,
+                userdataDir.resolve("cache").resolve("org.graalvm.polyglot").toString());
+        props.setProperty(SYSTEM_PROPERTY_ATTACH_LIBRARY_FAILURE_ACTION, "ignore");
+
         String packageName = PythonScriptEngineConfiguration.class.getPackageName();
         packageName = packageName.substring(0, packageName.lastIndexOf("."));
         Path bindingDirectory = userdataDir.resolve("cache").resolve(packageName);
-
-        Properties props = System.getProperties();
-        props.setProperty(SYSTEM_PROPERTY_POLYGLOT_ENGINE_USERRESOURCECACHE, bindingDirectory.toString());
         bytecodeDirectory = PythonScriptEngineHelper.initDirectory(bindingDirectory.resolve("resources"));
         venvDirectory = PythonScriptEngineHelper.initDirectory(bindingDirectory.resolve("venv"));
 
@@ -139,7 +152,11 @@ public class PythonScriptEngineConfiguration {
 
         installedHelperLibVersion = PythonScriptEngineHelper.initHelperLib(this, providedHelperLibVersion);
 
-        this.update(config, factory);
+        configuration = new Configuration(config).as(PythonScriptingConfiguration.class);
+    }
+
+    public void init(PythonScriptEngineFactory factory) {
+        PythonScriptEngineHelper.initPipModules(this, factory);
     }
 
     /**
@@ -148,35 +165,39 @@ public class PythonScriptEngineConfiguration {
      * @param config Configuration parameters to apply to ScriptEngine
      * @param initial
      */
-    public void modified(Map<String, Object> config, ScriptEngineFactory factory) {
-        boolean oldScopeEnabled = configuration.scopeEnabled;
-        boolean oldInjectionEnabled = !isInjection(PythonScriptEngineConfiguration.INJECTION_DISABLED);
+    public void modified(Map<String, Object> config, PythonScriptEngineFactory factory) {
+        int oldInjectionEnabled = configuration.injectionEnabled;
         boolean oldDependencyTrackingEnabled = isDependencyTrackingEnabled();
-
-        this.update(config, factory);
-
-        if (oldScopeEnabled != isScopeEnabled()) {
-            logger.info("{} scope for Python Scripting. Please resave your scripts to apply this change.",
-                    isScopeEnabled() ? "Enabled" : "Disabled");
-        }
-        if (oldInjectionEnabled != !isInjection(PythonScriptEngineConfiguration.INJECTION_DISABLED)) {
-            logger.info("{} injection for Python Scripting. Please resave your UI-based scripts to apply this change.",
-                    !isInjection(PythonScriptEngineConfiguration.INJECTION_DISABLED) ? "Enabled" : "Disabled");
-        }
-        if (oldDependencyTrackingEnabled != isDependencyTrackingEnabled()) {
-            logger.info("{} dependency tracking for Python Scripting. Please resave your scripts to apply this change.",
-                    isDependencyTrackingEnabled() ? "Enabled" : "Disabled");
-        }
-    }
-
-    private void update(Map<String, Object> config, ScriptEngineFactory factory) {
-        logger.trace("Python Script Engine Configuration: {}", config);
-
         String oldPipModules = configuration.pipModules;
+        boolean oldDebuggerEnabled = configuration.debuggerEnabled;
+        int oldDebuggerPort = configuration.debuggerPort;
+        long oldLockAcquisitionTimeout = configuration.lockAcquisitionTimeout;
+
         configuration = new Configuration(config).as(PythonScriptingConfiguration.class);
 
         if (!oldPipModules.equals(configuration.pipModules)) {
             PythonScriptEngineHelper.initPipModules(this, factory);
+        }
+
+        if (oldInjectionEnabled != configuration.injectionEnabled) {
+            logger.warn(
+                    "Changed helper module setting for Python Scripting. Please resave your python scripts to apply this change.");
+        }
+        if (oldDependencyTrackingEnabled != isDependencyTrackingEnabled()) {
+            logger.warn(
+                    "{} dependency tracking for Python Scripting. Please resave your python scripts to apply this change.",
+                    isDependencyTrackingEnabled() ? "Enabled" : "Disabled");
+        }
+        if (oldDebuggerEnabled != configuration.debuggerEnabled) {
+            logger.warn("{} debugger for Python Scripting. Restart openHAB to apply this change.",
+                    configuration.debuggerEnabled ? "Enabled" : "Disabled");
+        } else if (oldDebuggerPort != configuration.debuggerPort) {
+            logger.warn("Reconfigured debugger for Python Scripting. Restart openHAB to apply this change.");
+        }
+        if (oldLockAcquisitionTimeout != configuration.lockAcquisitionTimeout) {
+            logger.warn(
+                    "Python Scripting lock acquisition timeout changed from {} to {} seconds. Rules created with JavaScript scripts might need to be reloaded for the changes to apply.",
+                    oldLockAcquisitionTimeout, configuration.lockAcquisitionTimeout);
         }
     }
 
@@ -184,16 +205,20 @@ public class PythonScriptEngineConfiguration {
         installedHelperLibVersion = version;
     }
 
-    public boolean isScopeEnabled() {
-        return configuration.scopeEnabled;
+    public boolean isInjectionEnabledForAllScripts() {
+        return configuration.injectionEnabled == INJECTION_ENABLED_FOR_ALL_SCRIPTS;
+    }
+
+    public boolean isInjectionEnabledForScriptModules() {
+        return configuration.injectionEnabled == INJECTION_ENABLED_FOR_SCRIPT_MODULES_ONLY;
+    }
+
+    public boolean isInjectionEnabledForTransformations() {
+        return configuration.injectionEnabled == INJECTION_ENABLED_FOR_SCRIPT_MODULES_AND_TRANSFORMATIONS;
     }
 
     public boolean isHelperEnabled() {
-        return configuration.helperEnabled;
-    }
-
-    public boolean isInjection(int type) {
-        return configuration.injectionEnabled == type;
+        return configuration.injectionEnabled > 0;
     }
 
     public boolean isDependencyTrackingEnabled() {
@@ -208,8 +233,12 @@ public class PythonScriptEngineConfiguration {
         return configuration.jythonEmulation;
     }
 
-    public boolean isNativeModulesEnabled() {
-        return configuration.nativeModules;
+    public boolean isDebuggerEnabled() {
+        return configuration.debuggerEnabled;
+    }
+
+    public int getDebuggerPort() {
+        return configuration.debuggerPort;
     }
 
     public String getPIPModules() {
@@ -250,6 +279,13 @@ public class PythonScriptEngineConfiguration {
 
     public @Nullable Version getInstalledHelperLibVersion() {
         return installedHelperLibVersion;
+    }
+
+    /**
+     * @return The log acquisition timeout in milliseconds.
+     */
+    public long getLockAcquisitionTimeout() {
+        return TimeUnit.SECONDS.toMillis(configuration.lockAcquisitionTimeout);
     }
 
     /**

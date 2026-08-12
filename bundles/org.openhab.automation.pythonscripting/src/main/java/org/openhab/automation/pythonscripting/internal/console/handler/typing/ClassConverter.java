@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -225,7 +224,7 @@ public class ClassConverter {
                 String t = convertJavatToPythonType(javaType, localGenerics);
                 parameterTypes.add(t);
             }
-            List<String> sorted = parameterTypes.stream().sorted().collect(Collectors.toList());
+            List<String> sorted = parameterTypes.stream().sorted().toList();
             arguments.add(p.getName() + ": " + String.join(" | ", sorted) + (p.isOptional ? " = None" : ""));
         }
 
@@ -246,7 +245,7 @@ public class ClassConverter {
                 String t = convertJavatToPythonType(javaType, localGenerics);
                 returnTypes.add(t);
             }
-            List<String> sortedReturnTypes = returnTypes.stream().sorted().collect(Collectors.toList());
+            List<String> sortedReturnTypes = returnTypes.stream().sorted().toList();
 
             builder.append(" -> " + String.join(" | ", sortedReturnTypes));
         }

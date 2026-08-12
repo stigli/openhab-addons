@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -38,9 +38,9 @@ public class TogglexCommand {
         }
 
         @Override
-        public byte[] command(String deviceUUID) {
+        public byte[] command(MqttMessageBuilder mqttMessageBuilder, String deviceUUID) {
             Map<String, Object> payload = Map.of("togglex", Map.of("onoff", onOffValue, "channel", deviceChannel));
-            return MqttMessageBuilder.buildMqttMessage("SET", MerossEnum.Namespace.CONTROL_TOGGLEX.value(), deviceUUID,
+            return mqttMessageBuilder.buildMqttMessage("SET", MerossEnum.Namespace.CONTROL_TOGGLEX.value(), deviceUUID,
                     payload);
         }
     }

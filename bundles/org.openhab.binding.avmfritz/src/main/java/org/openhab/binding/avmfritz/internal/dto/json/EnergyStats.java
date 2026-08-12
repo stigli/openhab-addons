@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -19,6 +19,14 @@ import com.google.gson.annotations.SerializedName;
  * @author Christoph Weitkamp - Initial contribution
  */
 public class EnergyStats {
+
+    public static final int INVALID_VALUE = -9999;
+
+    public static final double AMPERAGE_FACTOR = 0.01;
+    public static final double VOLTAGE_FACTOR = 0.01;
+    public static final double POWER_FACTOR = 0.01;
+    public static final double ENERGY_FACTOR = 0.001;
+
     @SerializedName("DeviceConnectState")
     public String deviceConnectState;
     @SerializedName("VoltageStat")
@@ -33,6 +41,8 @@ public class EnergyStats {
     public int mMValueVolt;
     @SerializedName("MM_Value_Power")
     public int mMValuePower;
+    @SerializedName("MM_Value_Energy")
+    public int mMValueEnergy;
     @SerializedName("tabType")
     public String tabType;
     @SerializedName("DeviceID")
@@ -47,4 +57,40 @@ public class EnergyStats {
     public int sumMonth;
     @SerializedName("RequestResult")
     public boolean requestResult;
+
+    /**
+     * Gets the scaled amperage value.
+     *
+     * @return the scaled amperage value
+     */
+    public double getScaledAmperage() {
+        return mMValueAmp == INVALID_VALUE ? 0.0 : mMValueAmp * AMPERAGE_FACTOR;
+    }
+
+    /**
+     * Gets the scaled voltage value.
+     *
+     * @return the scaled voltage value
+     */
+    public double getScaledVoltage() {
+        return mMValueVolt == INVALID_VALUE ? 0.0 : mMValueVolt * VOLTAGE_FACTOR;
+    }
+
+    /**
+     * Gets the scaled power value.
+     *
+     * @return the scaled power value
+     */
+    public double getScaledPower() {
+        return mMValuePower == INVALID_VALUE ? 0.0 : mMValuePower * POWER_FACTOR;
+    }
+
+    /**
+     * Gets the scaled energy value.
+     *
+     * @return the scaled energy value
+     */
+    public double getScaledEnergy() {
+        return mMValueEnergy * ENERGY_FACTOR;
+    }
 }

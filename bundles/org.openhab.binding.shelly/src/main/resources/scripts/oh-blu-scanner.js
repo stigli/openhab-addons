@@ -8,7 +8,7 @@
  * @author Igor Jasan - Sensor parameter fixing, decoding of dimmer
  */
 
-let ALLTERCO_DEVICE_NAME_PREFIX = ["SBBT", "SBDW", "SBMO", "SBHT", "SBDI", "SBRC"];
+let ALLTERCO_DEVICE_NAME_PREFIX = ["SBBT", "SBDW", "SBMO", "SBHT", "SBDI", "SBRC", "SBWS"];
 let ALLTERCO_MFD_ID_STR = "0ba9";
 let BTHOME_SVC_ID_STR = "fcd2";
 
@@ -31,7 +31,6 @@ let uint32 = 6;
 let int32 = 7;
 
 let BTH_DIMMERSTEPS_INDEX = 0x3c;   // Dimmer (Wheel) Steps object ID
-let FORCE_ARRAY_VALUES = ["Temperature", "Button", "Rotation"];
 
 // BTHome object definitions: id => {name, type, optional scale factor}
 // https://bthome.io/format/
@@ -53,7 +52,7 @@ BTH[0x11] = { n: "Opening", t: uint8 };                                       //
 BTH[0x12] = { n: "Co2", t: uint16 };                                          // CO2 concentration ppm
 BTH[0x13] = { n: "TVOC", t: uint16 };                                         // TVOC Air Quality ug/m3
 BTH[0x14] = { n: "Moisture16", t: uint16, f: 0.01 };                          // Moisture (scaled by 0.01)
-BTH[0x15] = { n: "Battery", t: uint8 };                                       // Battery level normal/low status (boolean)
+BTH[0x15] = { n: "BatteryLow", t: uint8 };                                    // Battery low flag: 0=normal, 1=low
 BTH[0x16] = { n: "BatteryCharging", t: uint8 };                               // Battery charging status (boolean)
 BTH[0x17] = { n: "CarbonMonoxide", t: uint8 };                                // Carbon Monoxide not detected/detected status (boolean)
 BTH[0x18] = { n: "Cold", t: uint8 };                                          // Cold normal/cold status (boolean)
@@ -64,7 +63,7 @@ BTH[0x1c] = { n: "Gas", t: uint8 };                                           //
 BTH[0x1d] = { n: "Heat", t: uint8 };                                          // Heat normal/hot status (boolean)
 BTH[0x1e] = { n: "Light", t: uint8 };                                         // Light no light/light detected status (boolean)
 BTH[0x1f] = { n: "Lock", t: uint8 };                                          // Lock locked/unlocked status (boolean)
-BTH[0x20] = { n: "Moisture", t: uint8 };                                      // Moisture dry/wet status (boolean)
+BTH[0x20] = { n: "Moisture", t: uint8 };                                      // Moisture/Rain detection boolean
 BTH[0x21] = { n: "Motion", t: uint8 };                                        // Motion clear/detected status (boolean)
 BTH[0x22] = { n: "Moving", t: uint8 };                                        // Moving not moving/moving status (boolean)
 BTH[0x23] = { n: "Occupancy", t: uint8 };                                     // Occupancy clear/detected status (boolean)
@@ -115,6 +114,7 @@ BTH[0x5d] = { n: "Current", t: int16, f: 0.001 };                             //
 BTH[0x5e] = { n: "Direction", t: uint16, f: 0.01 };                           // Direction (scaled by 0.01)
 BTH[0x5f] = { n: "Precipitation", t: uint16, f: 0.1 };                        // Precipitation (scaled by 0.1)
 BTH[0x60] = { n: "Channel", t: uint8 };                                       // Channel
+BTH[0x64] = { n: "LightLevel", t: uint8 };                                    // Light level 0=dark, 1=twilight, 2=bright
 BTH[0xF0] = { n: "DeviceId", t: uint16};                                      // Device type ID
 BTH[0xF1] = { n: "Firmware32", t: uint32};                                    // Firmware version in 1.2.3.4 format
 BTH[0xF2] = { n: "Firmware24", t: uint24};                                    // Firmware version in 1.2.3 format
@@ -183,8 +183,12 @@ let BTHomeDecoder = {
     let _dib = buffer.at(0); // Device Info Byte
     result["encryption"] = _dib & 0x1 ? true : false;
     result["BTHome_version"] = _dib >> 5;
-    if (result["encryption"]) return result; // Can not handle encrypted data
-    if (result["BTHome_version"] !== 2) return null; // Can not handle BT version != 2    
+    if (result["encryption"]) {
+      console.log("BTH: encrypted payload, cannot decode");
+      result["alarmCode"] = "BTH_ENCRYPTED";
+      return result; // Can not handle encrypted data
+    }
+    if (result["BTHome_version"] !== 2) return null; // Can not handle BT version != 2
     
     buffer = buffer.slice(1); // Remove header byte
 
@@ -197,6 +201,7 @@ let BTHomeDecoder = {
       let _bth = BTH[bthIdx];
       if (typeof _bth === "undefined") {
         console.log("BTH: unknown type", bthIdx);
+        result["alarmCode"] = "BTH_UNKNOWN_TYPE";
         break;
       }
 
@@ -251,14 +256,6 @@ let BTHomeDecoder = {
     // Add events as arrays to the result
     if (dimmer.length > 0) result["Dimmer"] = dimmer;
 
-    // Special handling for values, which need to be converted to an array
-    for (let i = 0; i < FORCE_ARRAY_VALUES.length; i++) {
-      let key = FORCE_ARRAY_VALUES[i];
-      if (typeof result[key] !== "undefined" && !Array.isArray(result[key])) {
-        result[key] = [result[key]];
-      }
-    }
-
     return result;
   }
 };
@@ -308,7 +305,12 @@ function scanCB(ev, res) {
     console.log("Failed to parse BTH data");
     return;
   }
- 
+
+  if (BTHparsed.alarmCode) {
+    console.log("BLU alarm:", BTHparsed.alarmCode, "addr=", res.addr);
+    Shelly.emitEvent("oh-blu.alarm", {"addr":res.addr, "code":BTHparsed.alarmCode});
+  }
+
   // skip, we are deduping results
   if (typeof LAST_PID[res.addr] === 'undefined' || BTHparsed.pid !== LAST_PID[res.addr]) {
     console.log('Parsed BTH data from device ', res.local_name, ': ', JSON.stringify(BTHparsed));

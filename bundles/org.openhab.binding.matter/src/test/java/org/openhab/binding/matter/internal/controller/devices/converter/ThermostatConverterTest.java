@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -54,8 +54,7 @@ class ThermostatConverterTest extends BaseMatterConverterTest {
     @BeforeEach
     void setUp() {
         super.setUp();
-        mockCluster.featureMap = new ThermostatCluster.FeatureMap(true, true, true, false, false, true, false, false,
-                false);
+        mockCluster.featureMap = new ThermostatCluster.FeatureMap(true, true, true, true, false, false, false);
         mockCluster.absMinHeatSetpointLimit = 500; // 5°C
         mockCluster.absMaxHeatSetpointLimit = 3000; // 30°C
         mockCluster.absMinCoolSetpointLimit = 1500; // 15°C

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -247,7 +247,7 @@ public class OppoDiscoveryService extends AbstractDiscoveryService {
                     model = MODEL103;
                     displayName = DISPLAY_NAME_103;
                 }
-            } else if (BDP20X_PORT.toString().equals(port)) {
+            } else if (UDP20X_PORT.toString().equals(port)) {
                 if (displayName != null && displayName.contains(Integer.toString(MODEL203))) {
                     model = MODEL203;
                 } else if (displayName != null && displayName.contains(Integer.toString(MODEL205))) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -13,6 +13,7 @@
 package org.openhab.binding.meross.internal.command;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.openhab.binding.meross.internal.dto.MqttMessageBuilder;
 
 /**
  * The {@link MerossCommand} interface is responsible for implementing command type
@@ -22,5 +23,5 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
  */
 @NonNullByDefault
 public interface MerossCommand {
-    byte[] command(String deviceUUID);
+    byte[] command(MqttMessageBuilder mqttMessageBuilder, String deviceUUID);
 }

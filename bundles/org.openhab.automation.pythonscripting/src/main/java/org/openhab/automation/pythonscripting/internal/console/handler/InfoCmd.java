@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -20,8 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.graalvm.polyglot.Language;
-import org.openhab.automation.pythonscripting.internal.PythonScriptEngine;
 import org.openhab.automation.pythonscripting.internal.PythonScriptEngineConfiguration;
 import org.openhab.automation.pythonscripting.internal.PythonScriptEngineFactory;
 import org.openhab.core.config.core.ConfigDescription;
@@ -38,10 +38,12 @@ import org.openhab.core.io.console.Console;
 public class InfoCmd {
     private final PythonScriptEngineConfiguration config;
     private final Console console;
+    private final @Nullable Language language;
 
-    public InfoCmd(PythonScriptEngineConfiguration config, Console console) {
+    public InfoCmd(PythonScriptEngineConfiguration config, Console console, @Nullable Language language) {
         this.config = config;
         this.console = console;
+        this.language = language;
     }
 
     public void show(ConfigDescriptionRegistry registry) {
@@ -50,7 +52,6 @@ public class InfoCmd {
         console.println("  Runtime:");
         console.println("    Bundle version: " + config.getBundleVersion());
         console.println("    GraalVM version: " + config.getGraalVersion());
-        Language language = PythonScriptEngine.getLanguage();
         console.println("    Python version: " + (language != null ? language.getVersion() : "unavailable"));
         Version version = config.getInstalledHelperLibVersion();
         console.println("    Helper lib version: " + (version != null ? version.toString() : "disabled"));

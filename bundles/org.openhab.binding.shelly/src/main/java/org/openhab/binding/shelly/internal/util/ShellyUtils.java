@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -23,7 +23,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.DateTimeException;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -138,6 +137,14 @@ public class ShellyUtils {
         return group + "#" + channel;
     }
 
+    /**
+     * Channel id matching any group starting with groupPrefix (e.g. meter, meter1, meter2, ...).
+     * Used for channel migration rules that must apply to every indexed meter group of a Thing.
+     */
+    public static String mkWildcardChannelId(String groupPrefix, String channel) {
+        return groupPrefix + "*#" + channel;
+    }
+
     public static String getString(@Nullable String value) {
         return value != null ? value : "";
     }
@@ -228,6 +235,11 @@ public class ShellyUtils {
         return new DecimalType((value != null ? value : 0));
     }
 
+    public static DecimalType getDecimal(@Nullable Double value, int digits) {
+        BigDecimal bd = BigDecimal.valueOf(value != null ? value : 0);
+        return new DecimalType(bd.setScale(digits, RoundingMode.HALF_UP));
+    }
+
     public static DecimalType getDecimal(@Nullable Integer value) {
         return new DecimalType((value != null ? value : 0));
     }
@@ -296,14 +308,14 @@ public class ShellyUtils {
     }
 
     public static DateTimeType getTimestamp() {
-        return new DateTimeType(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
+        return new DateTimeType(Instant.now().truncatedTo(ChronoUnit.SECONDS));
     }
 
     public static DateTimeType getTimestamp(String zone, long timestamp) {
         try {
-            ZoneId zoneId = !zone.isEmpty() ? ZoneId.of(zone) : ZoneId.systemDefault();
-            ZonedDateTime zdt = LocalDateTime.now().atZone(zoneId);
-            int delta = zdt.getOffset().getTotalSeconds();
+            ZoneId zoneId = zone.isEmpty() ? ZoneId.systemDefault() : ZoneId.of(zone);
+            Instant instant = Instant.ofEpochSecond(timestamp);
+            int delta = zoneId.getRules().getOffset(instant).getTotalSeconds();
             return new DateTimeType(Instant.ofEpochSecond(timestamp - delta));
         } catch (DateTimeException e) {
             // Unable to convert device's timezone, use system one

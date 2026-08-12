@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -323,7 +323,9 @@ public abstract class AVMFritzBaseBridgeHandler extends BaseBridgeHandler {
      */
     public String getThingTypeId(AVMFritzBaseModel device) {
         if (device instanceof GroupModel) {
-            if (device.isHeatingThermostat()) {
+            if (device.isHANFUNBlinds()) {
+                return GROUP_BLINDS;
+            } else if (device.isHeatingThermostat()) {
                 return GROUP_HEATING;
             } else if (device.isSwitchableOutlet()) {
                 return GROUP_SWITCH;
@@ -336,7 +338,7 @@ public abstract class AVMFritzBaseBridgeHandler extends BaseBridgeHandler {
             } else if (device.isDimmableLight()) {
                 return DEVICE_HAN_FUN_DIMMABLE_BULB;
             }
-            List<String> interfaces = Arrays.asList(deviceModel.getEtsiunitinfo().getInterfaces().split(","));
+            List<String> interfaces = Arrays.stream(deviceModel.getEtsiunitinfo().getInterfaces().split(",")).toList();
             if (interfaces.contains(HAN_FUN_INTERFACE_ALERT)) {
                 return DEVICE_HAN_FUN_CONTACT;
             } else if (interfaces.contains(HAN_FUN_INTERFACE_SIMPLE_BUTTON)) {

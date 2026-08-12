@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -24,12 +24,11 @@ public class Home {
     public String message = "";
     public HomeData data;
 
-    public class HomeData {
+    public static class HomeData {
         public int id;
         public String name = "";
         public int tuyaHomeId;
         public int rrHomeId;
-        public String deviceListOrder = "";
     }
 
     public Home() {

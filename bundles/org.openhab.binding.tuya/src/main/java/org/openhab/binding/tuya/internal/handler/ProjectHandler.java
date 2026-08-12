@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -46,6 +46,7 @@ import com.google.gson.Gson;
 @NonNullByDefault
 public class ProjectHandler extends BaseThingHandler implements ApiStatusCallback {
     private final TuyaOpenAPI api;
+    protected @Nullable TuyaDiscoveryService discoveryService = null;
 
     private @Nullable ScheduledFuture<?> apiConnectFuture;
 
@@ -82,6 +83,14 @@ public class ProjectHandler extends BaseThingHandler implements ApiStatusCallbac
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR);
         } else {
             stopApiConnectFuture();
+
+            if (thing.getStatus() != ThingStatus.ONLINE) {
+                var discoveryService = this.discoveryService;
+                if (discoveryService != null) {
+                    discoveryService.startScan();
+                }
+            }
+
             updateStatus(ThingStatus.ONLINE);
         }
     }
@@ -116,6 +125,10 @@ public class ProjectHandler extends BaseThingHandler implements ApiStatusCallbac
     public void dispose() {
         stopApiConnectFuture();
         api.disconnect();
+    }
+
+    public void setDiscoveryService(@Nullable TuyaDiscoveryService discoveryService) {
+        this.discoveryService = discoveryService;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -52,7 +52,8 @@ public class AVMFritzPowerMeterActions implements ThingActions {
         if (deviceId == null) {
             throw new IllegalArgumentException("Cannot enable power meter high refresh as 'deviceId' is null!");
         }
-        actionsHandler.enablePowerMeterHighRefresh(deviceId.longValue());
+        // TODO add input for polling interval
+        actionsHandler.enablePowerMeterHighRefresh(deviceId.longValue(), 10L);
     }
 
     public static void enablePowerMeterHighRefresh(ThingActions actions, @Nullable Long deviceId) {

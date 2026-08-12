@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -130,10 +130,13 @@ public class WindowCoveringDevice extends BaseDevice {
                 if (data instanceof AbstractMap treeMap) {
                     @SuppressWarnings("unchecked")
                     AbstractMap<String, Object> map = (AbstractMap<String, Object>) treeMap;
-                    if (map.get("global") instanceof Integer value) {
-                        if (WindowCoveringCluster.MovementStatus.STOPPED.getValue().equals(value)
-                                && primaryItem instanceof RollershutterItem rollerShutterItem) {
-                            rollerShutterItem.send(StopMoveType.STOP, MATTER_SOURCE);
+                    if (map.get("global") instanceof Number value) {
+                        if (WindowCoveringCluster.MovementStatus.STOPPED.getValue().equals(value.intValue())) {
+                            if (primaryItem instanceof RollershutterItem rollerShutterItem) {
+                                rollerShutterItem.send(StopMoveType.STOP, MATTER_SOURCE);
+                            } else if (primaryItem instanceof GroupItem groupItem) {
+                                groupItem.send(StopMoveType.STOP, MATTER_SOURCE);
+                            }
                             cancelTimer();
                         }
                     }
@@ -159,7 +162,11 @@ public class WindowCoveringDevice extends BaseDevice {
             }
             setEndpointState(WindowCoveringCluster.CLUSTER_PREFIX,
                     WindowCoveringCluster.ATTRIBUTE_CURRENT_POSITION_LIFT_PERCENT100THS, currentPercent * 100).get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.debug("Could not set state", e);
+            return;
+        } catch (ExecutionException e) {
             logger.debug("Could not set state", e);
             return;
         }
@@ -206,7 +213,10 @@ public class WindowCoveringDevice extends BaseDevice {
             setEndpointState(WindowCoveringCluster.CLUSTER_PREFIX,
                     WindowCoveringCluster.ATTRIBUTE_TARGET_POSITION_LIFT_PERCENT100THS, currentPercent * 100).get();
             lastTargetPercent = null;
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.debug("Could not set target state", e);
+        } catch (ExecutionException e) {
             logger.debug("Could not set target state", e);
         }
     }

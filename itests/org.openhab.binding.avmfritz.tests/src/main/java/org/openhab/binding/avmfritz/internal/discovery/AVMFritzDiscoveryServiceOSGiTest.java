@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -95,7 +95,7 @@ public class AVMFritzDiscoveryServiceOSGiTest extends AVMFritzThingHandlerOSGiTe
 
     @Test
     public void correctSupportedTypes() {
-        assertEquals(22, discovery.getSupportedThingTypes().size());
+        assertEquals(23, discovery.getSupportedThingTypes().size());
         assertTrue(discovery.getSupportedThingTypes().contains(DECT100_THING_TYPE));
         assertTrue(discovery.getSupportedThingTypes().contains(DECT200_THING_TYPE));
         assertTrue(discovery.getSupportedThingTypes().contains(DECT210_THING_TYPE));
@@ -115,6 +115,7 @@ public class AVMFritzDiscoveryServiceOSGiTest extends AVMFritzThingHandlerOSGiTe
         assertTrue(discovery.getSupportedThingTypes().contains(HAN_FUN_DIMMABLE_BULB_THING_TYPE));
         assertTrue(discovery.getSupportedThingTypes().contains(HAN_FUN_SENSOR_THING_TYPE));
         assertTrue(discovery.getSupportedThingTypes().contains(HAN_FUN_HOST_THING_TYPE));
+        assertTrue(discovery.getSupportedThingTypes().contains(GROUP_BLINDS_THING_TYPE));
         assertTrue(discovery.getSupportedThingTypes().contains(GROUP_HEATING_THING_TYPE));
         assertTrue(discovery.getSupportedThingTypes().contains(GROUP_SWITCH_THING_TYPE));
         assertTrue(discovery.getSupportedThingTypes().contains(SMART_ENERGY_250_THING_TYPE));

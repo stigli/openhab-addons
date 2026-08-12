@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -66,9 +66,6 @@ import org.slf4j.LoggerFactory;
 @NonNullByDefault
 @Component(immediate = true, service = { ChannelTypeProvider.class, TuyaChannelTypeProvider.class })
 public class TuyaChannelTypeProvider implements ChannelTypeProvider {
-    private static final String DEFAULT_CONTROL_CATEGORY = "settings";
-    private static final String DEFAULT_STATUS_CATEGORY = "line";
-
     private static final Map<String, String> dimensionToCategory = Collections
             .unmodifiableMap(new HashMap<String, String>() {
                 private static final long serialVersionUID = 1L;
@@ -167,7 +164,7 @@ public class TuyaChannelTypeProvider implements ChannelTypeProvider {
         channelTypeId = channelTypeId.substring(i + 1);
 
         // Build with a channelTypeId of just the lower-cased DP identifier and set defaults for all text.
-        channelType = channelTypeFromSchema(channelTypeUID, productId, channelTypeId.toLowerCase());
+        channelType = channelTypeFromSchema(channelTypeUID, productId, channelTypeId);
         if (channelType != null) {
             // Localize that (e.g. using channel-type.tuya.cur_voltage.label = ...)
             channelType = localizationService.createLocalizedChannelType(bundle, channelType, locale);
@@ -250,21 +247,28 @@ public class TuyaChannelTypeProvider implements ChannelTypeProvider {
         }
 
         String acceptedItemType = STRING;
-        String category = "";
+        String category = categoryForChannelType(channelTypeId, schemaDp);
         String configurationRef = null;
         Collection<String> tags = new ArrayList<>(2);
         StateDescriptionFragmentBuilder stateDescriptionFragmentBuilder = null;
         boolean advanced = false;
 
-        if (DIMMER_CHANNEL_CODES.contains(channelTypeId)) {
-            acceptedItemType = DIMMER;
-            category = "slider";
-            configurationRef = "channel-type:tuya:dimmer";
+        if (channelTypeId.endsWith("_coe")) {
+            // Coefficients are present on power switches with monitoring capabilities. They are
+            // readonly and their meaning is unknown.
+            advanced = true;
+        }
+
+        if ("bitmap".equals(schemaDp.type)) {
+            acceptedItemType = NUMBER;
+            configurationRef = "channel-type:tuya:bitmap";
             tags.add(schemaDp.readOnly ? "Status" : "Control");
-            tags.add("Brightness");
+
+            stateDescriptionFragmentBuilder = StateDescriptionFragmentBuilder.create() //
+                    .withReadOnly(schemaDp.readOnly) //
+                    .withPattern("%x");
         } else if ("bool".equals(schemaDp.type)) {
             acceptedItemType = SWITCH;
-            category = "switch";
             configurationRef = "channel-type:tuya:switch";
             tags.add(schemaDp.readOnly ? "Status" : "Switch");
         } else if ("enum".equals(schemaDp.type)) {
@@ -293,52 +297,63 @@ public class TuyaChannelTypeProvider implements ChannelTypeProvider {
             }
         } else if ("value".equals(schemaDp.type)) {
             acceptedItemType = NUMBER;
-            category = "";
             configurationRef = "channel-type:tuya:number";
 
-            if (!schemaDp.unit.isEmpty()) {
-                Unit<?> unit = schemaDp.parsedUnit;
-                if (unit == null) {
-                    unit = UnitUtils.parseUnit(schemaDp.unit);
-                    schemaDp.parsedUnit = unit;
-                }
+            if (DIMMER_CHANNEL_CODES.contains(channelTypeId) //
+                    && (schemaDp.unit.isEmpty() || (!schemaDp.readOnly && "%".equals(schemaDp.unit)))) {
+                acceptedItemType = DIMMER;
+                category = "slider";
+                configurationRef = "channel-type:tuya:dimmer";
+                tags.add(schemaDp.readOnly ? "Status" : "Control");
+                tags.add("temp_value".equals(schemaDp.code) ? "ColorTemperature" : "Brightness");
 
-                if (unit != null) {
-                    String dimension = UnitUtils.getDimensionName(unit);
-                    if (dimension != null) {
-                        acceptedItemType = NUMBER + ":" + dimension;
-                        category = dimensionToCategory.getOrDefault(dimension,
-                                (schemaDp.readOnly ? DEFAULT_STATUS_CATEGORY : DEFAULT_CONTROL_CATEGORY));
-                        tags.add(schemaDp.readOnly ? "Measurement"
-                                : ("Time".equals(dimension) ? "Control" : "Setpoint"));
-                        String tag = dimensionToSemanticProperty.get(dimension);
-                        if (tag != null) {
-                            tags.add(tag);
-                        }
-                    } else {
-                        logger.warn("Channel {} has unit \"{}\" but openHAB doesn't know the dimension", channelTypeId,
-                                schemaDp.unit);
-
-                        tags.add(schemaDp.readOnly ? "Status" : "Setpoint");
-                    }
-                }
+                stateDescriptionFragmentBuilder = StateDescriptionFragmentBuilder.create() //
+                        .withReadOnly(schemaDp.readOnly) //
+                        .withStep(schemaDp.step);
             } else {
-                tags.add(schemaDp.readOnly ? "Status" : "Setpoint");
-            }
+                if (!schemaDp.unit.isEmpty()) {
+                    Unit<?> unit = schemaDp.parsedUnit;
+                    if (unit == null) {
+                        unit = UnitUtils.parseUnit(schemaDp.unit);
+                        schemaDp.parsedUnit = unit;
+                    }
 
-            stateDescriptionFragmentBuilder = StateDescriptionFragmentBuilder.create() //
-                    .withReadOnly(schemaDp.readOnly) //
-                    .withStep(schemaDp.step) //
-                    .withPattern("%." + schemaDp.scale + "f " + ("%".equals(schemaDp.unit) ? "%%" : "%unit%"));
+                    if (unit != null) {
+                        String dimension = UnitUtils.getDimensionName(unit);
+                        if (dimension != null) {
+                            acceptedItemType = NUMBER + ":" + dimension;
+                            category = dimensionToCategory.getOrDefault(dimension, category);
+                            tags.add(schemaDp.readOnly ? "Measurement"
+                                    : ("Time".equals(dimension) ? "Control" : "Setpoint"));
+                            String tag = dimensionToSemanticProperty.get(dimension);
+                            if (tag != null) {
+                                tags.add(tag);
+                            }
+                        } else {
+                            logger.warn("Channel {} has unit \"{}\" but openHAB doesn't know the dimension",
+                                    channelTypeId, schemaDp.unit);
 
-            Double min = schemaDp.min;
-            if (min != null) {
-                stateDescriptionFragmentBuilder.withMinimum(new BigDecimal(min));
-            }
+                            tags.add(schemaDp.readOnly ? "Status" : "Setpoint");
+                        }
+                    }
+                } else {
+                    tags.add(schemaDp.readOnly ? "Status" : "Setpoint");
+                }
 
-            Double max = schemaDp.max;
-            if (max != null) {
-                stateDescriptionFragmentBuilder.withMaximum(new BigDecimal(max));
+                stateDescriptionFragmentBuilder = StateDescriptionFragmentBuilder.create() //
+                        .withReadOnly(schemaDp.readOnly) //
+                        .withStep(schemaDp.step) //
+                        .withPattern("%." + schemaDp.scale + "f " + ("%".equals(schemaDp.unit) ? "%%" : "%unit%"));
+
+                Double min = schemaDp.min;
+                if (min != null) {
+                    stateDescriptionFragmentBuilder.withMinimum(new BigDecimal(min));
+                }
+
+                Double max = schemaDp.max;
+                if (max != null) {
+                    stateDescriptionFragmentBuilder.withMaximum(new BigDecimal(max));
+                }
             }
         } else {
             logger.warn("Don't know how to build a channel type for schema entry {} type {} - using string",
@@ -361,8 +376,13 @@ public class TuyaChannelTypeProvider implements ChannelTypeProvider {
         } catch (URISyntaxException e) {
         }
 
-        if (!schemaDp.unit.isEmpty()) {
+        if (!schemaDp.unit.isEmpty() && acceptedItemType.startsWith(NUMBER + ":")) {
             channelTypeBuilder.withUnitHint(schemaDp.unit);
+        } else if (!schemaDp.unit.isEmpty() && !acceptedItemType.contains(":")
+                && (!"%".equals(schemaDp.unit) || !DIMMER.equals(acceptedItemType))) {
+            logger.error("Channel {} creation aborted, unit  \"{}\" has no known dimension, please report as bug.",
+                    channelTypeId, schemaDp.unit);
+            return null;
         }
 
         if (stateDescriptionFragmentBuilder != null) {
@@ -370,5 +390,58 @@ public class TuyaChannelTypeProvider implements ChannelTypeProvider {
         }
 
         return channelTypeBuilder.build();
+    }
+
+    private String categoryForChannelType(String channelTypeId, SchemaDp schemaDp) {
+        switch (channelTypeId) {
+            case "alarm_message":
+                return "if:line-md:chat-alert";
+
+            case "battery_state":
+                return "batterylevel";
+
+            case "doorcontact_state":
+                return "door";
+
+            case "initiative_message":
+                return "if:material-symbols:chat-info-outline";
+
+            case "pir_state":
+                return "motion";
+
+            default:
+                if (channelTypeId.startsWith("alarm") || channelTypeId.endsWith("_alarm") //
+                        || channelTypeId.startsWith("fault") || channelTypeId.endsWith("_fault")) {
+                    return "error";
+                } else if (channelTypeId.endsWith("_pic")) {
+                    return "if:fluent-color:scan-person-48";
+                } else if (channelTypeId.contains("time")) {
+                    return "time";
+                }
+                break;
+        }
+
+        switch (schemaDp.type) {
+            case "bool":
+                return "switch";
+
+            case "enum":
+                return (schemaDp.readOnly ? "if:pepicons-pencil:text-bubble" : "if:picon:selectbox");
+
+            case "value":
+                if (!schemaDp.unit.isEmpty()) {
+                    if (channelTypeId.startsWith("maxhum_") || channelTypeId.startsWith("minihum_")
+                            || channelTypeId.contains("humid")) {
+                        return "humidity";
+                    } else {
+                        return (schemaDp.readOnly ? "line" : "settings");
+                    }
+                } else {
+                    return "if:fluent-color:number-symbol-square-32";
+                }
+
+            default:
+                return (schemaDp.readOnly ? "if:pepicons-pencil:text-bubble" : "input");
+        }
     }
 }

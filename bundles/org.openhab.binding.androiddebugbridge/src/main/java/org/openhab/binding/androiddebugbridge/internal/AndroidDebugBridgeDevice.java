@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -33,6 +33,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -211,12 +212,14 @@ public class AndroidDebugBridgeDevice {
         } else {
             out = runAdbShell("dumpsys", "window", "windows", "|", "grep", "mFocusedApp");
         }
-        var targetLine = Arrays.stream(out.split("\n")).findFirst().orElse("");
-        var lineParts = targetLine.split(" ");
-        if (lineParts.length >= 2) {
-            var packageActivityName = lineParts[lineParts.length - 2];
-            if (packageActivityName.contains("/")) {
-                return packageActivityName.split("/")[0];
+
+        if (Arrays.stream(out.split("\n")).findFirst().orElse("") instanceof String targetLine) {
+            var lineParts = targetLine.split(" ");
+            if (lineParts.length >= 2) {
+                var packageActivityName = lineParts[lineParts.length - 2];
+                if (packageActivityName.contains("/")) {
+                    return packageActivityName.split("/")[0];
+                }
             }
         }
         throw new AndroidDebugBridgeDeviceReadException("Unable to read package name");
@@ -750,6 +753,7 @@ public class AndroidDebugBridgeDevice {
         if (adb == null) {
             throw new AndroidDebugBridgeDeviceException("Device not connected");
         }
+        AtomicReference<@Nullable Exception> streamError = new AtomicReference<>();
         try {
             commandLock.lock();
             var commandFuture = scheduler.submit(() -> {
@@ -760,15 +764,25 @@ public class AndroidDebugBridgeDevice {
                     do {
                         byteArrayOutputStream.writeBytes(stream.read());
                     } while (!stream.isClosed());
-                } catch (IOException e) {
+                } catch (IllegalStateException | IOException e) {
                     if (!"Stream closed".equals(e.getMessage())) {
-                        throw e;
+                        // Capture rather than throw: letting it escape the scheduled task makes openHAB's
+                        // WrappedScheduledExecutorService log a noisy "Scheduled runnable ended with an
+                        // exception" stacktrace for an expected condition (a standby adbd rejecting the
+                        // shell stream). It is re-surfaced as a typed exception on the calling thread below.
+                        streamError.set(e);
                     }
                 }
                 return byteArrayOutputStream.toString(StandardCharsets.US_ASCII);
             });
             this.commandFuture = commandFuture;
-            return commandFuture.get(commandTimeout, TimeUnit.SECONDS);
+            String result = commandFuture.get(commandTimeout, TimeUnit.SECONDS);
+            Exception error = streamError.get();
+            if (error != null) {
+                throw new AndroidDebugBridgeDeviceException(
+                        "Error opening adb shell stream " + ip + ":" + port + ": " + error.getMessage());
+            }
+            return result;
         } finally {
             var commandFuture = this.commandFuture;
             if (commandFuture != null) {

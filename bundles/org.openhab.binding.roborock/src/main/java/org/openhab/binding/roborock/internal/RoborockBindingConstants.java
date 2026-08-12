@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -26,7 +26,7 @@ import org.openhab.core.thing.ThingTypeUID;
 @NonNullByDefault
 public class RoborockBindingConstants {
 
-    private static final String BINDING_ID = "roborock";
+    public static final String BINDING_ID = "roborock";
 
     // List of all Thing Type UIDs
     public static final ThingTypeUID ROBOROCK_ACCOUNT = new ThingTypeUID(BINDING_ID, "account");
@@ -37,6 +37,8 @@ public class RoborockBindingConstants {
 
     // Constants used by RoborockWebTargets
     public static final int TIMEOUT_MS = 30000;
+    public static final String CODE_LOGIN = "/api/v1/loginWithCode";
+    public static final String CODE_LOGIN_V4 = "/api/v4/auth/email/login/code";
     public static final String EU_IOT_BASE_URL = "https://euiot.roborock.com";
     public static final String GET_URL_BY_EMAIL_URI = EU_IOT_BASE_URL + "/api/v1/getUrlByEmail";
     public static final String GET_TOKEN_PATH = "/api/v1/login";
@@ -44,22 +46,54 @@ public class RoborockBindingConstants {
     public static final String GET_HOME_DATA_PATH = "/user/homes/";
     public static final String GET_HOME_DATA_V3_PATH = "/v3/user/homes/";
     public static final String GET_ROUTINES_PATH = "/user/scene/device/";
+    public static final String REQUEST_CODE_V1 = "/api/v1/sendEmailCode";
+    public static final String REQUEST_CODE_V4 = "/api/v4/email/code/send";
     public static final String SET_ROUTINE_PATH = "/user/scene/";
     public static final String SET_ROUTINE_PATH_SUFFIX = "/execute";
+    public static final String SIGN_KEY_V3 = "/api/v3/key/sign";
 
     // Protocol constants
+    /** Message digest algorithm used for key derivation helpers. */
     public static final String MD5_ALGORITHM = "MD5";
+    /** Cipher transformation for protocol-level AES/ECB encryption/decryption. */
     public static final String AES_ECB_PADDING = "AES/ECB/PKCS5Padding";
+    /** Cipher transformation for map body AES/CBC decryption. */
     public static final String AES_CBC_NO_PADDING = "AES/CBC/NoPadding";
+    /** Wire protocol version expected in Roborock transport headers. */
     public static final String VERSION_1_0 = "1.0";
+    /** Protocol id for JSON payload frames. */
+    public static final int PROTOCOL_JSON = 102;
+    /** Protocol id for map transport frames. */
+    public static final int PROTOCOL_MAP = 301;
+    /** Byte offset for the sequence number in the common message header. */
     public static final int SEQ_OFFSET = 3;
+    /** Byte offset for the random value in the common message header. */
     public static final int RANDOM_OFFSET = 7;
+    /** Byte offset for the timestamp in the common message header. */
     public static final int TIMESTAMP_OFFSET = 11;
+    /** Byte offset for the protocol id in the common message header. */
     public static final int PROTOCOL_OFFSET = 15;
+    /** Byte offset where encrypted payload bytes begin in the common message header. */
     public static final int PAYLOAD_OFFSET = 17;
+    /**
+     * Size of the protocol message header excluding CRC bytes.
+     */
     public static final int HEADER_LENGTH_WITHOUT_CRC = 19; // 3 (version) + 4 (seq) + 4 (random) + 4 (timestamp) + 2
                                                             // (protocol) + 2 (payloadLen)
+    /** Number of trailing CRC32 bytes in a transport frame. */
     public static final int CRC_LENGTH = 4;
+    /** Total bytes in the map transport header before encrypted map body bytes. */
+    public static final int MAP_TRANSPORT_HEADER_LENGTH = 24;
+    /** Endpoint field length in bytes within a map transport header. */
+    public static final int MAP_ENDPOINT_LENGTH = 8;
+    /** Reserved field length in bytes within a map transport header. */
+    public static final int MAP_RESERVED_LENGTH = 8;
+    /** Request-id field offset in bytes within a map transport header. */
+    public static final int MAP_REQUEST_ID_OFFSET = 16;
+    /** Tail field length in bytes within a map transport header. */
+    public static final int MAP_TAIL_LENGTH = 6;
+    /** Correlation timeout used to map map responses back to originating requests. */
+    public static final int MAP_REQUEST_CORRELATION_TIMEOUT_MS = 120000;
 
     // List of all Channel ids
     public static final String CHANNEL_BATTERY = "status#battery";
@@ -75,11 +109,13 @@ public class RoborockBindingConstants {
     public static final String CHANNEL_DOCK_STATE_ID = "status#dock-state-id";
     public static final String CHANNEL_MOP_DRYING = "status#is-mop-drying";
     public static final String CHANNEL_MOP_TOTAL_DRYTIME = "status#mop-drying-time";
+    public static final String CHANNEL_CLEAN_PERCENT = "status#clean-percent";
 
     public static final String CHANNEL_ROUTINES = "info#routine-mapping";
 
     public static final String CHANNEL_CONTROL = "actions#control";
     public static final String CHANNEL_COMMAND = "actions#commands";
+    public static final String CHANNEL_DP_COMMAND = "actions#dpcommand";
     public static final String CHANNEL_RPC = "actions#rpc";
     public static final String CHANNEL_VACUUM = "actions#vacuum";
     public static final String CHANNEL_FAN_CONTROL = "actions#fan";
@@ -129,14 +165,12 @@ public class RoborockBindingConstants {
     public static final String COMMAND_APP_SPOT = "app_spot";
     public static final String COMMAND_APP_START = "app_start";
     public static final String COMMAND_APP_START_BUILD_MAP = "app_start_build_map";
-    public static final String COMMAND_APP_START_COLLECT_DUST = "app_start_collect_dust";
     public static final String COMMAND_APP_START_EASTER_EGG = "app_start_easter_egg";
     public static final String COMMAND_APP_START_PATROL = "app_start_patrol";
     public static final String COMMAND_APP_START_PET_PATROL = "app_start_pet_patrol";
     public static final String COMMAND_APP_START_WASH = "app_start_wash";
     public static final String COMMAND_APP_STAT = "app_stat";
     public static final String COMMAND_APP_STOP = "app_stop";
-    public static final String COMMAND_APP_STOP_COLLECT_DUST = "app_stop_collect_dust";
     public static final String COMMAND_APP_STOP_WASH = "app_stop_wash";
     public static final String COMMAND_SET_MODE = "set_custom_mode";
     public static final String COMMAND_SET_WATERBOX_MODE = "set_water_box_custom_mode";
@@ -144,6 +178,7 @@ public class RoborockBindingConstants {
     public static final String COMMAND_START_SEGMENT = "app_segment_clean";
     public static final String COMMAND_CONSUMABLES_RESET = "reset_consumable";
     public static final String COMMAND_SET_COLLECT_DUST = "app_start_collect_dust";
+    public static final String COMMAND_STOP_COLLECT_DUST = "app_stop_collect_dust";
     public static final String COMMAND_SET_CLEAN_MOP_START = "app_start_wash";
     public static final String COMMAND_SET_CLEAN_MOP_STOP = "app_stop_wash";
     public static final String COMMAND_GET_ROOM_MAPPING = "get_room_mapping";
@@ -161,6 +196,15 @@ public class RoborockBindingConstants {
     public static final String COMMAND_GET_MAP = "get_map_v1";
 
     public static final String THING_CONFIG_DUID = "duid";
+    public static final String THING_CONFIG_COMMUNICATION = "communication";
+    public static final String THING_CONFIG_LOCAL_HOST = "localHost";
+    public static final String THING_CONFIG_LOCAL_PORT = "localPort";
+    public static final String THING_CONFIG_CLOUD_MAP_REFRESH = "cloudMapRefresh";
+    public static final String THING_CONFIG_CLOUD_METADATA_REFRESH = "cloudMetadataRefresh";
+    public static final String THING_CONFIG_CLOUD_REFRESH_INTERVAL = "cloudRefreshInterval";
+    public static final String THING_CONFIG_FAST_REFRESH_INTERVAL = "fastRefreshInterval";
+    public static final String THING_PROPERTY_DEVICE_NAME = "deviceName";
+    public static final String THING_PROPERTY_PROTOCOL = "protocol";
     public static final String THING_PROPERTY_SN = "sn";
 
     public static final Set<ThingTypeUID> BRIDGE_THING_TYPES_UIDS = Set.of(ROBOROCK_ACCOUNT);

@@ -2,6 +2,10 @@
 
 This binding is used to control Roborock robot vacuum cleaner products implementing the Roborock protocol.
 
+Robots that use the v1.0 protocol are fully supported.
+The Q7/Q10 series are partially supported - some channels will be fixed in a future update.
+Local control on the Q7/Q10 is not (yet) supported.
+
 ## Supported Things
 
 The following things types are available:
@@ -17,21 +21,48 @@ After (manually) adding a Roborock Account bridge, registered vacuums will be au
 
 ## `account` Bridge Configuration
 
-Account configuration is necessary. 
-The easiest way to do this is from the UI. 
-Just add a new thing, select the Roborock binding, then Roborock Account Binding Thing, and enter the email and password for your Roborock account.
+Account configuration is necessary.
+The easiest way to do this is from the UI.
+Just add a new thing, select the Roborock binding, then Roborock Account Binding Thing, and enter the email for your Roborock account.
+If the email is valid, you will be sent an email with a verification code.
+Once received, update the twofa field and hit save.
 
 | Thing Parameter | Default Value | Required | Advanced | Description                                                                          |
 |-----------------|---------------|----------|----------|--------------------------------------------------------------------------------------|
 | email           | N/A           | Yes      | No       | Email address for your Roborock account                                              |
-| password        | N/A           | Yes      | No       | Password for your Roborock account                                                   |
+| twofa           | N/A           | No       | No       | 2FA code which will be sent to your email once you add the thing                     |
 
 ## `vacuum` Thing Configuration
 
 | Thing Parameter | Default Value | Required | Advanced | Description                                                                          |
 |-----------------|---------------|----------|----------|--------------------------------------------------------------------------------------|
 | duid            | N/A           | Yes      | No       | duid (Device UID) of the robot from the Roborock api                                 |
-| refresh         | 5             | No       | Yes      | The frequency with which to refresh information from Roborock specified in minutes   |
+| communication   | cloud         | No       | No       | Command transport mode: `cloud` (default) or `direct`                                |
+| localHost       | N/A           | No       | Yes      | Optional local IP/hostname override, used only in `direct` mode                      |
+| localPort       | 58867         | No       | Yes      | Local port used in `direct` mode communication                                        |
+| cloudMapRefresh | on            | No       | Yes      | Cloud-only map refresh policy in `direct` mode: `on` or `off`                        |
+| cloudMetadataRefresh | on       | No       | Yes      | Cloud-only metadata refresh policy in `direct` mode: `on` or `off`                    |
+| refresh         | 5             | No       | Yes      | Legacy compatibility refresh interval in minutes (existing Thing configs continue to use this) |
+| fastRefreshInterval | 15        | No       | Yes      | Direct-mode status refresh interval in seconds while `status#vacuum` is `ON`         |
+| mapRefreshCloudCleaningInterval | 30 | No | Yes | Map refresh interval in seconds while cleaning when `communication=cloud` (minimum 30) |
+| mapRefreshDirectCleaningInterval | 15 | No | Yes | Map refresh interval in seconds while cleaning when `communication=direct` (minimum 15) |
+| cloudRefreshInterval | refresh interval | No | Yes      | Cloud-only refresh interval in seconds for map/metadata tasks in `direct` mode (falls back to `refresh`, enforced minimum 60s) |
+
+### Communication Modes
+
+- `cloud` (default): uses Roborock cloud transport for command routing and data retrieval.
+- `direct`: uses local direct transport for supported vacuum communication. `localHost` can be set to override the detected local endpoint; `localPort` defaults to `58867`.
+
+Map retrieval/refresh remains cloud-only at this stage, regardless of selected communication mode.
+
+During cleaning, map refresh uses a mode-specific interval:
+
+- `communication=cloud`: `mapRefreshCloudCleaningInterval` (default 30s, minimum 30s)
+- `communication=direct`: `mapRefreshDirectCleaningInterval` (default 15s, minimum 15s)
+- If `communication=direct` and `cloudMapRefresh=off`, channel `cleaning#map` is explicitly set to `UNDEF` and map refresh is skipped.
+- If `communication=direct` and `cloudMetadataRefresh=off`, cloud metadata refresh tasks are skipped and metadata channels (for example routines and room mapping when present) are explicitly set to `UNDEF`.
+
+When `communication=direct` is selected and a capability is cloud-only (for example map retrieval/refresh), it is still routed through cloud transport. If cloud access is not available, those cloud-only capabilities will not refresh/update, while direct-mode supported operations continue to use local direct transport.
 
 ### Channels
 
@@ -70,6 +101,7 @@ Just add a new thing, select the Roborock binding, then Roborock Account Binding
 | Number:Time          | cleaning#last-clean-duration      | Last Clean Time                            |
 | Number               | cleaning#last-clean-error         | Last Clean Error                           |
 | Switch               | cleaning#last-clean-finish        | Last Cleaning Completed                    |
+| Image                | cleaning#map                      | Rendered cleaning map image (PNG)          |
 
 Additionally depending on the capabilities of your robot vacuum other channels may be enabled at runtime
 
@@ -98,8 +130,8 @@ In case your vacuum does not support one of these commands, it will show "unsupp
 ### `demo.things` Example
 
 ```java
-Bridge roborock:account:account [ email="xxxx", password="xxxx" ] {
-    roborock:vacuum:QrevoS [ refresh=5 ]
+Bridge roborock:account:account [ email="xxxx", twofa="xxxx" ] {
+    roborock:vacuum:QrevoS [ refresh=5, cloudRefreshInterval=300 ]
 }
 ```
 
@@ -146,4 +178,5 @@ Number:Area          lastArea         "Last Cleaned Area [%1.0fm²]"   <zoom>   
 Number:Time          lastTime         "Last Clean Time [%1.0f']"      <clock>        (gVacLast)      {channel="roborock:vacuum:034F0E45:cleaning#last-clean-duration"}
 Number               lastError        "Error [%s]"                    <error>        (gVacLast)      {channel="roborock:vacuum:034F0E45:cleaning#last-clean-error" }
 Switch               lastCompleted    "Last Cleaning Completed"                      (gVacLast)      {channel="roborock:vacuum:034F0E45:cleaning#last-clean-finish" }
+Image                cleaningMap      "Cleaning Map"                                 (gVacStat)      {channel="roborock:vacuum:034F0E45:cleaning#map"}
 ```

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -14,6 +14,7 @@ package org.openhab.binding.homematic.internal.discovery;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.openhab.binding.homematic.test.util.BridgeHelper.createHomematicBridge;
@@ -21,8 +22,8 @@ import static org.openhab.binding.homematic.test.util.DimmerHelper.createDimmerH
 
 import java.io.IOException;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.openhab.binding.homematic.internal.communicator.HomematicGateway;
 import org.openhab.binding.homematic.internal.handler.HomematicBridgeHandler;
@@ -35,6 +36,7 @@ import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.ThingStatusInfo;
+import org.openhab.core.util.SameThreadExecutorService;
 
 /**
  * Tests for {@link HomematicDeviceDiscoveryServiceTest}.
@@ -42,16 +44,27 @@ import org.openhab.core.thing.ThingStatusInfo;
  * @author Florian Stolte - Initial Contribution
  *
  */
+@NonNullByDefault
 public class HomematicDeviceDiscoveryServiceTest extends JavaTest {
 
     private HomematicDeviceDiscoveryService homematicDeviceDiscoveryService;
     private HomematicBridgeHandler homematicBridgeHandler;
 
+    public HomematicDeviceDiscoveryServiceTest() throws IOException {
+        this.homematicBridgeHandler = mockHomematicBridgeHandler();
+        this.homematicDeviceDiscoveryService = new HomematicDeviceDiscoveryService(new SameThreadExecutorService());
+        this.homematicDeviceDiscoveryService.setThingHandler(homematicBridgeHandler);
+    }
+
     @BeforeEach
     public void setup() throws IOException {
-        this.homematicBridgeHandler = mockHomematicBridgeHandler();
-        this.homematicDeviceDiscoveryService = new HomematicDeviceDiscoveryService();
-        this.homematicDeviceDiscoveryService.setThingHandler(homematicBridgeHandler);
+        HomematicBridgeHandler homematicBridgeHandler = mockHomematicBridgeHandler();
+        HomematicDeviceDiscoveryService discoveryService = new HomematicDeviceDiscoveryService(
+                new SameThreadExecutorService());
+        discoveryService.setThingHandler(homematicBridgeHandler);
+
+        this.homematicBridgeHandler = homematicBridgeHandler;
+        this.homematicDeviceDiscoveryService = discoveryService;
     }
 
     private HomematicBridgeHandler mockHomematicBridgeHandler() throws IOException {
@@ -79,7 +92,6 @@ public class HomematicDeviceDiscoveryServiceTest extends JavaTest {
         return mock(HomematicTypeGenerator.class);
     }
 
-    @Disabled
     @Test
     public void testDiscoveryResultIsReportedForNewDevice() {
         SimpleDiscoveryListener discoveryListener = new SimpleDiscoveryListener();
@@ -92,23 +104,24 @@ public class HomematicDeviceDiscoveryServiceTest extends JavaTest {
         discoveryResultMatchesHmDevice(discoveryListener.discoveredResults.element(), hmDevice);
     }
 
-    @Disabled
     @Test
     public void testDevicesAreLoadedFromBridgeDuringDiscovery() throws IOException {
         startScanAndWaitForLoadedDevices();
 
-        verify(homematicBridgeHandler.getGateway()).loadAllDeviceMetadata();
+        HomematicGateway gateway = homematicBridgeHandler.getGateway();
+        assertNotNull(gateway);
+        verify(gateway).loadAllDeviceMetadata();
     }
 
-    @Disabled
     @Test
     public void testInstallModeIsNotActiveDuringInitialDiscovery() throws IOException {
         startScanAndWaitForLoadedDevices();
 
-        verify(homematicBridgeHandler.getGateway(), never()).setInstallMode(eq(true), anyInt());
+        HomematicGateway gateway = homematicBridgeHandler.getGateway();
+        assertNotNull(gateway);
+        verify(gateway, never()).setInstallMode(eq(true), anyInt());
     }
 
-    @Disabled
     @Test
     public void testInstallModeIsActiveDuringSubsequentDiscovery() throws IOException {
         homematicBridgeHandler.getThing()
@@ -116,26 +129,27 @@ public class HomematicDeviceDiscoveryServiceTest extends JavaTest {
 
         startScanAndWaitForLoadedDevices();
 
-        verify(homematicBridgeHandler.getGateway(), after(500L)).setInstallMode(true, 60);
+        HomematicGateway gateway = homematicBridgeHandler.getGateway();
+        assertNotNull(gateway);
+        verify(gateway).setInstallMode(true, 60);
     }
 
-    @Disabled
     @Test
-    public void testStoppingDiscoveryDisablesInstallMode() throws IOException, InterruptedException {
+    public void testStoppingDiscoveryDisablesInstallMode() throws IOException {
         homematicBridgeHandler.getThing()
                 .setStatusInfo(new ThingStatusInfo(ThingStatus.ONLINE, ThingStatusDetail.NONE, ""));
         homematicDeviceDiscoveryService.startScan();
 
-        Thread.sleep(500L);
-
         homematicDeviceDiscoveryService.stopScan();
 
-        verify(homematicBridgeHandler.getGateway(), after(500L)).setInstallMode(false, 0);
+        HomematicGateway gateway = homematicBridgeHandler.getGateway();
+        assertNotNull(gateway);
+        verify(gateway).setInstallMode(false, 0);
     }
 
     private void startScanAndWaitForLoadedDevices() {
         homematicDeviceDiscoveryService.startScan();
-        waitForAssert(() -> verify(homematicBridgeHandler, after(500L)).setOfflineStatus(), 1000, 50);
+        waitForAssert(() -> verify(homematicBridgeHandler).setOfflineStatus(), 1000, 50);
     }
 
     private void discoveryResultMatchesHmDevice(DiscoveryResult result, HmDevice device) {
