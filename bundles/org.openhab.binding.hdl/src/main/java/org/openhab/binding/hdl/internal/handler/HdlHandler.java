@@ -733,29 +733,35 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_ACMODE),
                                     new StringType(((MPL848FH) device).getACMode()));
                         }
-                        if (((MPL848FH) device).getUVSwitch1() != null) {
+                        OnOffType uvSwitch1 = ((MPL848FH) device).getUVSwitch1();
+                        if (uvSwitch1 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH1),
-                                    ((MPL848FH) device).getUVSwitch1());
+                                    uvSwitch1);
                         }
-                        if (((MPL848FH) device).getUVSwitch2() != null) {
+                        OnOffType uvSwitch2 = ((MPL848FH) device).getUVSwitch2();
+                        if (uvSwitch2 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH2),
-                                    ((MPL848FH) device).getUVSwitch2());
+                                    uvSwitch2);
                         }
-                        if (((MPL848FH) device).getUVSwitch3() != null) {
+                        OnOffType uvSwitch3 = ((MPL848FH) device).getUVSwitch3();
+                        if (uvSwitch3 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH3),
-                                    ((MPL848FH) device).getUVSwitch3());
+                                    uvSwitch3);
                         }
-                        if (((MPL848FH) device).getUVSwitch4() != null) {
+                        OnOffType uvSwitch4 = ((MPL848FH) device).getUVSwitch4();
+                        if (uvSwitch4 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH4),
-                                    ((MPL848FH) device).getUVSwitch4());
+                                    uvSwitch4);
                         }
-                        if (((MPL848FH) device).getUVSwitch5() != null) {
+                        OnOffType uvSwitch5 = ((MPL848FH) device).getUVSwitch5();
+                        if (uvSwitch5 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH5),
-                                    ((MPL848FH) device).getUVSwitch5());
+                                    uvSwitch5);
                         }
-                        if (((MPL848FH) device).getUVSwitch6() != null) {
+                        OnOffType uvSwitch6 = ((MPL848FH) device).getUVSwitch6();
+                        if (uvSwitch6 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH6),
-                                    ((MPL848FH) device).getUVSwitch6());
+                                    uvSwitch6);
                         }
                         break;
                     case MFH06_432:

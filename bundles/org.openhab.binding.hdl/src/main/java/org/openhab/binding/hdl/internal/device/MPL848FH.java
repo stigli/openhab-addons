@@ -15,13 +15,13 @@ package org.openhab.binding.hdl.internal.device;
 import java.math.BigDecimal;
 import java.util.Objects;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.HdlBindingConstants.EnumFHMode;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.OnOffType;
 
-import org.eclipse.jdt.annotation.NonNullByDefault;
-import org.eclipse.jdt.annotation.Nullable;
 /**
  * The MPL8_48_FH class contains support channels for device Type MPL8.
  * And how the information on the HDL bus is packet for this device.
@@ -389,7 +389,7 @@ public class MPL848FH extends Device {
         this.floorHeatingTemperaturType = FloorHeatingTemperaturType;
     }
 
-    public String getFloorHeatingTemperaturType() {
+    public @Nullable String getFloorHeatingTemperaturType() {
         return floorHeatingTemperaturType;
     }
 
@@ -506,7 +506,7 @@ public class MPL848FH extends Device {
         this.floorHeatingTimer = FloorHeatingTimer;
     }
 
-    public String getFloorHeatingTimer() {
+    public @Nullable String getFloorHeatingTimer() {
         return floorHeatingTimer;
     }
 
@@ -519,7 +519,7 @@ public class MPL848FH extends Device {
         this.acFanSpeed = ACFanSpeed;
     }
 
-    public String getACFanSpeed() {
+    public @Nullable String getACFanSpeed() {
         return acFanSpeed;
     }
 
@@ -530,7 +530,7 @@ public class MPL848FH extends Device {
         this.acMode = ACMode;
     }
 
-    public String getACMode() {
+    public @Nullable String getACMode() {
         return acMode;
     }
 
