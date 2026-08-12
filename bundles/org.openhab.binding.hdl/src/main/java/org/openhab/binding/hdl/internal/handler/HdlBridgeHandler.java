@@ -134,6 +134,10 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
                     Device dev = getDevice(p.serialNr);
                     if (dev != null) {
                         List<DeviceConfiguration> configurations = null;
+                        logger.debug("For Source : {} , Id {}-{}, from Target Id: {}-{} with command: {}",
+                                p.sourceDevice, p.sourceSubnetID, p.sourceDeviceID, p.targetSubnetID, p.targetDeviceID,
+                                p.command);
+
                         Device.update(p, configurations, dev);
 
                         for (DeviceStatusListener deviceStatusListener : deviceStatusListeners) {

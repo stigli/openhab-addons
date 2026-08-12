@@ -14,6 +14,8 @@ package org.openhab.binding.hdl.internal.device;
 
 import java.util.Objects;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 import org.openhab.core.library.types.PercentType;
 
@@ -25,17 +27,17 @@ import org.openhab.core.library.types.PercentType;
  *
  * @author stigla - Initial contribution
  */
-
+@NonNullByDefault
 public class MRDA06 extends Device {
     // Ballast controller, 6 channels, 0-10V
 
     // private OpenClosedType shutterState = null;
-    private PercentType dimChannel1 = null;
-    private PercentType dimChannel2 = null;
-    private PercentType dimChannel3 = null;
-    private PercentType dimChannel4 = null;
-    private PercentType dimChannel5 = null;
-    private PercentType dimChannel6 = null;
+    private @Nullable PercentType dimChannel1 = null;
+    private @Nullable PercentType dimChannel2 = null;
+    private @Nullable PercentType dimChannel3 = null;
+    private @Nullable PercentType dimChannel4 = null;
+    private @Nullable PercentType dimChannel5 = null;
+    private @Nullable PercentType dimChannel6 = null;
 
     public MRDA06(DeviceConfiguration c) {
         super(c);
@@ -105,69 +107,69 @@ public class MRDA06 extends Device {
         }
     }
 
-    public void setDimChannel1(PercentType DimChannel1) {
+    public void setDimChannel1(@Nullable PercentType DimChannel1) {
         if (!Objects.equals(this.dimChannel1, DimChannel1)) {
             setUpdated(true);
         }
         this.dimChannel1 = DimChannel1;
     }
 
-    public PercentType getDimChannel1State() {
+    public @Nullable PercentType getDimChannel1State() {
         return dimChannel1;
     }
 
-    public void setDimChannel2(PercentType DimChannel2) {
+    public void setDimChannel2(@Nullable PercentType DimChannel2) {
         if (!Objects.equals(this.dimChannel2, DimChannel2)) {
             setUpdated(true);
         }
         this.dimChannel2 = DimChannel2;
     }
 
-    public PercentType getDimChannel2State() {
+    public @Nullable PercentType getDimChannel2State() {
         return dimChannel2;
     }
 
-    public void setDimChannel3(PercentType DimChannel3) {
+    public void setDimChannel3(@Nullable PercentType DimChannel3) {
         if (!Objects.equals(this.dimChannel3, DimChannel3)) {
             setUpdated(true);
         }
         this.dimChannel3 = DimChannel3;
     }
 
-    public PercentType getDimChannel3State() {
+    public @Nullable PercentType getDimChannel3State() {
         return dimChannel3;
     }
 
-    public void setDimChannel4(PercentType DimChannel4) {
+    public void setDimChannel4(@Nullable PercentType DimChannel4) {
         if (!Objects.equals(this.dimChannel4, DimChannel4)) {
             setUpdated(true);
         }
         this.dimChannel4 = DimChannel4;
     }
 
-    public PercentType getDimChannel4State() {
+    public @Nullable PercentType getDimChannel4State() {
         return dimChannel4;
     }
 
-    public void setDimChannel5(PercentType DimChannel5) {
+    public void setDimChannel5(@Nullable PercentType DimChannel5) {
         if (!Objects.equals(this.dimChannel5, DimChannel5)) {
             setUpdated(true);
         }
         this.dimChannel5 = DimChannel5;
     }
 
-    public PercentType getDimChannel5State() {
+    public @Nullable PercentType getDimChannel5State() {
         return dimChannel5;
     }
 
-    public void setDimChannel6(PercentType DimChannel6) {
+    public void setDimChannel6(@Nullable PercentType DimChannel6) {
         if (!Objects.equals(this.dimChannel6, DimChannel6)) {
             setUpdated(true);
         }
         this.dimChannel6 = DimChannel6;
     }
 
-    public PercentType getDimChannel6State() {
+    public @Nullable PercentType getDimChannel6State() {
         return dimChannel6;
     }
 }

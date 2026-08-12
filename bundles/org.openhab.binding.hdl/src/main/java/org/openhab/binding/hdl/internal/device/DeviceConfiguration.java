@@ -15,18 +15,21 @@ package org.openhab.binding.hdl.internal.device;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
+
 /**
  * The DeviceConfiguration class set all the configurations for HDL Devices
  *
  * @author stigla - Initial contribution
  */
-
+@NonNullByDefault
 public final class DeviceConfiguration {
 
-    private String serialNr;
+    private String serialNr = "";
     private int subNet = -1;
     private int deviceID = -1;
-    private DeviceType deviceType;
+    private @Nullable DeviceType deviceType;
 
     /** Extended configuration properties **/
     private HashMap<String, Object> properties = new HashMap<>();
@@ -66,7 +69,7 @@ public final class DeviceConfiguration {
         return deviceID;
     }
 
-    public DeviceType getDeviceType() {
+    public @Nullable DeviceType getDeviceType() {
         return deviceType;
     }
 

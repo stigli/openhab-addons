@@ -16,6 +16,8 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.HdlBindingConstants;
 import org.openhab.binding.hdl.internal.discovery.HdlDeviceDiscoveryService;
 import org.openhab.binding.hdl.internal.handler.HdlBridgeHandler;
@@ -39,6 +41,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author stigla - Initial contribution
  */
+@NonNullByDefault
 @Component(service = ThingHandlerFactory.class, configurationPid = "binding.hdl")
 public class HdlHandlerFactory extends BaseThingHandlerFactory {
 
@@ -46,8 +49,8 @@ public class HdlHandlerFactory extends BaseThingHandlerFactory {
     private final Map<ThingUID, ServiceRegistration<?>> discoveryServiceRegs = new HashMap<>();
 
     @Override
-    public Thing createThing(ThingTypeUID thingTypeUID, Configuration configuration, ThingUID thingUID,
-            ThingUID bridgeUID) {
+    public @Nullable Thing createThing(ThingTypeUID thingTypeUID, Configuration configuration,
+            @Nullable ThingUID thingUID, @Nullable ThingUID bridgeUID) {
         if (HdlBindingConstants.THING_TYPE_BRIDGE.equals(thingTypeUID)) {
             ThingUID hdlBridgeUID = getBridgeThingUID(thingTypeUID, thingUID, configuration);
             return super.createThing(thingTypeUID, configuration, hdlBridgeUID, null);// null);
@@ -65,7 +68,8 @@ public class HdlHandlerFactory extends BaseThingHandlerFactory {
         return HdlBindingConstants.SUPPORTED_THING_TYPES_UIDS.contains(thingTypeUID);
     }
 
-    private ThingUID getBridgeThingUID(ThingTypeUID thingTypeUID, ThingUID thingUID, Configuration configuration) {
+    private ThingUID getBridgeThingUID(ThingTypeUID thingTypeUID, @Nullable ThingUID thingUID,
+            Configuration configuration) {
         if (thingUID == null) {
             String serialNumber = (String) configuration.get(HdlBindingConstants.PROPERTY_IP);
             return new ThingUID(thingTypeUID, serialNumber);
@@ -73,8 +77,8 @@ public class HdlHandlerFactory extends BaseThingHandlerFactory {
         return thingUID;
     }
 
-    private ThingUID getHdlDeviceUID(ThingTypeUID thingTypeUID, ThingUID thingUID, Configuration configuration,
-            ThingUID bridgeUID) {
+    private ThingUID getHdlDeviceUID(ThingTypeUID thingTypeUID, @Nullable ThingUID thingUID,
+            Configuration configuration, @Nullable ThingUID bridgeUID) {
         int subNet = ((BigDecimal) configuration.get(HdlBindingConstants.PROPERTY_SUBNET)).intValueExact();
         int deviceID = ((BigDecimal) configuration.get(HdlBindingConstants.PROPERTY_DEVICEID)).intValueExact();
 
@@ -108,7 +112,7 @@ public class HdlHandlerFactory extends BaseThingHandlerFactory {
     }
 
     @Override
-    protected ThingHandler createHandler(Thing thing) {
+    protected @Nullable ThingHandler createHandler(Thing thing) {
         if (thing.getThingTypeUID().equals(HdlBindingConstants.THING_TYPE_BRIDGE)) {
             HdlBridgeHandler handler = new HdlBridgeHandler((Bridge) thing);
             registerDeviceDiscoveryService(handler);

@@ -790,99 +790,115 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                                     new StringType(((MFH06) device).getFloorHeatingMode().toString()));
                         }
 
-                        if (((MFH06) device).getUVSwitch1() != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH1),
-                                    ((MFH06) device).getUVSwitch1());
+                        org.openhab.core.library.types.OnOffType u1 = ((MFH06) device).getUVSwitch1();
+                        if (u1 != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH1), u1);
                         }
-                        if (((MFH06) device).getUVSwitch2() != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH2),
-                                    ((MFH06) device).getUVSwitch2());
+                        org.openhab.core.library.types.OnOffType u2 = ((MFH06) device).getUVSwitch2();
+                        if (u2 != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH2), u2);
                         }
-                        if (((MFH06) device).getUVSwitch3() != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH3),
-                                    ((MFH06) device).getUVSwitch3());
+                        org.openhab.core.library.types.OnOffType u3 = ((MFH06) device).getUVSwitch3();
+                        if (u3 != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH3), u3);
                         }
-                        if (((MFH06) device).getUVSwitch4() != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH4),
-                                    ((MFH06) device).getUVSwitch4());
+                        org.openhab.core.library.types.OnOffType u4 = ((MFH06) device).getUVSwitch4();
+                        if (u4 != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH4), u4);
                         }
-                        if (((MFH06) device).getUVSwitch5() != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH5),
-                                    ((MFH06) device).getUVSwitch5());
+                        org.openhab.core.library.types.OnOffType u5 = ((MFH06) device).getUVSwitch5();
+                        if (u5 != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH5), u5);
                         }
-                        if (((MFH06) device).getUVSwitch6() != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH6),
-                                    ((MFH06) device).getUVSwitch6());
+                        org.openhab.core.library.types.OnOffType u6 = ((MFH06) device).getUVSwitch6();
+                        if (u6 != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH6), u6);
                         }
                         break;
                     case MDT0601_233:
-                        if (((MDT0601) device).getDimChannel1State() != null) {
+                        PercentType md1 = ((MDT0601) device).getDimChannel1State();
+                        if (md1 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL1),
-                                    ((MDT0601) device).getDimChannel1State());
+                                    md1);
                         }
-                        if (((MDT0601) device).getDimChannel2State() != null) {
+                        PercentType md2 = ((MDT0601) device).getDimChannel2State();
+                        if (md2 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL2),
-                                    ((MDT0601) device).getDimChannel2State());
+                                    md2);
                         }
-                        if (((MDT0601) device).getDimChannel3State() != null) {
+                        PercentType md3 = ((MDT0601) device).getDimChannel3State();
+                        if (md3 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL3),
-                                    ((MDT0601) device).getDimChannel3State());
+                                    md3);
                         }
-                        if (((MDT0601) device).getDimChannel4State() != null) {
+                        PercentType md4 = ((MDT0601) device).getDimChannel4State();
+                        if (md4 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL4),
-                                    ((MDT0601) device).getDimChannel4State());
+                                    md4);
                         }
-                        if (((MDT0601) device).getDimChannel5State() != null) {
+                        PercentType md5 = ((MDT0601) device).getDimChannel5State();
+                        if (md5 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL5),
-                                    ((MDT0601) device).getDimChannel5State());
+                                    md5);
                         }
-                        if (((MDT0601) device).getDimChannel6State() != null) {
+                        PercentType md6 = ((MDT0601) device).getDimChannel6State();
+                        if (md6 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL6),
-                                    ((MDT0601) device).getDimChannel6State());
+                                    md6);
                         }
                         break;
                     case MDT04015_433:
-                        if (((MDT04015) device).getDimChannel1State() != null) {
+                        PercentType m1 = ((MDT04015) device).getDimChannel1State();
+                        if (m1 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL1),
-                                    ((MDT04015) device).getDimChannel1State());
+                                    m1);
                         }
-                        if (((MDT04015) device).getDimChannel2State() != null) {
+                        PercentType m2 = ((MDT04015) device).getDimChannel2State();
+                        if (m2 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL2),
-                                    ((MDT04015) device).getDimChannel2State());
+                                    m2);
                         }
-                        if (((MDT04015) device).getDimChannel3State() != null) {
+                        PercentType m3 = ((MDT04015) device).getDimChannel3State();
+                        if (m3 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL3),
-                                    ((MDT04015) device).getDimChannel3State());
+                                    m3);
                         }
-                        if (((MDT04015) device).getDimChannel4State() != null) {
+                        PercentType m4 = ((MDT04015) device).getDimChannel4State();
+                        if (m4 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL4),
-                                    ((MDT04015) device).getDimChannel4State());
+                                    m4);
                         }
                         break;
                     case MRDA06:
-                        if (((MRDA06) device).getDimChannel1State() != null) {
+                        PercentType mr1 = ((MRDA06) device).getDimChannel1State();
+                        if (mr1 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL1),
-                                    ((MRDA06) device).getDimChannel1State());
+                                    mr1);
                         }
-                        if (((MRDA06) device).getDimChannel2State() != null) {
+                        PercentType mr2 = ((MRDA06) device).getDimChannel2State();
+                        if (mr2 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL2),
-                                    ((MRDA06) device).getDimChannel2State());
+                                    mr2);
                         }
-                        if (((MRDA06) device).getDimChannel3State() != null) {
+                        PercentType mr3 = ((MRDA06) device).getDimChannel3State();
+                        if (mr3 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL3),
-                                    ((MRDA06) device).getDimChannel3State());
+                                    mr3);
                         }
-                        if (((MRDA06) device).getDimChannel4State() != null) {
+                        PercentType mr4 = ((MRDA06) device).getDimChannel4State();
+                        if (mr4 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL4),
-                                    ((MRDA06) device).getDimChannel4State());
+                                    mr4);
                         }
-                        if (((MRDA06) device).getDimChannel5State() != null) {
+                        PercentType mr5 = ((MRDA06) device).getDimChannel5State();
+                        if (mr5 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL5),
-                                    ((MRDA06) device).getDimChannel5State());
+                                    mr5);
                         }
-                        if (((MRDA06) device).getDimChannel6State() != null) {
+                        PercentType mr6 = ((MRDA06) device).getDimChannel6State();
+                        if (mr6 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL6),
-                                    ((MRDA06) device).getDimChannel6State());
+                                    mr6);
                         }
                         break;
                     case MR1610_433:
@@ -1059,171 +1075,214 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         }
 
                         break;
-                    case ML01:
-                        if (((ML01) device).getUVSwitch200() != null) {
+                    case ML01: {
+                        ML01 ml = (ML01) device;
+                        org.openhab.core.library.types.OnOffType u200 = ml.getUVSwitch200();
+                        if (u200 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH200),
-                                    ((ML01) device).getUVSwitch200());
+                                    u200);
                         }
-                        if (((ML01) device).getUVSwitch201() != null) {
+                        org.openhab.core.library.types.OnOffType u201 = ml.getUVSwitch201();
+                        if (u201 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH201),
-                                    ((ML01) device).getUVSwitch201());
+                                    u201);
                         }
-                        if (((ML01) device).getUVSwitch202() != null) {
+                        org.openhab.core.library.types.OnOffType u202 = ml.getUVSwitch202();
+                        if (u202 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH202),
-                                    ((ML01) device).getUVSwitch202());
+                                    u202);
                         }
-                        if (((ML01) device).getUVSwitch203() != null) {
+                        org.openhab.core.library.types.OnOffType u203 = ml.getUVSwitch203();
+                        if (u203 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH203),
-                                    ((ML01) device).getUVSwitch203());
+                                    u203);
                         }
-                        if (((ML01) device).getUVSwitch204() != null) {
+                        org.openhab.core.library.types.OnOffType u204 = ml.getUVSwitch204();
+                        if (u204 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH204),
-                                    ((ML01) device).getUVSwitch204());
+                                    u204);
                         }
-                        if (((ML01) device).getUVSwitch205() != null) {
+                        org.openhab.core.library.types.OnOffType u205 = ml.getUVSwitch205();
+                        if (u205 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH205),
-                                    ((ML01) device).getUVSwitch205());
+                                    u205);
                         }
-                        if (((ML01) device).getUVSwitch206() != null) {
+                        org.openhab.core.library.types.OnOffType u206 = ml.getUVSwitch206();
+                        if (u206 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH206),
-                                    ((ML01) device).getUVSwitch206());
+                                    u206);
                         }
-                        if (((ML01) device).getUVSwitch207() != null) {
+                        org.openhab.core.library.types.OnOffType u207 = ml.getUVSwitch207();
+                        if (u207 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH207),
-                                    ((ML01) device).getUVSwitch207());
+                                    u207);
                         }
-                        if (((ML01) device).getUVSwitch208() != null) {
+                        org.openhab.core.library.types.OnOffType u208 = ml.getUVSwitch208();
+                        if (u208 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH208),
-                                    ((ML01) device).getUVSwitch208());
+                                    u208);
                         }
-                        if (((ML01) device).getUVSwitch209() != null) {
+                        org.openhab.core.library.types.OnOffType u209 = ml.getUVSwitch209();
+                        if (u209 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH209),
-                                    ((ML01) device).getUVSwitch209());
+                                    u209);
                         }
-                        if (((ML01) device).getUVSwitch210() != null) {
+                        org.openhab.core.library.types.OnOffType u210 = ml.getUVSwitch210();
+                        if (u210 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH210),
-                                    ((ML01) device).getUVSwitch210());
+                                    u210);
                         }
-                        if (((ML01) device).getUVSwitch211() != null) {
+                        org.openhab.core.library.types.OnOffType u211 = ml.getUVSwitch211();
+                        if (u211 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH211),
-                                    ((ML01) device).getUVSwitch211());
+                                    u211);
                         }
-                        if (((ML01) device).getUVSwitch212() != null) {
+                        org.openhab.core.library.types.OnOffType u212 = ml.getUVSwitch212();
+                        if (u212 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH212),
-                                    ((ML01) device).getUVSwitch212());
+                                    u212);
                         }
-                        if (((ML01) device).getUVSwitch213() != null) {
+                        org.openhab.core.library.types.OnOffType u213 = ml.getUVSwitch213();
+                        if (u213 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH213),
-                                    ((ML01) device).getUVSwitch213());
+                                    u213);
                         }
-                        if (((ML01) device).getUVSwitch214() != null) {
+                        org.openhab.core.library.types.OnOffType u214 = ml.getUVSwitch214();
+                        if (u214 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH214),
-                                    ((ML01) device).getUVSwitch214());
+                                    u214);
                         }
-                        if (((ML01) device).getUVSwitch215() != null) {
+                        org.openhab.core.library.types.OnOffType u215 = ml.getUVSwitch215();
+                        if (u215 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH215),
-                                    ((ML01) device).getUVSwitch215());
+                                    u215);
                         }
-                        if (((ML01) device).getUVSwitch216() != null) {
+                        org.openhab.core.library.types.OnOffType u216 = ml.getUVSwitch216();
+                        if (u216 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH216),
-                                    ((ML01) device).getUVSwitch216());
+                                    u216);
                         }
-                        if (((ML01) device).getUVSwitch217() != null) {
+                        org.openhab.core.library.types.OnOffType u217 = ml.getUVSwitch217();
+                        if (u217 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH217),
-                                    ((ML01) device).getUVSwitch217());
+                                    u217);
                         }
-                        if (((ML01) device).getUVSwitch218() != null) {
+                        org.openhab.core.library.types.OnOffType u218 = ml.getUVSwitch218();
+                        if (u218 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH218),
-                                    ((ML01) device).getUVSwitch218());
+                                    u218);
                         }
-                        if (((ML01) device).getUVSwitch219() != null) {
+                        org.openhab.core.library.types.OnOffType u219 = ml.getUVSwitch219();
+                        if (u219 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH219),
-                                    ((ML01) device).getUVSwitch219());
+                                    u219);
                         }
-                        if (((ML01) device).getUVSwitch220() != null) {
+                        org.openhab.core.library.types.OnOffType u220 = ml.getUVSwitch220();
+                        if (u220 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH220),
-                                    ((ML01) device).getUVSwitch220());
+                                    u220);
                         }
-                        if (((ML01) device).getUVSwitch221() != null) {
+                        org.openhab.core.library.types.OnOffType u221 = ml.getUVSwitch221();
+                        if (u221 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH221),
-                                    ((ML01) device).getUVSwitch221());
+                                    u221);
                         }
-                        if (((ML01) device).getUVSwitch222() != null) {
+                        org.openhab.core.library.types.OnOffType u222 = ml.getUVSwitch222();
+                        if (u222 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH222),
-                                    ((ML01) device).getUVSwitch222());
+                                    u222);
                         }
-                        if (((ML01) device).getUVSwitch223() != null) {
+                        org.openhab.core.library.types.OnOffType u223 = ml.getUVSwitch223();
+                        if (u223 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH223),
-                                    ((ML01) device).getUVSwitch223());
+                                    u223);
                         }
-                        if (((ML01) device).getUVSwitch224() != null) {
+                        org.openhab.core.library.types.OnOffType u224 = ml.getUVSwitch224();
+                        if (u224 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH224),
-                                    ((ML01) device).getUVSwitch224());
+                                    u224);
                         }
-                        if (((ML01) device).getUVSwitch225() != null) {
+                        org.openhab.core.library.types.OnOffType u225 = ml.getUVSwitch225();
+                        if (u225 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH225),
-                                    ((ML01) device).getUVSwitch225());
+                                    u225);
                         }
-                        if (((ML01) device).getUVSwitch226() != null) {
+                        org.openhab.core.library.types.OnOffType u226 = ml.getUVSwitch226();
+                        if (u226 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH226),
-                                    ((ML01) device).getUVSwitch226());
+                                    u226);
                         }
-                        if (((ML01) device).getUVSwitch227() != null) {
+                        org.openhab.core.library.types.OnOffType u227 = ml.getUVSwitch227();
+                        if (u227 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH227),
-                                    ((ML01) device).getUVSwitch227());
+                                    u227);
                         }
-                        if (((ML01) device).getUVSwitch228() != null) {
+                        org.openhab.core.library.types.OnOffType u228 = ml.getUVSwitch228();
+                        if (u228 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH228),
-                                    ((ML01) device).getUVSwitch228());
+                                    u228);
                         }
-                        if (((ML01) device).getUVSwitch229() != null) {
+                        org.openhab.core.library.types.OnOffType u229 = ml.getUVSwitch229();
+                        if (u229 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH229),
-                                    ((ML01) device).getUVSwitch229());
+                                    u229);
                         }
-                        if (((ML01) device).getUVSwitch230() != null) {
+                        org.openhab.core.library.types.OnOffType u230 = ml.getUVSwitch230();
+                        if (u230 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH230),
-                                    ((ML01) device).getUVSwitch230());
+                                    u230);
                         }
-                        if (((ML01) device).getUVSwitch231() != null) {
+                        org.openhab.core.library.types.OnOffType u231 = ml.getUVSwitch231();
+                        if (u231 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH231),
-                                    ((ML01) device).getUVSwitch231());
+                                    u231);
                         }
-                        if (((ML01) device).getUVSwitch232() != null) {
+                        org.openhab.core.library.types.OnOffType u232 = ml.getUVSwitch232();
+                        if (u232 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH232),
-                                    ((ML01) device).getUVSwitch232());
+                                    u232);
                         }
-                        if (((ML01) device).getUVSwitch233() != null) {
+                        org.openhab.core.library.types.OnOffType u233 = ml.getUVSwitch233();
+                        if (u233 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH233),
-                                    ((ML01) device).getUVSwitch233());
+                                    u233);
                         }
-                        if (((ML01) device).getUVSwitch234() != null) {
+                        org.openhab.core.library.types.OnOffType u234 = ml.getUVSwitch234();
+                        if (u234 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH234),
-                                    ((ML01) device).getUVSwitch234());
+                                    u234);
                         }
-                        if (((ML01) device).getUVSwitch235() != null) {
+                        org.openhab.core.library.types.OnOffType u235 = ml.getUVSwitch235();
+                        if (u235 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH235),
-                                    ((ML01) device).getUVSwitch235());
+                                    u235);
                         }
-                        if (((ML01) device).getUVSwitch236() != null) {
+                        org.openhab.core.library.types.OnOffType u236 = ml.getUVSwitch236();
+                        if (u236 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH236),
-                                    ((ML01) device).getUVSwitch236());
+                                    u236);
                         }
-                        if (((ML01) device).getUVSwitch237() != null) {
+                        org.openhab.core.library.types.OnOffType u237 = ml.getUVSwitch237();
+                        if (u237 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH237),
-                                    ((ML01) device).getUVSwitch237());
+                                    u237);
                         }
-                        if (((ML01) device).getUVSwitch238() != null) {
+                        org.openhab.core.library.types.OnOffType u238 = ml.getUVSwitch238();
+                        if (u238 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH238),
-                                    ((ML01) device).getUVSwitch238());
+                                    u238);
                         }
-                        if (((ML01) device).getUVSwitch239() != null) {
+                        org.openhab.core.library.types.OnOffType u239 = ml.getUVSwitch239();
+                        if (u239 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH239),
-                                    ((ML01) device).getUVSwitch239());
+                                    u239);
                         }
-                        if (((ML01) device).getUVSwitch240() != null) {
+                        org.openhab.core.library.types.OnOffType u240 = ml.getUVSwitch240();
+                        if (u240 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH240),
-                                    ((ML01) device).getUVSwitch240());
+                                    u240);
                         }
+                    }
                         break;
                     case MS24:
                         if (((MS24) device).getDryContact1Value() != null) {

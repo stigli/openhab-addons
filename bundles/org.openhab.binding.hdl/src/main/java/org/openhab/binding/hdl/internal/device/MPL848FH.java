@@ -20,6 +20,8 @@ import org.openhab.binding.hdl.internal.handler.HdlPacket;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.OnOffType;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 /**
  * The MPL8_48_FH class contains support channels for device Type MPL8.
  * And how the information on the HDL bus is packet for this device.
@@ -27,30 +29,30 @@ import org.openhab.core.library.types.OnOffType;
  *
  * @author stigla - Initial contribution
  */
-
+@NonNullByDefault
 public class MPL848FH extends Device {
     private double temperatureValue;
-    private OnOffType uvSwitch1 = null; // Status On/OFf
-    private OnOffType uvSwitch2 = null; // Normal Mode
-    private OnOffType uvSwitch3 = null; // Day Mode
-    private OnOffType uvSwitch4 = null; // Night Mode
-    private OnOffType uvSwitch5 = null; // Away Mode
-    private OnOffType uvSwitch6 = null; // Timer Mode
+    private @Nullable OnOffType uvSwitch1 = null; // Status On/OFf
+    private @Nullable OnOffType uvSwitch2 = null; // Normal Mode
+    private @Nullable OnOffType uvSwitch3 = null; // Day Mode
+    private @Nullable OnOffType uvSwitch4 = null; // Night Mode
+    private @Nullable OnOffType uvSwitch5 = null; // Away Mode
+    private @Nullable OnOffType uvSwitch6 = null; // Timer Mode
 
     // Floor Heating
-    private String floorHeatingTemperaturType;
+    private @Nullable String floorHeatingTemperaturType;
     private double floorHeatingCurrentTemperatur;
-    private OnOffType floorHeatingStatus = null;
-    private EnumFHMode floorHeatingMode;
+    private @Nullable OnOffType floorHeatingStatus = null;
+    private @Nullable EnumFHMode floorHeatingMode;
     private double floorHeatingSetNormalTemperatur;
     private double floorHeatingSetDayTemperatur;
     private double floorHeatingSetNightTemperatur;
     private double floorHeatingSetAwayTemperatur;
-    private String floorHeatingTimer;
+    private @Nullable String floorHeatingTimer;
 
     // AC
-    private String acFanSpeed;
-    private String acMode;
+    private @Nullable String acFanSpeed;
+    private @Nullable String acMode;
     private double acCoolingTemp;
     private double acHeatTemp;
     private double acAutoTemp;
@@ -299,10 +301,11 @@ public class MPL848FH extends Device {
      */
 
     public void setTemperatureValue(double value) {
-        if (this.temperatureValue != value) {
+        double rounded = roundToHalf(value);
+        if (this.temperatureValue != rounded) {
             setUpdated(true);
         }
-        this.temperatureValue = value;
+        this.temperatureValue = rounded;
     }
 
     /**
@@ -313,69 +316,69 @@ public class MPL848FH extends Device {
         return new DecimalType(temperatureValue);
     }
 
-    public void setUVSwitch1(OnOffType UVSwitch1) {
-        if (this.uvSwitch1 != UVSwitch1) {
+    public void setUVSwitch1(@Nullable OnOffType UVSwitch1) {
+        if (!Objects.equals(this.uvSwitch1, UVSwitch1)) {
             setUpdated(true);
         }
         this.uvSwitch1 = UVSwitch1;
     }
 
-    public OnOffType getUVSwitch1() {
+    public @Nullable OnOffType getUVSwitch1() {
         return uvSwitch1;
     }
 
-    public void setUVSwitch2(OnOffType UVSwitch2) {
-        if (this.uvSwitch2 != UVSwitch2) {
+    public void setUVSwitch2(@Nullable OnOffType UVSwitch2) {
+        if (!Objects.equals(this.uvSwitch2, UVSwitch2)) {
             setUpdated(true);
         }
         this.uvSwitch2 = UVSwitch2;
     }
 
-    public OnOffType getUVSwitch2() {
+    public @Nullable OnOffType getUVSwitch2() {
         return uvSwitch2;
     }
 
-    public void setUVSwitch3(OnOffType UVSwitch3) {
-        if (this.uvSwitch3 != UVSwitch3) {
+    public void setUVSwitch3(@Nullable OnOffType UVSwitch3) {
+        if (!Objects.equals(this.uvSwitch3, UVSwitch3)) {
             setUpdated(true);
         }
         this.uvSwitch3 = UVSwitch3;
     }
 
-    public OnOffType getUVSwitch3() {
+    public @Nullable OnOffType getUVSwitch3() {
         return uvSwitch3;
     }
 
-    public void setUVSwitch4(OnOffType UVSwitch4) {
-        if (this.uvSwitch4 != UVSwitch4) {
+    public void setUVSwitch4(@Nullable OnOffType UVSwitch4) {
+        if (!Objects.equals(this.uvSwitch4, UVSwitch4)) {
             setUpdated(true);
         }
         this.uvSwitch4 = UVSwitch4;
     }
 
-    public OnOffType getUVSwitch4() {
+    public @Nullable OnOffType getUVSwitch4() {
         return uvSwitch4;
     }
 
-    public void setUVSwitch5(OnOffType UVSwitch5) {
-        if (this.uvSwitch5 != UVSwitch5) {
+    public void setUVSwitch5(@Nullable OnOffType UVSwitch5) {
+        if (!Objects.equals(this.uvSwitch5, UVSwitch5)) {
             setUpdated(true);
         }
         this.uvSwitch5 = UVSwitch5;
     }
 
-    public OnOffType getUVSwitch5() {
+    public @Nullable OnOffType getUVSwitch5() {
         return uvSwitch5;
     }
 
-    public void setUVSwitch6(OnOffType UVSwitch6) {
-        if (this.uvSwitch6 != UVSwitch6) {
+    public void setUVSwitch6(@Nullable OnOffType UVSwitch6) {
+        if (!Objects.equals(this.uvSwitch6, UVSwitch6)) {
             setUpdated(true);
         }
         this.uvSwitch6 = UVSwitch6;
     }
 
-    public OnOffType getUVSwitch6() {
+    public @Nullable OnOffType getUVSwitch6() {
         return uvSwitch6;
     }
 
@@ -402,25 +405,25 @@ public class MPL848FH extends Device {
         return new DecimalType(floorHeatingCurrentTemperaturValue);
     }
 
-    public void setFloorHeatingStatus(OnOffType FloorHeatingStatus) {
+    public void setFloorHeatingStatus(@Nullable OnOffType FloorHeatingStatus) {
         if (!Objects.equals(this.floorHeatingStatus, FloorHeatingStatus)) {
             setUpdated(true);
         }
         this.floorHeatingStatus = FloorHeatingStatus;
     }
 
-    public OnOffType getFloorHeatingStatus() {
+    public @Nullable OnOffType getFloorHeatingStatus() {
         return floorHeatingStatus;
     }
 
-    public void setFloorHeatingMode(EnumFHMode FloorHeatingMode) {
-        if (this.floorHeatingMode != FloorHeatingMode) {
+    public void setFloorHeatingMode(@Nullable EnumFHMode FloorHeatingMode) {
+        if (!Objects.equals(this.floorHeatingMode, FloorHeatingMode)) {
             setUpdated(true);
         }
         this.floorHeatingMode = FloorHeatingMode;
     }
 
-    public EnumFHMode getFloorHeatingMode() {
+    public @Nullable EnumFHMode getFloorHeatingMode() {
         return floorHeatingMode;
     }
 
@@ -605,5 +608,9 @@ public class MPL848FH extends Device {
     public DecimalType getACCurrentTemperatur() {
         BigDecimal acCurrentTempValue = BigDecimal.valueOf(this.acCurrentTemp);
         return new DecimalType(acCurrentTempValue);
+    }
+
+    private double roundToHalf(double v) {
+        return Math.round(v * 2.0) / 2.0;
     }
 }

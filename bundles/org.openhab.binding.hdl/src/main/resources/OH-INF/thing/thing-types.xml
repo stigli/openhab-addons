@@ -568,7 +568,7 @@
 		<state pattern="%d %%" readOnly="true"></state>
 	</channel-type>
 
-	<channel-type id="DateTime">
+	<channel-type id="dateTime">
 		<item-type>DateTime</item-type>
 		<label>DateTime</label>
 		<description>Current time</description>

@@ -15,6 +15,8 @@ package org.openhab.binding.hdl.internal.device;
 import java.util.HashMap;
 import java.util.List;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +27,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author stigla - Initial contribution
  */
-
+@NonNullByDefault
 public abstract class Device {
     protected static final Logger LOGGER = LoggerFactory.getLogger(Device.class);
 
@@ -45,7 +47,8 @@ public abstract class Device {
 
     public abstract DeviceType getType();
 
-    public static Device create(String serialNr, List<DeviceConfiguration> configurations) {
+    public static @Nullable Device create(@Nullable String serialNr,
+            @Nullable List<DeviceConfiguration> configurations) {
         if (serialNr == null || configurations == null) {
             LOGGER.debug("Device.create called with null serial or configurations (serial={}, configs={})", serialNr,
                     configurations == null ? 0 : configurations.size());
@@ -64,7 +67,7 @@ public abstract class Device {
         return null;
     }
 
-    public static Device create(HdlPacket p, List<DeviceConfiguration> configurations) {
+    public static @Nullable Device create(HdlPacket p, @Nullable List<DeviceConfiguration> configurations) {
         Device device = Device.create(p.serialNr, configurations);
         if (device == null) {
             LOGGER.warn("Can't create device from received message, returning NULL.");
@@ -116,7 +119,7 @@ public abstract class Device {
         }
     }
 
-    public static Device update(HdlPacket p, List<DeviceConfiguration> configurations, Device device) {
+    public static Device update(HdlPacket p, @Nullable List<DeviceConfiguration> configurations, Device device) {
         switch (device.getType()) {
             case MDT0601_233:
                 MDT0601 mdt0601233 = (MDT0601) device;

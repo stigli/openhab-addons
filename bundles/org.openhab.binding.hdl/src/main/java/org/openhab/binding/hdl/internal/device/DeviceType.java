@@ -12,12 +12,15 @@
  */
 package org.openhab.binding.hdl.internal.device;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+
 /**
  * The DeviceType class contains all names of Devices that are in HDL definiotns.
  * and the number the device has in HDL bus definitions.
  *
  * @author stigla - Initial contribution
  */
+@NonNullByDefault
 public enum DeviceType {
 
     MD0610(1), // 6 channels 10A dimmable scene controller

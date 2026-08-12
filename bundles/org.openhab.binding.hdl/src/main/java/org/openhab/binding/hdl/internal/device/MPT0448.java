@@ -15,6 +15,8 @@ package org.openhab.binding.hdl.internal.device;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 import org.openhab.core.library.types.OnOffType;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 /**
  * The MPT04_48 class contains support channels for device Type MPT04.
  * And how the information on the HDL bus is packet for this device.

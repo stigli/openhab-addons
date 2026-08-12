@@ -13,6 +13,8 @@
 
 package org.openhab.binding.hdl.internal.device;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+
 /**
  * The CommandType class define all allowed commands that can be sent on HDL bus
  * and the value it should have.
@@ -21,6 +23,7 @@ package org.openhab.binding.hdl.internal.device;
  * @author stigla - Initial contribution
  *
  */
+@NonNullByDefault
 public enum CommandType {
     Scene_Control(2),
     Response_Scene_Control(3),
