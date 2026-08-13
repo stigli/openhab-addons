@@ -31,7 +31,7 @@ public enum CommandType {
     Response_Read_Status_of_Scene(13),
     Broadcast_Status_of_Scene(61439),
     Read_Area_Information(4),
-    Response_Read_Area_Information(55),
+    Response_Read_Area_Information(5),
     Read_Scene_Information(0),
     Response_Read_Scene_Information(1),
     Modify_Scene_Information(8),
@@ -60,7 +60,7 @@ public enum CommandType {
     UV_Switch_Control(57372),
     Response_UV_Switch_Control(57373),
     Read_Status_of_UV_Switch(57368),
-    Response_Read_Status_of_UV_Switch(57389),
+    Response_Read_Status_of_UV_Switch(57369),
     Broadcast_Status_of_Status_of_UV_Switches(57367),
     Curtain_Switch_Control(58336), // E3E0
     Response_Curtain_Switch_Control(58337),
@@ -81,8 +81,8 @@ public enum CommandType {
     Response_Read_Floor_Heating_Status_DLP(6469), // 0x1945
     Control_Floor_Heating_Status_DLP(6470), // 0x1946
     Response_Control_Floor_Heating_Status_DLP(6471), // 0x1947
-    Read_Floor_Heating_Status(16136),
-    Response_Read_Floor_Heating_Status(16137),
+    Read_Floor_Heating_Status(7262),
+    Response_Read_Floor_Heating_Status(7263),
     Control_Floor_Heating_Status(7260),
     Response_Control_Floor_Heating_Status(7261),
     Read_Floor_Heating_Settings(6464),
@@ -92,6 +92,11 @@ public enum CommandType {
     Read_Floor_Heating_Day_Night_Time_Setting(7454),
     Response_Read_Floor_Heating_Day_Night_Time_Setting(7455),
     Modify_Floor_Heating_Day_Night_Time_Setting(7453),
+    // FIXME: the HDL Bus Pro spec documents 0x1D1F/7455 for both this response and
+    // Response_Read_Floor_Heating_Day_Night_Time_Setting above (confirmed against third-party
+    // implementations of the protocol, which reproduce the same ambiguity and leave it
+    // unimplemented). The real, distinct command code for this response is unknown, so create()
+    // and toString() below only resolve 7455 to Response_Read_Floor_Heating_Day_Night_Time_Setting.
     Response_Modify_Floor_Heating_Day_Night_Time_Setting(7455),
     Read_Sensors_Status_DeviceType315(56064),
     Response_Read_Sensors_Status_DeviceType315(56065),
@@ -168,7 +173,7 @@ public enum CommandType {
                 return Broadcast_Status_of_Scene;
             case 4:
                 return Read_Area_Information;
-            case 55:
+            case 5:
                 return Response_Read_Area_Information;
             case 0:
                 return Read_Scene_Information;
@@ -226,7 +231,7 @@ public enum CommandType {
                 return Response_UV_Switch_Control;
             case 57368:
                 return Read_Status_of_UV_Switch;
-            case 57389:
+            case 57369:
                 return Response_Read_Status_of_UV_Switch;
             case 57367:
                 return Broadcast_Status_of_Status_of_UV_Switches;
@@ -268,9 +273,9 @@ public enum CommandType {
                 return Control_Floor_Heating_Status_DLP;
             case 6471:
                 return Response_Control_Floor_Heating_Status_DLP;
-            case 16136:
+            case 7262:
                 return Read_Floor_Heating_Status;
-            case 16137:
+            case 7263:
                 return Response_Read_Floor_Heating_Status;
             case 7260:
                 return Control_Floor_Heating_Status;
@@ -404,7 +409,7 @@ public enum CommandType {
                 return "Broadcast_Status_of_Scene";
             case 4:
                 return "Read_Area_Information";
-            case 55:
+            case 5:
                 return "Response_Read_Area_Information";
             case 0:
                 return "Read_Scene_Information";
@@ -462,7 +467,7 @@ public enum CommandType {
                 return "Response_UV_Switch_Control";
             case 57368:
                 return "Read_Status_of_UV_Switch";
-            case 57389:
+            case 57369:
                 return "Response_Read_Status_of_UV_Switch";
             case 57367:
                 return "Broadcast_Status_of_Status_of_UV_Switches";
@@ -504,9 +509,9 @@ public enum CommandType {
                 return "Control_Floor_Heating_Status_DLP";
             case 6471:
                 return "Response_Control_Floor_Heating_Status_DLP";
-            case 16136:
+            case 7262:
                 return "Read_Floor_Heating_Status";
-            case 16137:
+            case 7263:
                 return "Response_Read_Floor_Heating_Status";
             case 7260:
                 return "Control_Floor_Heating_Status";
