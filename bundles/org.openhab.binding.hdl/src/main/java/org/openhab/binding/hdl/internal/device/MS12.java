@@ -33,14 +33,19 @@ import org.openhab.core.library.types.StopMoveType;
  */
 @NonNullByDefault
 public class MS12 extends Device {
+
+    private static final int CHANNEL_COUNT = 2;
+
     private double temperatureValue;
     private double brightnessValue;
     private @Nullable StopMoveType motionSensorValue = null;
     private @Nullable StopMoveType sonicValue = null;
-    private @Nullable OpenClosedType dryContact1Value = null;
-    private @Nullable OpenClosedType dryContact2Value = null;
-    private @Nullable OnOffType relayCh01 = null;
-    private @Nullable OnOffType relayCh02 = null;
+
+    /** Dry contact state per channel; 1-indexed to match the HDL protocol, index 0 is unused. **/
+    private final @Nullable OpenClosedType[] dryContacts = new OpenClosedType[CHANNEL_COUNT + 1];
+
+    /** Relay state per channel; 1-indexed to match the HDL protocol, index 0 is unused. **/
+    private final @Nullable OnOffType[] relayChannels = new OnOffType[CHANNEL_COUNT + 1];
 
     /** Date setpoint until the temperature setpoint is valid */
     private @Nullable Date dateSetpoint;
@@ -77,52 +82,19 @@ public class MS12 extends Device {
             case Broadcast_Sensors_Status_Automatically:
                 setTemperatureValue(p.data[0] - 20.0);
                 setBrightnessValue(ushort(p.data[2], p.data[1]));
-
-                if (p.data[3] == 1) {
-                    setMotionSensorValue(StopMoveType.MOVE);
-                } else {
-                    setMotionSensorValue(StopMoveType.STOP);
-                }
-                if (p.data[4] == 1) {
-                    setSonicValue(StopMoveType.MOVE);
-                } else {
-                    setSonicValue(StopMoveType.STOP);
-                }
-                if (p.data[5] == 1) {
-                    setDryContact1Value(OpenClosedType.OPEN);
-                } else {
-                    setDryContact1Value(OpenClosedType.CLOSED);
-                }
-                if (p.data[6] == 1) {
-                    setDryContact2Value(OpenClosedType.OPEN);
-                } else {
-                    setDryContact2Value(OpenClosedType.CLOSED);
-                }
+                setMotionSensorValue(p.data[3] == 1 ? StopMoveType.MOVE : StopMoveType.STOP);
+                setSonicValue(p.data[4] == 1 ? StopMoveType.MOVE : StopMoveType.STOP);
+                setDryContactValue(1, p.data[5] == 1 ? OpenClosedType.OPEN : OpenClosedType.CLOSED);
+                setDryContactValue(2, p.data[6] == 1 ? OpenClosedType.OPEN : OpenClosedType.CLOSED);
                 break;
             case Response_Read_Sensors_Status:
                 if (p.data[0] == -8) {
                     setTemperatureValue(p.data[1] - 20.0);
                     setBrightnessValue(ushort(p.data[2], p.data[3]));
-                    if (p.data[4] == 1) {
-                        setMotionSensorValue(StopMoveType.MOVE);
-                    } else {
-                        setMotionSensorValue(StopMoveType.STOP);
-                    }
-                    if (p.data[5] == 1) {
-                        setSonicValue(StopMoveType.MOVE);
-                    } else {
-                        setSonicValue(StopMoveType.STOP);
-                    }
-                    if (p.data[6] == 1) {
-                        setDryContact1Value(OpenClosedType.CLOSED);
-                    } else {
-                        setDryContact1Value(OpenClosedType.OPEN);
-                    }
-                    if (p.data[7] == 1) {
-                        setDryContact2Value(OpenClosedType.CLOSED);
-                    } else {
-                        setDryContact2Value(OpenClosedType.OPEN);
-                    }
+                    setMotionSensorValue(p.data[4] == 1 ? StopMoveType.MOVE : StopMoveType.STOP);
+                    setSonicValue(p.data[5] == 1 ? StopMoveType.MOVE : StopMoveType.STOP);
+                    setDryContactValue(1, p.data[6] == 1 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
+                    setDryContactValue(2, p.data[7] == 1 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
                 }
                 break;
             case Broadcast_Temperature:
@@ -134,115 +106,63 @@ public class MS12 extends Device {
                 setTemperatureValue(tempfloat);
                 break;
             case Response_Single_Channel_Control:
-                if ((p.data[0]) == 1) {
-                    if ((p.data[2]) == 100) {
-                        setRelayCh01(OnOffType.ON);
-                    } else {
-                        setRelayCh01(OnOffType.OFF);
-                    }
-                }
-                if ((p.data[0]) == 2) {
-                    if ((p.data[2]) == 100) {
-                        setRelayCh02(OnOffType.ON);
-                    } else {
-                        setRelayCh02(OnOffType.OFF);
-                    }
+                // data[0] holds the 1-based channel number, data[2] its new state (100 = ON).
+                int relayChannel = p.data[0];
+                if (relayChannel >= 1 && relayChannel <= CHANNEL_COUNT) {
+                    setRelayChannel(relayChannel, p.data[2] == 100 ? OnOffType.ON : OnOffType.OFF);
                 }
                 break;
             case Response_Auto_broadcast_Dry_Contact_Status:
-                if (p.data[1] == 1) {
-                    if (p.data[2] == 1) {
-                        setDryContact1Value(OpenClosedType.OPEN);
-                    } else {
-                        setDryContact1Value(OpenClosedType.CLOSED);
-                    }
-                }
-                if (p.data[1] == 2) {
-                    if (p.data[2] == 1) {
-                        setDryContact2Value(OpenClosedType.OPEN);
-                    } else {
-                        setDryContact2Value(OpenClosedType.CLOSED);
-                    }
-                }
-                break;
             case Response_Read_Dry_Contact_Status:
-                if (p.data[1] == 1) {
-                    if (p.data[2] == 1) {
-                        setDryContact1Value(OpenClosedType.OPEN);
-                    } else {
-                        setDryContact1Value(OpenClosedType.CLOSED);
-                    }
-                }
-                if (p.data[1] == 2) {
-                    if (p.data[2] == 1) {
-                        setDryContact2Value(OpenClosedType.OPEN);
-                    } else {
-                        setDryContact2Value(OpenClosedType.CLOSED);
-                    }
-                }
-                break;
             case Auto_broadcast_Dry_Contact_Status:
-                if (p.data[1] == 1) {
-                    if (p.data[2] == 1) {
-                        setDryContact1Value(OpenClosedType.OPEN);
-                    } else {
-                        setDryContact1Value(OpenClosedType.CLOSED);
-                    }
-                }
-                if (p.data[1] == 2) {
-                    if (p.data[2] == 1) {
-                        setDryContact2Value(OpenClosedType.OPEN);
-                    } else {
-                        setDryContact2Value(OpenClosedType.CLOSED);
-                    }
+                // data[1] holds the 1-based channel number that changed, data[2] its new state.
+                int contactChannel = p.data[1];
+                if (contactChannel >= 1 && contactChannel <= CHANNEL_COUNT) {
+                    setDryContactValue(contactChannel, p.data[2] == 1 ? OpenClosedType.OPEN : OpenClosedType.CLOSED);
                 }
                 break;
             default:
                 LOGGER.debug("For Device Type: {}, Unhandled CommandType: {}.", getType(), p.commandType);
                 break;
         }
-        return;
     }
 
-    public void setRelayCh01(OnOffType RelayCh01) {
-        if (this.relayCh01 != RelayCh01) {
+    private void setRelayChannel(int channel, OnOffType value) {
+        if (relayChannels[channel] != value) {
             setUpdated(true);
         }
-        this.relayCh01 = RelayCh01;
+        relayChannels[channel] = value;
+    }
+
+    private @Nullable OnOffType getRelayChannel(int channel) {
+        return relayChannels[channel];
     }
 
     public @Nullable OnOffType getRelayCh01State() {
-        return relayCh01;
-    }
-
-    public void setRelayCh02(OnOffType RelayCh02) {
-        if (this.relayCh02 != RelayCh02) {
-            setUpdated(true);
-        }
-        this.relayCh02 = RelayCh02;
+        return getRelayChannel(1);
     }
 
     public @Nullable OnOffType getRelayCh02State() {
-        return relayCh02;
+        return getRelayChannel(2);
     }
 
-    /**
-     * Sets the DryContact1Value sensor for 12in1 Sensor.
-     *
-     * @param OpenClosedType Value of the DryContact1Value
-     */
-    public void setDryContact1Value(OpenClosedType value) {
-        if (this.dryContact1Value != value) {
+    private void setDryContactValue(int channel, OpenClosedType value) {
+        if (dryContacts[channel] != value) {
             setUpdated(true);
         }
-        this.dryContact1Value = value;
+        dryContacts[channel] = value;
     }
 
-    /**
-     * the DryContact1Value as <code>OpenClosedType</code>
-     */
+    private @Nullable OpenClosedType getDryContactValue(int channel) {
+        return dryContacts[channel];
+    }
+
     public @Nullable OpenClosedType getDryContact1Value() {
-        return dryContact1Value;
+        return getDryContactValue(1);
+    }
+
+    public @Nullable OpenClosedType getDryContact2Value() {
+        return getDryContactValue(2);
     }
 
     /**
@@ -255,25 +175,6 @@ public class MS12 extends Device {
             setUpdated(true);
         }
         this.sonicValue = value;
-    }
-
-    /**
-     * Sets the DryContact2Value sensor for 12in1 Sensor.
-     *
-     * @param OpenClosedType Value of the DryContact1Value
-     */
-    public void setDryContact2Value(OpenClosedType value) {
-        if (this.dryContact2Value != value) {
-            setUpdated(true);
-        }
-        this.dryContact2Value = value;
-    }
-
-    /**
-     * the DryContact2Value as <code>OpenClosedType</code>
-     */
-    public @Nullable OpenClosedType getDryContact2Value() {
-        return dryContact2Value;
     }
 
     /**

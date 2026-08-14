@@ -27,13 +27,13 @@ import org.openhab.core.library.types.OnOffType;
 @NonNullByDefault
 public class MPT0448 extends Device {
 
+    private static final int CHANNEL_COUNT = 4;
+
     /** Device type for Digital touch switch 4 buttons **/
     private DeviceType deviceType = DeviceType.MPT04_48;
 
-    private @Nullable OnOffType button1 = null;
-    private @Nullable OnOffType button2 = null;
-    private @Nullable OnOffType button3 = null;
-    private @Nullable OnOffType button4 = null;
+    /** Button state per channel; 1-indexed to match the HDL protocol, index 0 is unused. **/
+    private final @Nullable OnOffType[] buttons = new OnOffType[CHANNEL_COUNT + 1];
 
     public MPT0448(DeviceConfiguration c) {
         super(c);
@@ -61,23 +61,31 @@ public class MPT0448 extends Device {
         this.deviceType = type;
     }
 
+    private void setButtonValue(int channel, OnOffType value) {
+        if (buttons[channel] != value) {
+            setUpdated(true);
+        }
+        buttons[channel] = value;
+    }
+
+    private @Nullable OnOffType getButtonValue(int channel) {
+        return buttons[channel];
+    }
+
     /**
      * Sets the ButtonValue value for touch panel.
      *
      * @param OnOff Value of the Button1
      */
     public void setbutton1Value(OnOffType value) {
-        if (this.button1 != value) {
-            setUpdated(true);
-        }
-        this.button1 = value;
+        setButtonValue(1, value);
     }
 
     /**
      * the button1 Value as <code>OnOffType</code>
      */
     public @Nullable OnOffType getbutton1Value() {
-        return button1;
+        return getButtonValue(1);
     }
 
     /**
@@ -86,17 +94,14 @@ public class MPT0448 extends Device {
      * @param OnOff Value of the Button2
      */
     public void setbutton2Value(OnOffType value) {
-        if (this.button2 != value) {
-            setUpdated(true);
-        }
-        this.button2 = value;
+        setButtonValue(2, value);
     }
 
     /**
      * the button2 Value as <code>OnOffType</code>
      */
     public @Nullable OnOffType getbutton2Value() {
-        return button2;
+        return getButtonValue(2);
     }
 
     /**
@@ -105,17 +110,14 @@ public class MPT0448 extends Device {
      * @param OnOff Value of the Button3
      */
     public void setbutton3Value(OnOffType value) {
-        if (this.button3 != value) {
-            setUpdated(true);
-        }
-        this.button3 = value;
+        setButtonValue(3, value);
     }
 
     /**
      * the button2 Value as <code>OnOffType</code>
      */
     public @Nullable OnOffType getbutton3Value() {
-        return button3;
+        return getButtonValue(3);
     }
 
     /**
@@ -124,16 +126,13 @@ public class MPT0448 extends Device {
      * @param OnOff Value of the Button4
      */
     public void setbutton4Value(OnOffType value) {
-        if (this.button4 != value) {
-            setUpdated(true);
-        }
-        this.button4 = value;
+        setButtonValue(4, value);
     }
 
     /**
      * the button2 Value as <code>OnOffType</code>
      */
     public @Nullable OnOffType getbutton4Value() {
-        return button4;
+        return getButtonValue(4);
     }
 }

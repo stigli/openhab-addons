@@ -27,21 +27,13 @@ import org.openhab.core.library.types.OnOffType;
 @NonNullByDefault
 public class MR12xx extends Device {
 
+    private static final int CHANNEL_COUNT = 12;
+
     /** Device type for this 12 channel relay **/
     private DeviceType deviceType = DeviceType.MR1216_233;
 
-    private @Nullable OnOffType relayCh01 = null;
-    private @Nullable OnOffType relayCh02 = null;
-    private @Nullable OnOffType relayCh03 = null;
-    private @Nullable OnOffType relayCh04 = null;
-    private @Nullable OnOffType relayCh05 = null;
-    private @Nullable OnOffType relayCh06 = null;
-    private @Nullable OnOffType relayCh07 = null;
-    private @Nullable OnOffType relayCh08 = null;
-    private @Nullable OnOffType relayCh09 = null;
-    private @Nullable OnOffType relayCh10 = null;
-    private @Nullable OnOffType relayCh11 = null;
-    private @Nullable OnOffType relayCh12 = null;
+    /** Relay state per channel; 1-indexed to match the HDL protocol, index 0 is unused. **/
+    private final @Nullable OnOffType[] relayChannels = new OnOffType[CHANNEL_COUNT + 1];
 
     public MR12xx(DeviceConfiguration c) {
         super(c);
@@ -50,189 +42,17 @@ public class MR12xx extends Device {
     public void treatHDLPacketForDevice(HdlPacket p) {
         switch (p.commandType) {
             case Response_Read_Status_of_Channels:
-                if (p.data[1] == 0) {
-                    setRelayCh01(OnOffType.OFF);
-                } else {
-                    setRelayCh01(OnOffType.ON);
-                }
-                if (p.data[2] == 0) {
-                    setRelayCh02(OnOffType.OFF);
-                } else {
-                    setRelayCh02(OnOffType.ON);
-                }
-                if (p.data[3] == 0) {
-                    setRelayCh03(OnOffType.OFF);
-                } else {
-                    setRelayCh03(OnOffType.ON);
-                }
-                if (p.data[4] == 0) {
-                    setRelayCh04(OnOffType.OFF);
-                } else {
-                    setRelayCh04(OnOffType.ON);
-                }
-                if (p.data[5] == 0) {
-                    setRelayCh05(OnOffType.OFF);
-                } else {
-                    setRelayCh05(OnOffType.ON);
-                }
-                if (p.data[6] == 0) {
-                    setRelayCh06(OnOffType.OFF);
-                } else {
-                    setRelayCh06(OnOffType.ON);
-                }
-                if (p.data[7] == 0) {
-                    setRelayCh07(OnOffType.OFF);
-                } else {
-                    setRelayCh07(OnOffType.ON);
-                }
-                if (p.data[8] == 0) {
-                    setRelayCh08(OnOffType.OFF);
-                } else {
-                    setRelayCh08(OnOffType.ON);
-                }
-                if (p.data[9] == 0) {
-                    setRelayCh09(OnOffType.OFF);
-                } else {
-                    setRelayCh09(OnOffType.ON);
-                }
-                if (p.data[10] == 0) {
-                    setRelayCh10(OnOffType.OFF);
-                } else {
-                    setRelayCh10(OnOffType.ON);
-                }
-                if (p.data[11] == 0) {
-                    setRelayCh11(OnOffType.OFF);
-                } else {
-                    setRelayCh11(OnOffType.ON);
-                }
-                if (p.data[12] == 0) {
-                    setRelayCh12(OnOffType.OFF);
-                } else {
-                    setRelayCh12(OnOffType.ON);
-                }
-                break;
             case Response_Read_Current_Level_of_Channels:
-                if (p.data[1] == 0) {
-                    setRelayCh01(OnOffType.OFF);
-                } else {
-                    setRelayCh01(OnOffType.ON);
-                }
-                if (p.data[2] == 0) {
-                    setRelayCh02(OnOffType.OFF);
-                } else {
-                    setRelayCh02(OnOffType.ON);
-                }
-                if (p.data[3] == 0) {
-                    setRelayCh03(OnOffType.OFF);
-                } else {
-                    setRelayCh03(OnOffType.ON);
-                }
-                if (p.data[4] == 0) {
-                    setRelayCh04(OnOffType.OFF);
-                } else {
-                    setRelayCh04(OnOffType.ON);
-                }
-                if (p.data[5] == 0) {
-                    setRelayCh05(OnOffType.OFF);
-                } else {
-                    setRelayCh05(OnOffType.ON);
-                }
-                if (p.data[6] == 0) {
-                    setRelayCh06(OnOffType.OFF);
-                } else {
-                    setRelayCh06(OnOffType.ON);
-                }
-                if (p.data[7] == 0) {
-                    setRelayCh07(OnOffType.OFF);
-                } else {
-                    setRelayCh07(OnOffType.ON);
-                }
-                if (p.data[8] == 0) {
-                    setRelayCh08(OnOffType.OFF);
-                } else {
-                    setRelayCh08(OnOffType.ON);
-                }
-                if (p.data[9] == 0) {
-                    setRelayCh09(OnOffType.OFF);
-                } else {
-                    setRelayCh09(OnOffType.ON);
-                }
-                if (p.data[10] == 0) {
-                    setRelayCh10(OnOffType.OFF);
-                } else {
-                    setRelayCh10(OnOffType.ON);
-                }
-                if (p.data[11] == 0) {
-                    setRelayCh11(OnOffType.OFF);
-                } else {
-                    setRelayCh11(OnOffType.ON);
-                }
-                if (p.data[12] == 0) {
-                    setRelayCh12(OnOffType.OFF);
-                } else {
-                    setRelayCh12(OnOffType.ON);
+                for (int ch = 1; ch <= CHANNEL_COUNT; ch++) {
+                    setRelayChannel(ch, p.data[ch] == 0 ? OnOffType.OFF : OnOffType.ON);
                 }
                 break;
             case Response_Single_Channel_Control:
-                if ((p.data[4] & 0x01) == 1) {
-                    setRelayCh01(OnOffType.ON);
-                } else {
-                    setRelayCh01(OnOffType.OFF);
-                }
-                if ((p.data[4] & 0x02) == 2) {
-                    setRelayCh02(OnOffType.ON);
-                } else {
-                    setRelayCh02(OnOffType.OFF);
-                }
-                if ((p.data[4] & 0x04) == 4) {
-                    setRelayCh03(OnOffType.ON);
-                } else {
-                    setRelayCh03(OnOffType.OFF);
-                }
-                if ((p.data[4] & 0x08) == 8) {
-                    setRelayCh04(OnOffType.ON);
-                } else {
-                    setRelayCh04(OnOffType.OFF);
-                }
-                if ((p.data[4] & 0x10) == 16) {
-                    setRelayCh05(OnOffType.ON);
-                } else {
-                    setRelayCh05(OnOffType.OFF);
-                }
-                if ((p.data[4] & 0x20) == 32) {
-                    setRelayCh06(OnOffType.ON);
-                } else {
-                    setRelayCh06(OnOffType.OFF);
-                }
-                if ((p.data[4] & 0x40) == 64) {
-                    setRelayCh07(OnOffType.ON);
-                } else {
-                    setRelayCh07(OnOffType.OFF);
-                }
-                if ((p.data[4] & 0x80) == 128) {
-                    setRelayCh08(OnOffType.ON);
-                } else {
-                    setRelayCh08(OnOffType.OFF);
-                }
-                if ((p.data[5] & 0x01) == 1) {
-                    setRelayCh09(OnOffType.ON);
-                } else {
-                    setRelayCh09(OnOffType.OFF);
-                }
-                if ((p.data[5] & 0x02) == 2) {
-                    setRelayCh10(OnOffType.ON);
-                } else {
-                    setRelayCh10(OnOffType.OFF);
-                }
-                if ((p.data[5] & 0x04) == 4) {
-                    setRelayCh11(OnOffType.ON);
-                } else {
-                    setRelayCh11(OnOffType.OFF);
-                }
-                if ((p.data[5] & 0x08) == 8) {
-                    setRelayCh12(OnOffType.ON);
-                } else {
-                    setRelayCh12(OnOffType.OFF);
+                // Channels 1-8 are packed as a bitmask in data[4], channels 9-12 in data[5].
+                for (int ch = 1; ch <= CHANNEL_COUNT; ch++) {
+                    int dataByte = ch <= 8 ? p.data[4] : p.data[5];
+                    int bit = 1 << ((ch - 1) % 8);
+                    setRelayChannel(ch, (dataByte & bit) != 0 ? OnOffType.ON : OnOffType.OFF);
                 }
                 break;
             case Broadcast_Status_of_Scene:
@@ -244,136 +64,63 @@ public class MR12xx extends Device {
         }
     }
 
-    public void setRelayCh01(OnOffType RelayCh01) {
-        if (this.relayCh01 != RelayCh01) {
+    private void setRelayChannel(int channel, OnOffType value) {
+        if (relayChannels[channel] != value) {
             setUpdated(true);
         }
-        this.relayCh01 = RelayCh01;
+        relayChannels[channel] = value;
+    }
+
+    private @Nullable OnOffType getRelayChannel(int channel) {
+        return relayChannels[channel];
     }
 
     public @Nullable OnOffType getRelayCh01State() {
-        return relayCh01;
-    }
-
-    public void setRelayCh02(OnOffType RelayCh02) {
-        if (this.relayCh02 != RelayCh02) {
-            setUpdated(true);
-        }
-        this.relayCh02 = RelayCh02;
+        return getRelayChannel(1);
     }
 
     public @Nullable OnOffType getRelayCh02State() {
-        return relayCh02;
-    }
-
-    public void setRelayCh03(OnOffType RelayCh03) {
-        if (this.relayCh03 != RelayCh03) {
-            setUpdated(true);
-        }
-        this.relayCh03 = RelayCh03;
+        return getRelayChannel(2);
     }
 
     public @Nullable OnOffType getRelayCh03State() {
-        return relayCh03;
-    }
-
-    public void setRelayCh04(OnOffType RelayCh04) {
-        if (this.relayCh04 != RelayCh04) {
-            setUpdated(true);
-        }
-        this.relayCh04 = RelayCh04;
+        return getRelayChannel(3);
     }
 
     public @Nullable OnOffType getRelayCh04State() {
-        return relayCh04;
-    }
-
-    public void setRelayCh05(OnOffType RelayCh05) {
-        if (this.relayCh05 != RelayCh05) {
-            setUpdated(true);
-        }
-        this.relayCh05 = RelayCh05;
+        return getRelayChannel(4);
     }
 
     public @Nullable OnOffType getRelayCh05State() {
-        return relayCh05;
-    }
-
-    public void setRelayCh06(OnOffType RelayCh06) {
-        if (this.relayCh06 != RelayCh06) {
-            setUpdated(true);
-        }
-        this.relayCh06 = RelayCh06;
+        return getRelayChannel(5);
     }
 
     public @Nullable OnOffType getRelayCh06State() {
-        return relayCh06;
-    }
-
-    public void setRelayCh07(OnOffType RelayCh07) {
-        if (this.relayCh07 != RelayCh07) {
-            setUpdated(true);
-        }
-        this.relayCh07 = RelayCh07;
+        return getRelayChannel(6);
     }
 
     public @Nullable OnOffType getRelayCh07State() {
-        return relayCh07;
-    }
-
-    public void setRelayCh08(OnOffType RelayCh08) {
-        if (this.relayCh08 != RelayCh08) {
-            setUpdated(true);
-        }
-        this.relayCh08 = RelayCh08;
+        return getRelayChannel(7);
     }
 
     public @Nullable OnOffType getRelayCh08State() {
-        return relayCh08;
-    }
-
-    public void setRelayCh09(OnOffType RelayCh09) {
-        if (this.relayCh09 != RelayCh09) {
-            setUpdated(true);
-        }
-        this.relayCh09 = RelayCh09;
+        return getRelayChannel(8);
     }
 
     public @Nullable OnOffType getRelayCh09State() {
-        return relayCh09;
-    }
-
-    public void setRelayCh10(OnOffType RelayCh10) {
-        if (this.relayCh10 != RelayCh10) {
-            setUpdated(true);
-        }
-        this.relayCh10 = RelayCh10;
+        return getRelayChannel(9);
     }
 
     public @Nullable OnOffType getRelayCh10State() {
-        return relayCh10;
-    }
-
-    public void setRelayCh11(OnOffType RelayCh11) {
-        if (this.relayCh11 != RelayCh11) {
-            setUpdated(true);
-        }
-        this.relayCh11 = RelayCh11;
+        return getRelayChannel(10);
     }
 
     public @Nullable OnOffType getRelayCh11State() {
-        return relayCh11;
-    }
-
-    public void setRelayCh12(OnOffType RelayCh12) {
-        if (this.relayCh12 != RelayCh12) {
-            setUpdated(true);
-        }
-        this.relayCh12 = RelayCh12;
+        return getRelayChannel(11);
     }
 
     public @Nullable OnOffType getRelayCh12State() {
-        return relayCh12;
+        return getRelayChannel(12);
     }
 
     @Override

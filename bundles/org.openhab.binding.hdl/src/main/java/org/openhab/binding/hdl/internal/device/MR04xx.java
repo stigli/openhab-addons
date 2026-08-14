@@ -27,13 +27,13 @@ import org.openhab.core.library.types.OnOffType;
 @NonNullByDefault
 public class MR04xx extends Device {
 
+    private static final int CHANNEL_COUNT = 4;
+
     /** Device type for this Relay 4x16A **/
     private DeviceType deviceType = DeviceType.MR0416_C;
 
-    private @Nullable OnOffType relayCh01 = null;
-    private @Nullable OnOffType relayCh02 = null;
-    private @Nullable OnOffType relayCh03 = null;
-    private @Nullable OnOffType relayCh04 = null;
+    /** Relay state per channel; 1-indexed to match the HDL protocol, index 0 is unused. **/
+    private final @Nullable OnOffType[] relayChannels = new OnOffType[CHANNEL_COUNT + 1];
 
     public MR04xx(DeviceConfiguration c) {
         super(c);
@@ -42,71 +42,17 @@ public class MR04xx extends Device {
     public void treatHDLPacketForDevice(HdlPacket p) {
         switch (p.commandType) {
             case Response_Read_Status_of_Channels:
-                if (p.data[1] == 0) {
-                    setRelayCh01(OnOffType.OFF);
-                } else {
-                    setRelayCh01(OnOffType.ON);
-                }
-                if (p.data[2] == 0) {
-                    setRelayCh02(OnOffType.OFF);
-                } else {
-                    setRelayCh02(OnOffType.ON);
-                }
-                if (p.data[3] == 0) {
-                    setRelayCh03(OnOffType.OFF);
-                } else {
-                    setRelayCh03(OnOffType.ON);
-                }
-                if (p.data[4] == 0) {
-                    setRelayCh04(OnOffType.OFF);
-                } else {
-                    setRelayCh04(OnOffType.ON);
-                }
-                break;
             case Response_Read_Current_Level_of_Channels:
-                if (p.data[1] == 0) {
-                    setRelayCh01(OnOffType.OFF);
-                } else {
-                    setRelayCh01(OnOffType.ON);
-                }
-                if (p.data[2] == 0) {
-                    setRelayCh02(OnOffType.OFF);
-                } else {
-                    setRelayCh02(OnOffType.ON);
-                }
-                if (p.data[3] == 0) {
-                    setRelayCh03(OnOffType.OFF);
-                } else {
-                    setRelayCh03(OnOffType.ON);
-                }
-                if (p.data[4] == 0) {
-                    setRelayCh04(OnOffType.OFF);
-                } else {
-                    setRelayCh04(OnOffType.ON);
+                for (int ch = 1; ch <= CHANNEL_COUNT; ch++) {
+                    setRelayChannel(ch, p.data[ch] == 0 ? OnOffType.OFF : OnOffType.ON);
                 }
                 break;
             case Response_Single_Channel_Control:
-                if ((p.data[4] & 0x01) == 1) {
-                    setRelayCh01(OnOffType.ON);
-                } else {
-                    setRelayCh01(OnOffType.OFF);
+                // Channels 1-4 are packed as a bitmask in data[4].
+                for (int ch = 1; ch <= CHANNEL_COUNT; ch++) {
+                    int bit = 1 << (ch - 1);
+                    setRelayChannel(ch, (p.data[4] & bit) != 0 ? OnOffType.ON : OnOffType.OFF);
                 }
-                if ((p.data[4] & 0x02) == 2) {
-                    setRelayCh02(OnOffType.ON);
-                } else {
-                    setRelayCh02(OnOffType.OFF);
-                }
-                if ((p.data[4] & 0x04) == 4) {
-                    setRelayCh03(OnOffType.ON);
-                } else {
-                    setRelayCh03(OnOffType.OFF);
-                }
-                if ((p.data[4] & 0x08) == 8) {
-                    setRelayCh04(OnOffType.ON);
-                } else {
-                    setRelayCh04(OnOffType.OFF);
-                }
-
                 break;
             case Broadcast_Status_of_Scene:
                 LOGGER.debug("For type: {}, CommandType: {} Needs a lot of work.", p.sourcedeviceType, p.commandType);
@@ -117,48 +63,31 @@ public class MR04xx extends Device {
         }
     }
 
-    public void setRelayCh01(OnOffType RelayCh01) {
-        if (this.relayCh01 != RelayCh01) {
+    private void setRelayChannel(int channel, OnOffType value) {
+        if (relayChannels[channel] != value) {
             setUpdated(true);
         }
-        this.relayCh01 = RelayCh01;
+        relayChannels[channel] = value;
+    }
+
+    private @Nullable OnOffType getRelayChannel(int channel) {
+        return relayChannels[channel];
     }
 
     public @Nullable OnOffType getRelayCh01State() {
-        return relayCh01;
-    }
-
-    public void setRelayCh02(OnOffType RelayCh02) {
-        if (this.relayCh02 != RelayCh02) {
-            setUpdated(true);
-        }
-        this.relayCh02 = RelayCh02;
+        return getRelayChannel(1);
     }
 
     public @Nullable OnOffType getRelayCh02State() {
-        return relayCh02;
-    }
-
-    public void setRelayCh03(OnOffType RelayCh03) {
-        if (this.relayCh03 != RelayCh03) {
-            setUpdated(true);
-        }
-        this.relayCh03 = RelayCh03;
+        return getRelayChannel(2);
     }
 
     public @Nullable OnOffType getRelayCh03State() {
-        return relayCh03;
-    }
-
-    public void setRelayCh04(OnOffType RelayCh04) {
-        if (this.relayCh04 != RelayCh04) {
-            setUpdated(true);
-        }
-        this.relayCh04 = RelayCh04;
+        return getRelayChannel(3);
     }
 
     public @Nullable OnOffType getRelayCh04State() {
-        return relayCh04;
+        return getRelayChannel(4);
     }
 
     @Override
