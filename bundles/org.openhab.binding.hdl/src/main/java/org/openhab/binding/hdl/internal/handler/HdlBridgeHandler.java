@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -34,6 +34,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.HdlBindingConstants;
 import org.openhab.binding.hdl.internal.device.Device;
 import org.openhab.binding.hdl.internal.device.DeviceConfiguration;
@@ -55,17 +57,17 @@ import org.slf4j.LoggerFactory;
  *
  * @author stigla - Initial contribution
  */
-
+@NonNullByDefault
 public class HdlBridgeHandler extends BaseBridgeHandler {
     private Logger logger = LoggerFactory.getLogger(HdlBridgeHandler.class);
-    private Selector selector;
-    private DatagramChannel datagramChannel = null;
-    protected SelectionKey datagramChannelKey = null;
-    protected DatagramChannel listenerChannel = null;
-    protected SelectionKey listenerKey = null;
+    private @Nullable Selector selector;
+    private @Nullable DatagramChannel datagramChannel = null;
+    protected @Nullable SelectionKey datagramChannelKey = null;
+    protected @Nullable DatagramChannel listenerChannel = null;
+    protected @Nullable SelectionKey listenerKey = null;
     private final Lock lock = new ReentrantLock();
 
-    private ScheduledFuture<?> listeningJob;
+    private @Nullable ScheduledFuture<?> listeningJob;
 
     public static final int CONNECTION_REFRESH_INTERVAL_MILLISECONDS = 100;
     public static final int MAX_PACKET_SIZE = 512;
@@ -73,7 +75,7 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
     // public static final int POLLING_REFRESH_INTERVAL = 5;
     // public static final int REPORT_INTERVAL = 2000;
 
-    public static String ipAddress;
+    public static @Nullable String ipAddress;
     public static int portNr;
     private HashSet<String> lastActiveDevices = new HashSet<String>();
     private ArrayList<Device> devices = new ArrayList<Device>();
@@ -126,6 +128,9 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
         response = response.replaceAll("[\\r\\n]+$", "");
 
         HdlPacket p = HdlPacket.parse(byteBuffer.array(), byteBuffer.position());
+        if (p == null) {
+            return;
+        }
 
         try {
             if (p.sourcedeviceType != DeviceType.Invalid) {
@@ -192,7 +197,8 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
     }
 
     public void sendPacket(HdlPacket p) throws IOException {
-        if (datagramChannel == null) {
+        DatagramChannel channel = datagramChannel;
+        if (channel == null) {
             throw new IOException("server not started");
         }
         p.setReplyAddress(InetAddress.getByName(ipAddress));
@@ -201,7 +207,7 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
 
         ByteBuffer bytes = ByteBuffer.wrap(p.getBytes());
 
-        onWritable(bytes, datagramChannel);
+        onWritable(bytes, channel);
     }
 
     @Override
@@ -256,7 +262,8 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
         }
     }
 
-    protected ByteBuffer onReadable(DatagramChannel theChannel, int bufferSize, InetAddress permittedClientAddress) {
+    protected @Nullable ByteBuffer onReadable(DatagramChannel theChannel, int bufferSize,
+            InetAddress permittedClientAddress) {
         lock.lock();
         try {
             SelectionKey theSelectionKey = theChannel.keyFor(selector);
@@ -469,14 +476,16 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
         public void run() {
             lock.lock();
             try {
-                if (datagramChannel == null || !datagramChannel.isConnected()) {
+                DatagramChannel channel = datagramChannel;
+                DatagramChannel listener = listenerChannel;
+                if (channel == null || !channel.isConnected()) {
                     updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
                             "The connection is not yet initialized");
                     onConnectionLost();
-                } else {
-                    ByteBuffer buffer = onReadable(listenerChannel, BUFFER_SIZE, InetAddress.getByName(ipAddress));
+                } else if (listener != null) {
+                    ByteBuffer buffer = onReadable(listener, BUFFER_SIZE, InetAddress.getByName(ipAddress));
                     if (buffer != null && buffer.remaining() > 0) {
-                        onRead(buffer, datagramChannel);
+                        onRead(buffer, channel);
                     }
                 }
             } catch (Exception e) {
@@ -488,7 +497,7 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
         }
     };
 
-    private Device getDevice(String serialNumber, ArrayList<Device> devices) {
+    private @Nullable Device getDevice(String serialNumber, ArrayList<Device> devices) {
         for (Device device : devices) {
             if (device.getSerialNr().toUpperCase().equals(serialNumber)) {
                 return device;
@@ -497,7 +506,7 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
         return null;
     }
 
-    public Device getDevice(String serialNumber) {
+    public @Nullable Device getDevice(String serialNumber) {
         return getDevice(serialNumber, devices);
     }
 

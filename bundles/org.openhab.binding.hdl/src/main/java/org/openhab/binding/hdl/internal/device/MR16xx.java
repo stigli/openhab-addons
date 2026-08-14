@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.hdl.internal.device;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 import org.openhab.core.library.types.OnOffType;
 
@@ -22,28 +24,28 @@ import org.openhab.core.library.types.OnOffType;
  *
  * @author stigla - Initial contribution
  */
-
+@NonNullByDefault
 public class MR16xx extends Device {
 
     /** Device type for this 16 channel relay **/
     private DeviceType deviceType = DeviceType.MR1610_433;
 
-    private OnOffType relayCh01 = null;
-    private OnOffType relayCh02 = null;
-    private OnOffType relayCh03 = null;
-    private OnOffType relayCh04 = null;
-    private OnOffType relayCh05 = null;
-    private OnOffType relayCh06 = null;
-    private OnOffType relayCh07 = null;
-    private OnOffType relayCh08 = null;
-    private OnOffType relayCh09 = null;
-    private OnOffType relayCh10 = null;
-    private OnOffType relayCh11 = null;
-    private OnOffType relayCh12 = null;
-    private OnOffType relayCh13 = null;
-    private OnOffType relayCh14 = null;
-    private OnOffType relayCh15 = null;
-    private OnOffType relayCh16 = null;
+    private @Nullable OnOffType relayCh01 = null;
+    private @Nullable OnOffType relayCh02 = null;
+    private @Nullable OnOffType relayCh03 = null;
+    private @Nullable OnOffType relayCh04 = null;
+    private @Nullable OnOffType relayCh05 = null;
+    private @Nullable OnOffType relayCh06 = null;
+    private @Nullable OnOffType relayCh07 = null;
+    private @Nullable OnOffType relayCh08 = null;
+    private @Nullable OnOffType relayCh09 = null;
+    private @Nullable OnOffType relayCh10 = null;
+    private @Nullable OnOffType relayCh11 = null;
+    private @Nullable OnOffType relayCh12 = null;
+    private @Nullable OnOffType relayCh13 = null;
+    private @Nullable OnOffType relayCh14 = null;
+    private @Nullable OnOffType relayCh15 = null;
+    private @Nullable OnOffType relayCh16 = null;
 
     public MR16xx(DeviceConfiguration c) {
         super(c);
@@ -313,7 +315,7 @@ public class MR16xx extends Device {
         this.relayCh01 = RelayCh01;
     }
 
-    public OnOffType getRelayCh01State() {
+    public @Nullable OnOffType getRelayCh01State() {
         return relayCh01;
     }
 
@@ -324,7 +326,7 @@ public class MR16xx extends Device {
         this.relayCh02 = RelayCh02;
     }
 
-    public OnOffType getRelayCh02State() {
+    public @Nullable OnOffType getRelayCh02State() {
         return relayCh02;
     }
 
@@ -335,7 +337,7 @@ public class MR16xx extends Device {
         this.relayCh03 = RelayCh03;
     }
 
-    public OnOffType getRelayCh03State() {
+    public @Nullable OnOffType getRelayCh03State() {
         return relayCh03;
     }
 
@@ -346,7 +348,7 @@ public class MR16xx extends Device {
         this.relayCh04 = RelayCh04;
     }
 
-    public OnOffType getRelayCh04State() {
+    public @Nullable OnOffType getRelayCh04State() {
         return relayCh04;
     }
 
@@ -357,7 +359,7 @@ public class MR16xx extends Device {
         this.relayCh05 = RelayCh05;
     }
 
-    public OnOffType getRelayCh05State() {
+    public @Nullable OnOffType getRelayCh05State() {
         return relayCh05;
     }
 
@@ -368,7 +370,7 @@ public class MR16xx extends Device {
         this.relayCh06 = RelayCh06;
     }
 
-    public OnOffType getRelayCh06State() {
+    public @Nullable OnOffType getRelayCh06State() {
         return relayCh06;
     }
 
@@ -379,7 +381,7 @@ public class MR16xx extends Device {
         this.relayCh07 = RelayCh07;
     }
 
-    public OnOffType getRelayCh07State() {
+    public @Nullable OnOffType getRelayCh07State() {
         return relayCh07;
     }
 
@@ -390,7 +392,7 @@ public class MR16xx extends Device {
         this.relayCh08 = RelayCh08;
     }
 
-    public OnOffType getRelayCh08State() {
+    public @Nullable OnOffType getRelayCh08State() {
         return relayCh08;
     }
 
@@ -401,7 +403,7 @@ public class MR16xx extends Device {
         this.relayCh09 = RelayCh09;
     }
 
-    public OnOffType getRelayCh09State() {
+    public @Nullable OnOffType getRelayCh09State() {
         return relayCh09;
     }
 
@@ -412,7 +414,7 @@ public class MR16xx extends Device {
         this.relayCh10 = RelayCh10;
     }
 
-    public OnOffType getRelayCh10State() {
+    public @Nullable OnOffType getRelayCh10State() {
         return relayCh10;
     }
 
@@ -423,7 +425,7 @@ public class MR16xx extends Device {
         this.relayCh11 = RelayCh11;
     }
 
-    public OnOffType getRelayCh11State() {
+    public @Nullable OnOffType getRelayCh11State() {
         return relayCh11;
     }
 
@@ -434,7 +436,7 @@ public class MR16xx extends Device {
         this.relayCh12 = RelayCh12;
     }
 
-    public OnOffType getRelayCh12State() {
+    public @Nullable OnOffType getRelayCh12State() {
         return relayCh12;
     }
 
@@ -445,7 +447,7 @@ public class MR16xx extends Device {
         this.relayCh13 = RelayCh13;
     }
 
-    public OnOffType getRelayCh13State() {
+    public @Nullable OnOffType getRelayCh13State() {
         return relayCh13;
     }
 
@@ -456,7 +458,7 @@ public class MR16xx extends Device {
         this.relayCh14 = RelayCh14;
     }
 
-    public OnOffType getRelayCh14State() {
+    public @Nullable OnOffType getRelayCh14State() {
         return relayCh14;
     }
 
@@ -467,7 +469,7 @@ public class MR16xx extends Device {
         this.relayCh15 = RelayCh15;
     }
 
-    public OnOffType getRelayCh15State() {
+    public @Nullable OnOffType getRelayCh15State() {
         return relayCh15;
     }
 
@@ -478,7 +480,7 @@ public class MR16xx extends Device {
         this.relayCh16 = RelayCh16;
     }
 
-    public OnOffType getRelayCh16State() {
+    public @Nullable OnOffType getRelayCh16State() {
         return relayCh16;
     }
 

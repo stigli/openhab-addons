@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.hdl.internal.device;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 import org.openhab.core.library.types.StopMoveType;
 import org.openhab.core.library.types.UpDownType;
@@ -24,15 +26,16 @@ import org.openhab.core.library.types.UpDownType;
  *
  * @author stigla - Initial contribution
  */
+@NonNullByDefault
 public class MW02 extends Device {
 
     /** Device type for Curtain controller for controlling off 3. parts curtains **/
     private DeviceType deviceType = DeviceType.MW02;
 
-    private UpDownType shutter1UpDownState = null;
-    private UpDownType shutter2UpDownState = null;
-    private StopMoveType shutter1StopMoveState = null;
-    private StopMoveType shutter2StopMoveState = null;
+    private @Nullable UpDownType shutter1UpDownState = null;
+    private @Nullable UpDownType shutter2UpDownState = null;
+    private @Nullable StopMoveType shutter1StopMoveState = null;
+    private @Nullable StopMoveType shutter2StopMoveState = null;
 
     public MW02(DeviceConfiguration c) {
         super(c);
@@ -152,7 +155,7 @@ public class MW02 extends Device {
     /**
      * get the UpDown value for Shutter 1
      */
-    public UpDownType getUpDownShutter1Status() {
+    public @Nullable UpDownType getUpDownShutter1Status() {
         return shutter1UpDownState;
     }
 
@@ -171,7 +174,7 @@ public class MW02 extends Device {
     /**
      * get the StopMove value for Shutter 1
      */
-    public StopMoveType getStopMoveShutter1Status() {
+    public @Nullable StopMoveType getStopMoveShutter1Status() {
         return shutter1StopMoveState;
     }
 
@@ -188,7 +191,7 @@ public class MW02 extends Device {
     /**
      * get the UpDown value for Shutter 2
      */
-    public UpDownType getUpDownShutter2Status() {
+    public @Nullable UpDownType getUpDownShutter2Status() {
         return shutter2UpDownState;
     }
 
@@ -207,7 +210,7 @@ public class MW02 extends Device {
     /**
      * get the StopMove value for Shutter 2
      */
-    public StopMoveType getStopMoveShutter2Status() {
+    public @Nullable StopMoveType getStopMoveShutter2Status() {
         return shutter2StopMoveState;
     }
 }

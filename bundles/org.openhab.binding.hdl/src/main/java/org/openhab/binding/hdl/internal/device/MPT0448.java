@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.hdl.internal.device;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 import org.openhab.core.library.types.OnOffType;
 
@@ -22,16 +24,16 @@ import org.openhab.core.library.types.OnOffType;
  *
  * @author stigla - Initial contribution
  */
-
+@NonNullByDefault
 public class MPT0448 extends Device {
 
     /** Device type for Digital touch switch 4 buttons **/
     private DeviceType deviceType = DeviceType.MPT04_48;
 
-    private OnOffType button1 = null;
-    private OnOffType button2 = null;
-    private OnOffType button3 = null;
-    private OnOffType button4 = null;
+    private @Nullable OnOffType button1 = null;
+    private @Nullable OnOffType button2 = null;
+    private @Nullable OnOffType button3 = null;
+    private @Nullable OnOffType button4 = null;
 
     public MPT0448(DeviceConfiguration c) {
         super(c);
@@ -74,7 +76,7 @@ public class MPT0448 extends Device {
     /**
      * the button1 Value as <code>OnOffType</code>
      */
-    public OnOffType getbutton1Value() {
+    public @Nullable OnOffType getbutton1Value() {
         return button1;
     }
 
@@ -93,7 +95,7 @@ public class MPT0448 extends Device {
     /**
      * the button2 Value as <code>OnOffType</code>
      */
-    public OnOffType getbutton2Value() {
+    public @Nullable OnOffType getbutton2Value() {
         return button2;
     }
 
@@ -112,7 +114,7 @@ public class MPT0448 extends Device {
     /**
      * the button2 Value as <code>OnOffType</code>
      */
-    public OnOffType getbutton3Value() {
+    public @Nullable OnOffType getbutton3Value() {
         return button3;
     }
 
@@ -131,7 +133,7 @@ public class MPT0448 extends Device {
     /**
      * the button2 Value as <code>OnOffType</code>
      */
-    public OnOffType getbutton4Value() {
+    public @Nullable OnOffType getbutton4Value() {
         return button4;
     }
 }

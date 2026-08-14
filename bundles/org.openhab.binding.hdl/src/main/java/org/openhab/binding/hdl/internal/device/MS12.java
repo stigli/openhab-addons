@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -16,6 +16,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.OnOffType;
@@ -29,18 +31,19 @@ import org.openhab.core.library.types.StopMoveType;
  *
  * @author stigla - Initial contribution
  */
+@NonNullByDefault
 public class MS12 extends Device {
     private double temperatureValue;
     private double brightnessValue;
-    private StopMoveType motionSensorValue = null;
-    private StopMoveType sonicValue = null;
-    private OpenClosedType dryContact1Value = null;
-    private OpenClosedType dryContact2Value = null;
-    private OnOffType relayCh01 = null;
-    private OnOffType relayCh02 = null;
+    private @Nullable StopMoveType motionSensorValue = null;
+    private @Nullable StopMoveType sonicValue = null;
+    private @Nullable OpenClosedType dryContact1Value = null;
+    private @Nullable OpenClosedType dryContact2Value = null;
+    private @Nullable OnOffType relayCh01 = null;
+    private @Nullable OnOffType relayCh02 = null;
 
     /** Date setpoint until the temperature setpoint is valid */
-    private Date dateSetpoint;
+    private @Nullable Date dateSetpoint;
 
     /** Device type for this Sensor with 12 functions **/
     private DeviceType deviceType = DeviceType.MS12_2C;
@@ -65,7 +68,7 @@ public class MS12 extends Device {
         this.dateSetpoint = date;
     }
 
-    public Date getDateSetpoint() {
+    public @Nullable Date getDateSetpoint() {
         return dateSetpoint;
     }
 
@@ -208,7 +211,7 @@ public class MS12 extends Device {
         this.relayCh01 = RelayCh01;
     }
 
-    public OnOffType getRelayCh01State() {
+    public @Nullable OnOffType getRelayCh01State() {
         return relayCh01;
     }
 
@@ -219,7 +222,7 @@ public class MS12 extends Device {
         this.relayCh02 = RelayCh02;
     }
 
-    public OnOffType getRelayCh02State() {
+    public @Nullable OnOffType getRelayCh02State() {
         return relayCh02;
     }
 
@@ -238,7 +241,7 @@ public class MS12 extends Device {
     /**
      * the DryContact1Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact1Value() {
+    public @Nullable OpenClosedType getDryContact1Value() {
         return dryContact1Value;
     }
 
@@ -269,14 +272,14 @@ public class MS12 extends Device {
     /**
      * the DryContact2Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact2Value() {
+    public @Nullable OpenClosedType getDryContact2Value() {
         return dryContact2Value;
     }
 
     /**
      * the Sonic sensor Value as <code>OnOffType</code>
      */
-    public StopMoveType getSonicValue() {
+    public @Nullable StopMoveType getSonicValue() {
         return sonicValue;
     }
 
@@ -295,7 +298,7 @@ public class MS12 extends Device {
     /**
      * the Motion sensor Value as <code>OnOffType</code>
      */
-    public StopMoveType getMotionSensorValue() {
+    public @Nullable StopMoveType getMotionSensorValue() {
         return motionSensorValue;
     }
 

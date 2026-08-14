@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.hdl.internal.device;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 import org.openhab.core.library.types.OpenClosedType;
 
@@ -22,35 +24,36 @@ import org.openhab.core.library.types.OpenClosedType;
  *
  * @author stigla - Initial contribution
  */
+@NonNullByDefault
 public class MS24 extends Device {
 
     /** Device type for Sensor Input Module **/
     private DeviceType deviceType = DeviceType.MS24;
 
-    private OpenClosedType dryContact1 = null;
-    private OpenClosedType dryContact2 = null;
-    private OpenClosedType dryContact3 = null;
-    private OpenClosedType dryContact4 = null;
-    private OpenClosedType dryContact5 = null;
-    private OpenClosedType dryContact6 = null;
-    private OpenClosedType dryContact7 = null;
-    private OpenClosedType dryContact8 = null;
-    private OpenClosedType dryContact9 = null;
-    private OpenClosedType dryContact10 = null;
-    private OpenClosedType dryContact11 = null;
-    private OpenClosedType dryContact12 = null;
-    private OpenClosedType dryContact13 = null;
-    private OpenClosedType dryContact14 = null;
-    private OpenClosedType dryContact15 = null;
-    private OpenClosedType dryContact16 = null;
-    private OpenClosedType dryContact17 = null;
-    private OpenClosedType dryContact18 = null;
-    private OpenClosedType dryContact19 = null;
-    private OpenClosedType dryContact20 = null;
-    private OpenClosedType dryContact21 = null;
-    private OpenClosedType dryContact22 = null;
-    private OpenClosedType dryContact23 = null;
-    private OpenClosedType dryContact24 = null;
+    private @Nullable OpenClosedType dryContact1 = null;
+    private @Nullable OpenClosedType dryContact2 = null;
+    private @Nullable OpenClosedType dryContact3 = null;
+    private @Nullable OpenClosedType dryContact4 = null;
+    private @Nullable OpenClosedType dryContact5 = null;
+    private @Nullable OpenClosedType dryContact6 = null;
+    private @Nullable OpenClosedType dryContact7 = null;
+    private @Nullable OpenClosedType dryContact8 = null;
+    private @Nullable OpenClosedType dryContact9 = null;
+    private @Nullable OpenClosedType dryContact10 = null;
+    private @Nullable OpenClosedType dryContact11 = null;
+    private @Nullable OpenClosedType dryContact12 = null;
+    private @Nullable OpenClosedType dryContact13 = null;
+    private @Nullable OpenClosedType dryContact14 = null;
+    private @Nullable OpenClosedType dryContact15 = null;
+    private @Nullable OpenClosedType dryContact16 = null;
+    private @Nullable OpenClosedType dryContact17 = null;
+    private @Nullable OpenClosedType dryContact18 = null;
+    private @Nullable OpenClosedType dryContact19 = null;
+    private @Nullable OpenClosedType dryContact20 = null;
+    private @Nullable OpenClosedType dryContact21 = null;
+    private @Nullable OpenClosedType dryContact22 = null;
+    private @Nullable OpenClosedType dryContact23 = null;
+    private @Nullable OpenClosedType dryContact24 = null;
 
     public MS24(DeviceConfiguration c) {
         super(c);
@@ -603,7 +606,7 @@ public class MS24 extends Device {
     /**
      * the DryContact1Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact1Value() {
+    public @Nullable OpenClosedType getDryContact1Value() {
         return dryContact1;
     }
 
@@ -622,7 +625,7 @@ public class MS24 extends Device {
     /**
      * the DryContact1Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact2Value() {
+    public @Nullable OpenClosedType getDryContact2Value() {
         return dryContact2;
     }
 
@@ -641,7 +644,7 @@ public class MS24 extends Device {
     /**
      * the DryContact1Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact3Value() {
+    public @Nullable OpenClosedType getDryContact3Value() {
         return dryContact3;
     }
 
@@ -660,7 +663,7 @@ public class MS24 extends Device {
     /**
      * the DryContact1Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact4Value() {
+    public @Nullable OpenClosedType getDryContact4Value() {
         return dryContact4;
     }
 
@@ -679,7 +682,7 @@ public class MS24 extends Device {
     /**
      * the DryContact5Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact5Value() {
+    public @Nullable OpenClosedType getDryContact5Value() {
         return dryContact5;
     }
 
@@ -698,7 +701,7 @@ public class MS24 extends Device {
     /**
      * the DryContact6Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact6Value() {
+    public @Nullable OpenClosedType getDryContact6Value() {
         return dryContact6;
     }
 
@@ -717,7 +720,7 @@ public class MS24 extends Device {
     /**
      * the DryContact7Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact7Value() {
+    public @Nullable OpenClosedType getDryContact7Value() {
         return dryContact7;
     }
 
@@ -736,7 +739,7 @@ public class MS24 extends Device {
     /**
      * the DryContact1Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact8Value() {
+    public @Nullable OpenClosedType getDryContact8Value() {
         return dryContact8;
     }
 
@@ -755,7 +758,7 @@ public class MS24 extends Device {
     /**
      * the DryContact9Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact9Value() {
+    public @Nullable OpenClosedType getDryContact9Value() {
         return dryContact9;
     }
 
@@ -774,7 +777,7 @@ public class MS24 extends Device {
     /**
      * the DryContact10Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact10Value() {
+    public @Nullable OpenClosedType getDryContact10Value() {
         return dryContact10;
     }
 
@@ -793,7 +796,7 @@ public class MS24 extends Device {
     /**
      * the DryContact11Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact11Value() {
+    public @Nullable OpenClosedType getDryContact11Value() {
         return dryContact11;
     }
 
@@ -812,7 +815,7 @@ public class MS24 extends Device {
     /**
      * the DryContact12Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact12Value() {
+    public @Nullable OpenClosedType getDryContact12Value() {
         return dryContact12;
     }
 
@@ -831,7 +834,7 @@ public class MS24 extends Device {
     /**
      * the DryContact13Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact13Value() {
+    public @Nullable OpenClosedType getDryContact13Value() {
         return dryContact13;
     }
 
@@ -850,7 +853,7 @@ public class MS24 extends Device {
     /**
      * the DryContact14Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact14Value() {
+    public @Nullable OpenClosedType getDryContact14Value() {
         return dryContact14;
     }
 
@@ -869,7 +872,7 @@ public class MS24 extends Device {
     /**
      * the DryContact15Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact15Value() {
+    public @Nullable OpenClosedType getDryContact15Value() {
         return dryContact15;
     }
 
@@ -888,7 +891,7 @@ public class MS24 extends Device {
     /**
      * the DryContact1Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact16Value() {
+    public @Nullable OpenClosedType getDryContact16Value() {
         return dryContact16;
     }
 
@@ -907,7 +910,7 @@ public class MS24 extends Device {
     /**
      * the DryContact17Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact17Value() {
+    public @Nullable OpenClosedType getDryContact17Value() {
         return dryContact17;
     }
 
@@ -926,7 +929,7 @@ public class MS24 extends Device {
     /**
      * the DryContact18Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact18Value() {
+    public @Nullable OpenClosedType getDryContact18Value() {
         return dryContact18;
     }
 
@@ -945,7 +948,7 @@ public class MS24 extends Device {
     /**
      * the DryContact19Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact19Value() {
+    public @Nullable OpenClosedType getDryContact19Value() {
         return dryContact19;
     }
 
@@ -964,7 +967,7 @@ public class MS24 extends Device {
     /**
      * the DryContact20Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact20Value() {
+    public @Nullable OpenClosedType getDryContact20Value() {
         return dryContact20;
     }
 
@@ -983,7 +986,7 @@ public class MS24 extends Device {
     /**
      * the DryContact1Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact21Value() {
+    public @Nullable OpenClosedType getDryContact21Value() {
         return dryContact21;
     }
 
@@ -1002,7 +1005,7 @@ public class MS24 extends Device {
     /**
      * the DryContact22Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact22Value() {
+    public @Nullable OpenClosedType getDryContact22Value() {
         return dryContact22;
     }
 
@@ -1021,7 +1024,7 @@ public class MS24 extends Device {
     /**
      * the DryContact1Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact23Value() {
+    public @Nullable OpenClosedType getDryContact23Value() {
         return dryContact23;
     }
 
@@ -1040,7 +1043,7 @@ public class MS24 extends Device {
     /**
      * the DryContact24Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact24Value() {
+    public @Nullable OpenClosedType getDryContact24Value() {
         return dryContact24;
     }
 }

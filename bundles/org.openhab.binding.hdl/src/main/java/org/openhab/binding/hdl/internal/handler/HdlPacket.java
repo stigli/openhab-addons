@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -15,6 +15,8 @@ package org.openhab.binding.hdl.internal.handler;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.internal.device.CommandType;
 import org.openhab.binding.hdl.internal.device.DeviceType;
 import org.slf4j.Logger;
@@ -27,22 +29,22 @@ import org.slf4j.LoggerFactory;
  * @based on HDL Packet from HDL binding to OpenHAB 1
  * @author stigla - Initial contribution
  */
-
+@NonNullByDefault
 public class HdlPacket {
     private static Logger logger = LoggerFactory.getLogger(HdlPacket.class);
 
-    public String serialNr;
+    public String serialNr = "";
     public int sourceSubnetID;
     public int sourceDeviceID;
     public int sourceDevice = 0xfeff;
-    public DeviceType sourcedeviceType;
+    public DeviceType sourcedeviceType = DeviceType.Invalid;
     public int command;
-    public CommandType commandType;
+    public CommandType commandType = CommandType.Invalid;
     public int targetSubnetID;
     public int targetDeviceID;
     public InetAddress replyAddress;
 
-    public byte[] data;
+    public byte[] data = new byte[0];
 
     protected static final int[] CRC = { 0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7, 0x8108, 0x9129,
             0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef, 0x1231, 0x0210, 0x3273, 0x2252, 0x52b5, 0x4294, 0x72f7,
@@ -66,10 +68,13 @@ public class HdlPacket {
             0xaf9b, 0xbfba, 0x8fd9, 0x9ff8, 0x6e17, 0x7e36, 0x4e55, 0x5e74, 0x2e93, 0x3eb2, 0x0ed1, 0x1ef0 };
 
     public HdlPacket() {
+        InetAddress addr;
         try {
-            replyAddress = InetAddress.getByAddress(new byte[] { 0, 0, 0, 0 });
+            addr = InetAddress.getByAddress(new byte[] { 0, 0, 0, 0 });
         } catch (UnknownHostException e) {
+            addr = InetAddress.getLoopbackAddress();
         }
+        replyAddress = addr;
     }
 
     protected static int ubyte(byte a) {
@@ -93,7 +98,7 @@ public class HdlPacket {
         return crc & 0xffff;
     }
 
-    public static HdlPacket parse(byte[] data, int length) {
+    public static @Nullable HdlPacket parse(byte[] data, int length) {
         // 4 bytes for IP + 10 bytes for HDLMIRACLE + 13 bytes min packet length == 27
 
         if (length < 27 || !(new String(data, 4, 10).equals("HDLMIRACLE"))) {

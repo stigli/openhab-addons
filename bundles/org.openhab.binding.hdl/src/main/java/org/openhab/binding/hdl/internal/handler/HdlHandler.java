@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.HdlBindingConstants;
 import org.openhab.binding.hdl.internal.device.CommandType;
 import org.openhab.binding.hdl.internal.device.Device;
@@ -63,18 +65,18 @@ import org.slf4j.LoggerFactory;
  *
  * @author stigla - Initial contribution
  */
-
+@NonNullByDefault
 public class HdlHandler extends BaseThingHandler implements DeviceStatusListener {
 
     private Logger logger = LoggerFactory.getLogger(HdlHandler.class);
-    private HdlBridgeHandler bridgeHandler;
+    private @Nullable HdlBridgeHandler bridgeHandler;
 
-    private String hdldeviceSerial;
+    private @Nullable String hdldeviceSerial;
     private int subNet;
     private int deviceID;
     private int refreshRate;
     private int channelNumber;
-    private ScheduledFuture<?> refreshJob;
+    private @Nullable ScheduledFuture<?> refreshJob;
 
     public HdlHandler(Thing thing) {
         super(thing);
@@ -112,9 +114,10 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         "Initialized HDL device missing Subnet or DeviceID configuration");
             }
 
+            @Nullable
             HdlBridgeHandler hdlBridge = getHdlBridgeHandler();
 
-            if (getThing().getStatus().equals(ThingStatus.ONLINE)) {
+            if (hdlBridge != null && getThing().getStatus().equals(ThingStatus.ONLINE)) {
                 sendUpdatePackets(hdlBridge);
                 if (refreshRate != 0) {
                     if (refreshJob == null || refreshJob.isCancelled()) {
@@ -232,7 +235,7 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
      * @param configurationParameter
      */
 
-    private synchronized HdlBridgeHandler getHdlBridgeHandler() {
+    private synchronized @Nullable HdlBridgeHandler getHdlBridgeHandler() {
         if (this.bridgeHandler == null) {
             Bridge bridge = getBridge();
             if (bridge == null) {
@@ -344,14 +347,16 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
             logger.warn("HDL bridge handler not found. Cannot handle command without bridge.");
             return;
         }
-        if (hdldeviceSerial == null) {
+        String serial = hdldeviceSerial;
+        if (serial == null) {
             logger.warn("Serial number missing. Can't send command to device '{}'", getThing());
             return;
         }
 
         HdlPacket p = new HdlPacket();
 
-        Device chDevice = hdlBridge.getDevice(hdldeviceSerial);
+        @Nullable
+        Device chDevice = hdlBridge.getDevice(serial);
 
         if (command instanceof RefreshType) {
             sendUpdatePackets(hdlBridge);
@@ -601,15 +606,19 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         getThing().getUID());
                 switch (device.getType()) {
                     case MS08Mn_2C:
-                    case MSP08M_4C:
-                        if (((MS08) device).getTemperatureValue() != null) {
+                    case MSP08M_4C: {
+                        var temperatureValue = ((MS08) device).getTemperatureValue();
+                        if (temperatureValue != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_TEMPERATUR),
-                                    ((MS08) device).getTemperatureValue());
+                                    temperatureValue);
                         }
-                        if (((MS08) device).getBrightnessValue() != null) {
+                    } {
+                        var brightnessValue = ((MS08) device).getBrightnessValue();
+                        if (brightnessValue != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BRIGHTNESS),
-                                    ((MS08) device).getBrightnessValue());
+                                    brightnessValue);
                         }
+                    }
                         if (((MS08) device).getMotionSensorValue() != null) {
                             StopMoveType fromDevice = ((MS08) device).getMotionSensorValue();
                             OnOffType sendToUpdate = OnOffType.OFF;
@@ -618,25 +627,33 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             }
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_MOTIONSSENSOR),
                                     sendToUpdate);
-                        }
-                        if (((MS08) device).getDryContact1Value() != null) {
+                        } {
+                        var dryContact1Value = ((MS08) device).getDryContact1Value();
+                        if (dryContact1Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT1),
-                                    ((MS08) device).getDryContact1Value());
+                                    dryContact1Value);
                         }
-                        if (((MS08) device).getDryContact2Value() != null) {
+                    } {
+                        var dryContact2Value = ((MS08) device).getDryContact2Value();
+                        if (dryContact2Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT2),
-                                    ((MS08) device).getDryContact2Value());
+                                    dryContact2Value);
                         }
+                    }
                         break;
-                    case MS12_2C:
-                        if (((MS12) device).getTemperatureValue() != null) {
+                    case MS12_2C: {
+                        var temperatureValue = ((MS12) device).getTemperatureValue();
+                        if (temperatureValue != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_TEMPERATUR),
-                                    ((MS12) device).getTemperatureValue());
+                                    temperatureValue);
                         }
-                        if (((MS12) device).getBrightnessValue() != null) {
+                    } {
+                        var brightnessValue = ((MS12) device).getBrightnessValue();
+                        if (brightnessValue != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BRIGHTNESS),
-                                    ((MS12) device).getBrightnessValue());
+                                    brightnessValue);
                         }
+                    }
                         if (((MS12) device).getMotionSensorValue() != null) {
                             StopMoveType fromDevice = ((MS12) device).getMotionSensorValue();
                             OnOffType sendToUpdate = OnOffType.OFF;
@@ -654,46 +671,62 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             }
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_SONIC),
                                     sendToUpdate);
-                        }
-                        if (((MS12) device).getDryContact1Value() != null) {
+                        } {
+                        var dryContact1Value = ((MS12) device).getDryContact1Value();
+                        if (dryContact1Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT1),
-                                    ((MS12) device).getDryContact1Value());
+                                    dryContact1Value);
                         }
-                        if (((MS12) device).getDryContact2Value() != null) {
+                    } {
+                        var dryContact2Value = ((MS12) device).getDryContact2Value();
+                        if (dryContact2Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT2),
-                                    ((MS12) device).getDryContact2Value());
+                                    dryContact2Value);
                         }
-                        if (((MS12) device).getRelayCh01State() != null) {
+                    } {
+                        var relayCh01State = ((MS12) device).getRelayCh01State();
+                        if (relayCh01State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH1),
-                                    ((MS12) device).getRelayCh01State());
+                                    relayCh01State);
                         }
-                        if (((MS12) device).getRelayCh02State() != null) {
+                    } {
+                        var relayCh02State = ((MS12) device).getRelayCh02State();
+                        if (relayCh02State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH2),
-                                    ((MS12) device).getRelayCh02State());
+                                    relayCh02State);
                         }
+                    }
                         break;
-                    case MPL8_48_FH:
-                        if (((MPL848FH) device).getTemperatureValue() != null) {
+                    case MPL8_48_FH: {
+                        var temperatureValue = ((MPL848FH) device).getTemperatureValue();
+                        if (temperatureValue != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_TEMPERATUR),
-                                    ((MPL848FH) device).getTemperatureValue());
+                                    temperatureValue);
                         }
+                    }
                         if (((MPL848FH) device).getFloorHeatingSetNormalTemperatur() != null) {
                             updateState(
                                     new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHNORMALTEMPSET),
                                     ((MPL848FH) device).getFloorHeatingSetNormalTemperatur());
-                        }
-                        if (((MPL848FH) device).getFloorHeatingSetAwayTemperatur() != null) {
+                        } {
+                        var floorHeatingSetAwayTemperatur = ((MPL848FH) device).getFloorHeatingSetAwayTemperatur();
+                        if (floorHeatingSetAwayTemperatur != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHAWAYTEMPSET),
-                                    ((MPL848FH) device).getFloorHeatingSetAwayTemperatur());
+                                    floorHeatingSetAwayTemperatur);
                         }
-                        if (((MPL848FH) device).getFloorHeatingSetDayTemperatur() != null) {
+                    } {
+                        var floorHeatingSetDayTemperatur = ((MPL848FH) device).getFloorHeatingSetDayTemperatur();
+                        if (floorHeatingSetDayTemperatur != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHDAYTEMPSET),
-                                    ((MPL848FH) device).getFloorHeatingSetDayTemperatur());
+                                    floorHeatingSetDayTemperatur);
                         }
-                        if (((MPL848FH) device).getFloorHeatingSetNightTemperatur() != null) {
+                    } {
+                        var floorHeatingSetNightTemperatur = ((MPL848FH) device).getFloorHeatingSetNightTemperatur();
+                        if (floorHeatingSetNightTemperatur != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHNIGHTTEMPSET),
-                                    ((MPL848FH) device).getFloorHeatingSetNightTemperatur());
+                                    floorHeatingSetNightTemperatur);
                         }
+                    }
                         if (((MPL848FH) device).getFloorHeatingCurrentTemperatur() != null) {
                             updateState(
                                     new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHCURRENTTEMPSET),
@@ -702,11 +735,13 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         if (((MPL848FH) device).getFloorHeatingMode() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHMODE),
                                     new StringType(((MPL848FH) device).getFloorHeatingMode().toString()));
-                        }
-                        if (((MPL848FH) device).getACAutoTemperatur() != null) {
+                        } {
+                        var aCAutoTemperatur = ((MPL848FH) device).getACAutoTemperatur();
+                        if (aCAutoTemperatur != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_ACAUTOTEMPSET),
-                                    ((MPL848FH) device).getACAutoTemperatur());
+                                    aCAutoTemperatur);
                         }
+                    }
                         if (((MPL848FH) device).getACCoolingTemperatur() != null) {
                             updateState(
                                     new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_ACCOOLINGTEMPSET),
@@ -716,15 +751,19 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             updateState(
                                     new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_ACCURRENTTEMPSET),
                                     ((MPL848FH) device).getACCurrentTemperatur());
-                        }
-                        if (((MPL848FH) device).getACDryTemperatur() != null) {
+                        } {
+                        var aCDryTemperatur = ((MPL848FH) device).getACDryTemperatur();
+                        if (aCDryTemperatur != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_ACDRYTEMPSET),
-                                    ((MPL848FH) device).getACDryTemperatur());
+                                    aCDryTemperatur);
                         }
-                        if (((MPL848FH) device).getACHeatTemperatur() != null) {
+                    } {
+                        var aCHeatTemperatur = ((MPL848FH) device).getACHeatTemperatur();
+                        if (aCHeatTemperatur != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_ACHEATTEMPSET),
-                                    ((MPL848FH) device).getACHeatTemperatur());
+                                    aCHeatTemperatur);
                         }
+                    }
                         if (((MPL848FH) device).getACFanSpeed() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_ACFANSPEED),
                                     new StringType(((MPL848FH) device).getACFanSpeed()));
@@ -764,28 +803,36 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                                     uvSwitch6);
                         }
                         break;
-                    case MFH06_432:
-                        if (((MFH06) device).getTemperatureValue() != null) {
+                    case MFH06_432: {
+                        var temperatureValue = ((MFH06) device).getTemperatureValue();
+                        if (temperatureValue != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_TEMPERATUR),
-                                    ((MFH06) device).getTemperatureValue());
+                                    temperatureValue);
                         }
+                    }
                         if (((MFH06) device).getFloorHeatingSetNormalTemperatur() != null) {
                             updateState(
                                     new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHNORMALTEMPSET),
                                     ((MFH06) device).getFloorHeatingSetNormalTemperatur());
-                        }
-                        if (((MFH06) device).getFloorHeatingSetAwayTemperatur() != null) {
+                        } {
+                        var floorHeatingSetAwayTemperatur = ((MFH06) device).getFloorHeatingSetAwayTemperatur();
+                        if (floorHeatingSetAwayTemperatur != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHAWAYTEMPSET),
-                                    ((MFH06) device).getFloorHeatingSetAwayTemperatur());
+                                    floorHeatingSetAwayTemperatur);
                         }
-                        if (((MFH06) device).getFloorHeatingSetDayTemperatur() != null) {
+                    } {
+                        var floorHeatingSetDayTemperatur = ((MFH06) device).getFloorHeatingSetDayTemperatur();
+                        if (floorHeatingSetDayTemperatur != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHDAYTEMPSET),
-                                    ((MFH06) device).getFloorHeatingSetDayTemperatur());
+                                    floorHeatingSetDayTemperatur);
                         }
-                        if (((MFH06) device).getFloorHeatingSetNightTemperatur() != null) {
+                    } {
+                        var floorHeatingSetNightTemperatur = ((MFH06) device).getFloorHeatingSetNightTemperatur();
+                        if (floorHeatingSetNightTemperatur != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHNIGHTTEMPSET),
-                                    ((MFH06) device).getFloorHeatingSetNightTemperatur());
+                                    floorHeatingSetNightTemperatur);
                         }
+                    }
                         if (((MFH06) device).getFloorHeatingCurrentTemperatur() != null) {
                             updateState(
                                     new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHCURRENTTEMPSET),
@@ -907,178 +954,258 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                                     mr6);
                         }
                         break;
-                    case MR1610_433:
-                        if (((MR16xx) device).getRelayCh01State() != null) {
+                    case MR1610_433: {
+                        var relayCh01State = ((MR16xx) device).getRelayCh01State();
+                        if (relayCh01State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH1),
-                                    ((MR16xx) device).getRelayCh01State());
+                                    relayCh01State);
                         }
-                        if (((MR16xx) device).getRelayCh02State() != null) {
+                    } {
+                        var relayCh02State = ((MR16xx) device).getRelayCh02State();
+                        if (relayCh02State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH2),
-                                    ((MR16xx) device).getRelayCh02State());
+                                    relayCh02State);
                         }
-                        if (((MR16xx) device).getRelayCh03State() != null) {
+                    } {
+                        var relayCh03State = ((MR16xx) device).getRelayCh03State();
+                        if (relayCh03State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH3),
-                                    ((MR16xx) device).getRelayCh03State());
+                                    relayCh03State);
                         }
-                        if (((MR16xx) device).getRelayCh04State() != null) {
+                    } {
+                        var relayCh04State = ((MR16xx) device).getRelayCh04State();
+                        if (relayCh04State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH4),
-                                    ((MR16xx) device).getRelayCh04State());
+                                    relayCh04State);
                         }
-                        if (((MR16xx) device).getRelayCh05State() != null) {
+                    } {
+                        var relayCh05State = ((MR16xx) device).getRelayCh05State();
+                        if (relayCh05State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH5),
-                                    ((MR16xx) device).getRelayCh05State());
+                                    relayCh05State);
                         }
-                        if (((MR16xx) device).getRelayCh06State() != null) {
+                    } {
+                        var relayCh06State = ((MR16xx) device).getRelayCh06State();
+                        if (relayCh06State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH6),
-                                    ((MR16xx) device).getRelayCh06State());
+                                    relayCh06State);
                         }
-                        if (((MR16xx) device).getRelayCh07State() != null) {
+                    } {
+                        var relayCh07State = ((MR16xx) device).getRelayCh07State();
+                        if (relayCh07State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH7),
-                                    ((MR16xx) device).getRelayCh07State());
+                                    relayCh07State);
                         }
-                        if (((MR16xx) device).getRelayCh08State() != null) {
+                    } {
+                        var relayCh08State = ((MR16xx) device).getRelayCh08State();
+                        if (relayCh08State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH8),
-                                    ((MR16xx) device).getRelayCh08State());
+                                    relayCh08State);
                         }
-                        if (((MR16xx) device).getRelayCh09State() != null) {
+                    } {
+                        var relayCh09State = ((MR16xx) device).getRelayCh09State();
+                        if (relayCh09State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH9),
-                                    ((MR16xx) device).getRelayCh09State());
+                                    relayCh09State);
                         }
-                        if (((MR16xx) device).getRelayCh10State() != null) {
+                    } {
+                        var relayCh10State = ((MR16xx) device).getRelayCh10State();
+                        if (relayCh10State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH10),
-                                    ((MR16xx) device).getRelayCh10State());
+                                    relayCh10State);
                         }
-                        if (((MR16xx) device).getRelayCh11State() != null) {
+                    } {
+                        var relayCh11State = ((MR16xx) device).getRelayCh11State();
+                        if (relayCh11State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH11),
-                                    ((MR16xx) device).getRelayCh11State());
+                                    relayCh11State);
                         }
-                        if (((MR16xx) device).getRelayCh12State() != null) {
+                    } {
+                        var relayCh12State = ((MR16xx) device).getRelayCh12State();
+                        if (relayCh12State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH12),
-                                    ((MR16xx) device).getRelayCh12State());
+                                    relayCh12State);
                         }
-                        if (((MR16xx) device).getRelayCh13State() != null) {
+                    } {
+                        var relayCh13State = ((MR16xx) device).getRelayCh13State();
+                        if (relayCh13State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH13),
-                                    ((MR16xx) device).getRelayCh13State());
+                                    relayCh13State);
                         }
-                        if (((MR16xx) device).getRelayCh14State() != null) {
+                    } {
+                        var relayCh14State = ((MR16xx) device).getRelayCh14State();
+                        if (relayCh14State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH14),
-                                    ((MR16xx) device).getRelayCh14State());
+                                    relayCh14State);
                         }
-                        if (((MR16xx) device).getRelayCh15State() != null) {
+                    } {
+                        var relayCh15State = ((MR16xx) device).getRelayCh15State();
+                        if (relayCh15State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH15),
-                                    ((MR16xx) device).getRelayCh15State());
+                                    relayCh15State);
                         }
-                        if (((MR16xx) device).getRelayCh16State() != null) {
+                    } {
+                        var relayCh16State = ((MR16xx) device).getRelayCh16State();
+                        if (relayCh16State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH16),
-                                    ((MR16xx) device).getRelayCh16State());
+                                    relayCh16State);
                         }
+                    }
                         break;
                     case MR1216_233:
-                    case MR1210_433:
-                        if (((MR12xx) device).getRelayCh01State() != null) {
+                    case MR1210_433: {
+                        var relayCh01State = ((MR12xx) device).getRelayCh01State();
+                        if (relayCh01State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH1),
-                                    ((MR12xx) device).getRelayCh01State());
+                                    relayCh01State);
                         }
-                        if (((MR12xx) device).getRelayCh02State() != null) {
+                    } {
+                        var relayCh02State = ((MR12xx) device).getRelayCh02State();
+                        if (relayCh02State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH2),
-                                    ((MR12xx) device).getRelayCh02State());
+                                    relayCh02State);
                         }
-                        if (((MR12xx) device).getRelayCh03State() != null) {
+                    } {
+                        var relayCh03State = ((MR12xx) device).getRelayCh03State();
+                        if (relayCh03State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH3),
-                                    ((MR12xx) device).getRelayCh03State());
+                                    relayCh03State);
                         }
-                        if (((MR12xx) device).getRelayCh04State() != null) {
+                    } {
+                        var relayCh04State = ((MR12xx) device).getRelayCh04State();
+                        if (relayCh04State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH4),
-                                    ((MR12xx) device).getRelayCh04State());
+                                    relayCh04State);
                         }
-                        if (((MR12xx) device).getRelayCh05State() != null) {
+                    } {
+                        var relayCh05State = ((MR12xx) device).getRelayCh05State();
+                        if (relayCh05State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH5),
-                                    ((MR12xx) device).getRelayCh05State());
+                                    relayCh05State);
                         }
-                        if (((MR12xx) device).getRelayCh06State() != null) {
+                    } {
+                        var relayCh06State = ((MR12xx) device).getRelayCh06State();
+                        if (relayCh06State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH6),
-                                    ((MR12xx) device).getRelayCh06State());
+                                    relayCh06State);
                         }
-                        if (((MR12xx) device).getRelayCh07State() != null) {
+                    } {
+                        var relayCh07State = ((MR12xx) device).getRelayCh07State();
+                        if (relayCh07State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH7),
-                                    ((MR12xx) device).getRelayCh07State());
+                                    relayCh07State);
                         }
-                        if (((MR12xx) device).getRelayCh08State() != null) {
+                    } {
+                        var relayCh08State = ((MR12xx) device).getRelayCh08State();
+                        if (relayCh08State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH8),
-                                    ((MR12xx) device).getRelayCh08State());
+                                    relayCh08State);
                         }
-                        if (((MR12xx) device).getRelayCh09State() != null) {
+                    } {
+                        var relayCh09State = ((MR12xx) device).getRelayCh09State();
+                        if (relayCh09State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH9),
-                                    ((MR12xx) device).getRelayCh09State());
+                                    relayCh09State);
                         }
-                        if (((MR12xx) device).getRelayCh10State() != null) {
+                    } {
+                        var relayCh10State = ((MR12xx) device).getRelayCh10State();
+                        if (relayCh10State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH10),
-                                    ((MR12xx) device).getRelayCh10State());
+                                    relayCh10State);
                         }
-                        if (((MR12xx) device).getRelayCh11State() != null) {
+                    } {
+                        var relayCh11State = ((MR12xx) device).getRelayCh11State();
+                        if (relayCh11State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH11),
-                                    ((MR12xx) device).getRelayCh11State());
+                                    relayCh11State);
                         }
-                        if (((MR12xx) device).getRelayCh12State() != null) {
+                    } {
+                        var relayCh12State = ((MR12xx) device).getRelayCh12State();
+                        if (relayCh12State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH12),
-                                    ((MR12xx) device).getRelayCh12State());
+                                    relayCh12State);
                         }
+                    }
                         break;
                     case MR0816_432:
-                    case MR0810_432:
-                        if (((MR08xx) device).getRelayCh01State() != null) {
+                    case MR0810_432: {
+                        var relayCh01State = ((MR08xx) device).getRelayCh01State();
+                        if (relayCh01State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH1),
-                                    ((MR08xx) device).getRelayCh01State());
+                                    relayCh01State);
                         }
-                        if (((MR08xx) device).getRelayCh02State() != null) {
+                    } {
+                        var relayCh02State = ((MR08xx) device).getRelayCh02State();
+                        if (relayCh02State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH2),
-                                    ((MR08xx) device).getRelayCh02State());
+                                    relayCh02State);
                         }
-                        if (((MR08xx) device).getRelayCh03State() != null) {
+                    } {
+                        var relayCh03State = ((MR08xx) device).getRelayCh03State();
+                        if (relayCh03State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH3),
-                                    ((MR08xx) device).getRelayCh03State());
+                                    relayCh03State);
                         }
-                        if (((MR08xx) device).getRelayCh04State() != null) {
+                    } {
+                        var relayCh04State = ((MR08xx) device).getRelayCh04State();
+                        if (relayCh04State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH4),
-                                    ((MR08xx) device).getRelayCh04State());
+                                    relayCh04State);
                         }
-                        if (((MR08xx) device).getRelayCh05State() != null) {
+                    } {
+                        var relayCh05State = ((MR08xx) device).getRelayCh05State();
+                        if (relayCh05State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH5),
-                                    ((MR08xx) device).getRelayCh05State());
+                                    relayCh05State);
                         }
-                        if (((MR08xx) device).getRelayCh06State() != null) {
+                    } {
+                        var relayCh06State = ((MR08xx) device).getRelayCh06State();
+                        if (relayCh06State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH6),
-                                    ((MR08xx) device).getRelayCh06State());
+                                    relayCh06State);
                         }
-                        if (((MR08xx) device).getRelayCh07State() != null) {
+                    } {
+                        var relayCh07State = ((MR08xx) device).getRelayCh07State();
+                        if (relayCh07State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH7),
-                                    ((MR08xx) device).getRelayCh07State());
+                                    relayCh07State);
                         }
-                        if (((MR08xx) device).getRelayCh08State() != null) {
+                    } {
+                        var relayCh08State = ((MR08xx) device).getRelayCh08State();
+                        if (relayCh08State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH8),
-                                    ((MR08xx) device).getRelayCh08State());
+                                    relayCh08State);
                         }
+                    }
                         break;
                     case MR0416_C:
                     case MR0416_231:
                     case MR0416_431:
-                    case MR0410_431:
-                        if (((MR04xx) device).getRelayCh01State() != null) {
+                    case MR0410_431: {
+                        var relayCh01State = ((MR04xx) device).getRelayCh01State();
+                        if (relayCh01State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH1),
-                                    ((MR04xx) device).getRelayCh01State());
+                                    relayCh01State);
                         }
-                        if (((MR04xx) device).getRelayCh02State() != null) {
+                    } {
+                        var relayCh02State = ((MR04xx) device).getRelayCh02State();
+                        if (relayCh02State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH2),
-                                    ((MR04xx) device).getRelayCh02State());
+                                    relayCh02State);
                         }
-                        if (((MR04xx) device).getRelayCh03State() != null) {
+                    } {
+                        var relayCh03State = ((MR04xx) device).getRelayCh03State();
+                        if (relayCh03State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH3),
-                                    ((MR04xx) device).getRelayCh03State());
+                                    relayCh03State);
                         }
-                        if (((MR04xx) device).getRelayCh04State() != null) {
+                    } {
+                        var relayCh04State = ((MR04xx) device).getRelayCh04State();
+                        if (relayCh04State != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_RELAYCH4),
-                                    ((MR04xx) device).getRelayCh04State());
+                                    relayCh04State);
                         }
+                    }
 
                         break;
                     case ML01: {
@@ -1290,103 +1417,151 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         }
                     }
                         break;
-                    case MS24:
-                        if (((MS24) device).getDryContact1Value() != null) {
+                    case MS24: {
+                        var dryContact1Value = ((MS24) device).getDryContact1Value();
+                        if (dryContact1Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT1),
-                                    ((MS24) device).getDryContact1Value());
+                                    dryContact1Value);
                         }
-                        if (((MS24) device).getDryContact2Value() != null) {
+                    } {
+                        var dryContact2Value = ((MS24) device).getDryContact2Value();
+                        if (dryContact2Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT2),
-                                    ((MS24) device).getDryContact2Value());
+                                    dryContact2Value);
                         }
-                        if (((MS24) device).getDryContact3Value() != null) {
+                    } {
+                        var dryContact3Value = ((MS24) device).getDryContact3Value();
+                        if (dryContact3Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT3),
-                                    ((MS24) device).getDryContact3Value());
+                                    dryContact3Value);
                         }
-                        if (((MS24) device).getDryContact4Value() != null) {
+                    } {
+                        var dryContact4Value = ((MS24) device).getDryContact4Value();
+                        if (dryContact4Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT4),
-                                    ((MS24) device).getDryContact4Value());
+                                    dryContact4Value);
                         }
-                        if (((MS24) device).getDryContact5Value() != null) {
+                    } {
+                        var dryContact5Value = ((MS24) device).getDryContact5Value();
+                        if (dryContact5Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT5),
-                                    ((MS24) device).getDryContact5Value());
+                                    dryContact5Value);
                         }
-                        if (((MS24) device).getDryContact6Value() != null) {
+                    } {
+                        var dryContact6Value = ((MS24) device).getDryContact6Value();
+                        if (dryContact6Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT6),
-                                    ((MS24) device).getDryContact6Value());
+                                    dryContact6Value);
                         }
-                        if (((MS24) device).getDryContact7Value() != null) {
+                    } {
+                        var dryContact7Value = ((MS24) device).getDryContact7Value();
+                        if (dryContact7Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT7),
-                                    ((MS24) device).getDryContact7Value());
+                                    dryContact7Value);
                         }
-                        if (((MS24) device).getDryContact8Value() != null) {
+                    } {
+                        var dryContact8Value = ((MS24) device).getDryContact8Value();
+                        if (dryContact8Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT8),
-                                    ((MS24) device).getDryContact8Value());
+                                    dryContact8Value);
                         }
-                        if (((MS24) device).getDryContact9Value() != null) {
+                    } {
+                        var dryContact9Value = ((MS24) device).getDryContact9Value();
+                        if (dryContact9Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT9),
-                                    ((MS24) device).getDryContact9Value());
+                                    dryContact9Value);
                         }
-                        if (((MS24) device).getDryContact10Value() != null) {
+                    } {
+                        var dryContact10Value = ((MS24) device).getDryContact10Value();
+                        if (dryContact10Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT10),
-                                    ((MS24) device).getDryContact10Value());
+                                    dryContact10Value);
                         }
-                        if (((MS24) device).getDryContact11Value() != null) {
+                    } {
+                        var dryContact11Value = ((MS24) device).getDryContact11Value();
+                        if (dryContact11Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT11),
-                                    ((MS24) device).getDryContact11Value());
+                                    dryContact11Value);
                         }
-                        if (((MS24) device).getDryContact12Value() != null) {
+                    } {
+                        var dryContact12Value = ((MS24) device).getDryContact12Value();
+                        if (dryContact12Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT12),
-                                    ((MS24) device).getDryContact12Value());
+                                    dryContact12Value);
                         }
-                        if (((MS24) device).getDryContact13Value() != null) {
+                    } {
+                        var dryContact13Value = ((MS24) device).getDryContact13Value();
+                        if (dryContact13Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT13),
-                                    ((MS24) device).getDryContact13Value());
+                                    dryContact13Value);
                         }
-                        if (((MS24) device).getDryContact14Value() != null) {
+                    } {
+                        var dryContact14Value = ((MS24) device).getDryContact14Value();
+                        if (dryContact14Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT14),
-                                    ((MS24) device).getDryContact14Value());
+                                    dryContact14Value);
                         }
-                        if (((MS24) device).getDryContact15Value() != null) {
+                    } {
+                        var dryContact15Value = ((MS24) device).getDryContact15Value();
+                        if (dryContact15Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT15),
-                                    ((MS24) device).getDryContact15Value());
+                                    dryContact15Value);
                         }
-                        if (((MS24) device).getDryContact16Value() != null) {
+                    } {
+                        var dryContact16Value = ((MS24) device).getDryContact16Value();
+                        if (dryContact16Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT16),
-                                    ((MS24) device).getDryContact16Value());
+                                    dryContact16Value);
                         }
-                        if (((MS24) device).getDryContact17Value() != null) {
+                    } {
+                        var dryContact17Value = ((MS24) device).getDryContact17Value();
+                        if (dryContact17Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT17),
-                                    ((MS24) device).getDryContact17Value());
+                                    dryContact17Value);
                         }
-                        if (((MS24) device).getDryContact18Value() != null) {
+                    } {
+                        var dryContact18Value = ((MS24) device).getDryContact18Value();
+                        if (dryContact18Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT18),
-                                    ((MS24) device).getDryContact18Value());
+                                    dryContact18Value);
                         }
-                        if (((MS24) device).getDryContact19Value() != null) {
+                    } {
+                        var dryContact19Value = ((MS24) device).getDryContact19Value();
+                        if (dryContact19Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT19),
-                                    ((MS24) device).getDryContact19Value());
+                                    dryContact19Value);
                         }
-                        if (((MS24) device).getDryContact20Value() != null) {
+                    } {
+                        var dryContact20Value = ((MS24) device).getDryContact20Value();
+                        if (dryContact20Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT20),
-                                    ((MS24) device).getDryContact20Value());
+                                    dryContact20Value);
                         }
-                        if (((MS24) device).getDryContact21Value() != null) {
+                    } {
+                        var dryContact21Value = ((MS24) device).getDryContact21Value();
+                        if (dryContact21Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT21),
-                                    ((MS24) device).getDryContact21Value());
+                                    dryContact21Value);
                         }
-                        if (((MS24) device).getDryContact22Value() != null) {
+                    } {
+                        var dryContact22Value = ((MS24) device).getDryContact22Value();
+                        if (dryContact22Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT22),
-                                    ((MS24) device).getDryContact22Value());
+                                    dryContact22Value);
                         }
-                        if (((MS24) device).getDryContact23Value() != null) {
+                    } {
+                        var dryContact23Value = ((MS24) device).getDryContact23Value();
+                        if (dryContact23Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT23),
-                                    ((MS24) device).getDryContact23Value());
+                                    dryContact23Value);
                         }
-                        if (((MS24) device).getDryContact24Value() != null) {
+                    } {
+                        var dryContact24Value = ((MS24) device).getDryContact24Value();
+                        if (dryContact24Value != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DRYCONTACT24),
-                                    ((MS24) device).getDryContact24Value());
+                                    dryContact24Value);
                         }
+                    }
                         break;
                     // case MW02_231:
                     // if (((MW02) device).getStopMoveShutter1Status() != null) {

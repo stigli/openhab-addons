@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.hdl.internal.device;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 import org.openhab.core.library.types.OnOffType;
 
@@ -22,16 +24,16 @@ import org.openhab.core.library.types.OnOffType;
  *
  * @author stigla - Initial contribution
  */
-
+@NonNullByDefault
 public class MR04xx extends Device {
 
     /** Device type for this Relay 4x16A **/
     private DeviceType deviceType = DeviceType.MR0416_C;
 
-    private OnOffType relayCh01 = null;
-    private OnOffType relayCh02 = null;
-    private OnOffType relayCh03 = null;
-    private OnOffType relayCh04 = null;
+    private @Nullable OnOffType relayCh01 = null;
+    private @Nullable OnOffType relayCh02 = null;
+    private @Nullable OnOffType relayCh03 = null;
+    private @Nullable OnOffType relayCh04 = null;
 
     public MR04xx(DeviceConfiguration c) {
         super(c);
@@ -122,7 +124,7 @@ public class MR04xx extends Device {
         this.relayCh01 = RelayCh01;
     }
 
-    public OnOffType getRelayCh01State() {
+    public @Nullable OnOffType getRelayCh01State() {
         return relayCh01;
     }
 
@@ -133,7 +135,7 @@ public class MR04xx extends Device {
         this.relayCh02 = RelayCh02;
     }
 
-    public OnOffType getRelayCh02State() {
+    public @Nullable OnOffType getRelayCh02State() {
         return relayCh02;
     }
 
@@ -144,7 +146,7 @@ public class MR04xx extends Device {
         this.relayCh03 = RelayCh03;
     }
 
-    public OnOffType getRelayCh03State() {
+    public @Nullable OnOffType getRelayCh03State() {
         return relayCh03;
     }
 
@@ -155,7 +157,7 @@ public class MR04xx extends Device {
         this.relayCh04 = RelayCh04;
     }
 
-    public OnOffType getRelayCh04State() {
+    public @Nullable OnOffType getRelayCh04State() {
         return relayCh04;
     }
 

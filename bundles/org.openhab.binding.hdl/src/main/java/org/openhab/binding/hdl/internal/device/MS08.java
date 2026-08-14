@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2025 Contributors to the openHAB project
+ * Copyright (c) 2010-2026 Contributors to the openHAB project
  *
  * See the NOTICE file(s) distributed with this work for additional
  * information.
@@ -15,6 +15,8 @@ package org.openhab.binding.hdl.internal.device;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.OpenClosedType;
@@ -27,12 +29,13 @@ import org.openhab.core.library.types.StopMoveType;
  *
  * @author stigla - Initial contribution
  */
+@NonNullByDefault
 public class MS08 extends Device {
     private double temperatureValue;
     private double brightnessValue;
-    private StopMoveType motionSensorValue = null;
-    private OpenClosedType dryContact1Value = null;
-    private OpenClosedType dryContact2Value = null;
+    private @Nullable StopMoveType motionSensorValue = null;
+    private @Nullable OpenClosedType dryContact1Value = null;
+    private @Nullable OpenClosedType dryContact2Value = null;
 
     /** Device type for this sensor with 8 functions **/
     private DeviceType deviceType = DeviceType.MS08Mn_2C;
@@ -170,7 +173,7 @@ public class MS08 extends Device {
     /**
      * the DryContact1Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact1Value() {
+    public @Nullable OpenClosedType getDryContact1Value() {
         return dryContact1Value;
     }
 
@@ -189,7 +192,7 @@ public class MS08 extends Device {
     /**
      * the DryContact2Value as <code>OpenClosedType</code>
      */
-    public OpenClosedType getDryContact2Value() {
+    public @Nullable OpenClosedType getDryContact2Value() {
         return dryContact2Value;
     }
 
@@ -208,7 +211,7 @@ public class MS08 extends Device {
     /**
      * the Motion sensor Value as <code>StopMoveType</code>
      */
-    public StopMoveType getMotionSensorValue() {
+    public @Nullable StopMoveType getMotionSensorValue() {
         return motionSensorValue;
     }
 
