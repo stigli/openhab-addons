@@ -47,6 +47,8 @@ import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.BaseBridgeHandler;
 import org.openhab.core.types.Command;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +89,9 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
 
     @Override
     public void initialize() {
-        logger.debug("Initializing HDL Bridge handler.");
+        Bundle bundle = FrameworkUtil.getBundle(getClass());
+        logger.info("Initializing HDL Bridge handler. Build version: {}",
+                bundle != null ? bundle.getVersion() : "unknown");
         Configuration config = getThing().getConfiguration();
 
         ipAddress = (String) config.get(HdlBindingConstants.PROPERTY_IP);

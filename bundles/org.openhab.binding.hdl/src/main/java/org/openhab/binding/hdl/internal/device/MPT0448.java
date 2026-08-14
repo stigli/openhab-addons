@@ -35,16 +35,56 @@ public class MPT0448 extends Device {
     /** Button state per channel; 1-indexed to match the HDL protocol, index 0 is unused. **/
     private final @Nullable OnOffType[] buttons = new OnOffType[CHANNEL_COUNT + 1];
 
+    /**
+     * Set when a button is confirmed (on real hardware) to have been pressed, via one of the
+     * command types handled below, other than the Panel Control family itself: this must stay false for
+     * Panel_Control/Response_Panel_Control/Response_Read_Status_of_Panel_Control, since those are also the
+     * reply to our own status probe, and reacting to them here would cause an endless probe-reply-probe loop.
+     * Consumed (and cleared) via {@link #consumeControlEvent()}.
+     **/
+    private boolean controlEventPending;
+
     public MPT0448(DeviceConfiguration c) {
         super(c);
     }
 
     public void treatHDLPacketForDevice(HdlPacket p) {
         switch (p.commandType) {
+            case Panel_Control:
+            case Response_Panel_Control:
+            case Response_Read_Status_of_Panel_Control:
+                // Best-effort mapping, not yet confirmed against real MPT04.48 traffic: data[0] is assumed
+                // to be the 1-based button number and data[1] its new state (non-zero = pressed/on), matching
+                // the {key, value} wire format the Panel Control command family uses for MPL848FH's panel keys.
+                int key = p.data[0];
+                if (key >= 1 && key <= CHANNEL_COUNT) {
+                    setButtonValue(key, p.data[1] != 0 ? OnOffType.ON : OnOffType.OFF);
+                }
+                break;
+            case Single_Channel_Control:
+            case Scene_Control:
+            case Universal_control:
+                // Confirmed on real hardware: this panel's buttons are programmed (via the HDL Buspro Setup
+                // Tool) to directly drive another device instead of reporting their own state, so we can't
+                // tell which button was pressed or its new value from these packets. They do confirm a
+                // button was just pressed though, so flag it for the handler to request a fresh status read.
+                controlEventPending = true;
+                setUpdated(true);
+                break;
             default:
                 LOGGER.debug("For type: {}, Unhandled CommandType: {}.", p.sourcedeviceType, p.commandType);
                 break;
         }
+    }
+
+    /**
+     * Returns whether a control event (button press routed to another device, see
+     * {@link #treatHDLPacketForDevice}) has been seen since the last call, and clears the flag.
+     */
+    public boolean consumeControlEvent() {
+        boolean pending = controlEventPending;
+        controlEventPending = false;
+        return pending;
     }
 
     @Override

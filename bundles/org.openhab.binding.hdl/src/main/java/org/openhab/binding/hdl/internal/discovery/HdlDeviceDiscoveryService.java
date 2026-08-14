@@ -104,7 +104,8 @@ public class HdlDeviceDiscoveryService extends AbstractDiscoveryService implemen
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MR04XX, bridge.getUID(), device.getSerialNr());
                 break;
             case MRDA0610_432:
-                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MRDA0610, bridge.getUID(), device.getSerialNr());
+            case MRDA06:
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MRDA06, bridge.getUID(), device.getSerialNr());
                 break;
             case MS08Mn_2C:
             case MSP08M_4C:

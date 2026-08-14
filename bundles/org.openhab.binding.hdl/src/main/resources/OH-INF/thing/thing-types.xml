@@ -214,6 +214,13 @@
 				<label>Device ID</label>
 				<description>What device id the Touch Switch has.</description>
 			</parameter>
+			<parameter name="refreshInterval" type="integer" min="-1" required="false">
+				<label>Refresh Rate</label>
+				<description>How often the things status should be requested, in seconds. Set to -1 to only
+					request status right
+					after the panel is seen actively controlling something (event-only, no
+					fixed-interval polling).</description>
+			</parameter>
 		</config-description>
 	</thing-type>
 

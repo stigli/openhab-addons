@@ -31,6 +31,7 @@ import org.openhab.binding.hdl.internal.device.MDT0601;
 import org.openhab.binding.hdl.internal.device.MFH06;
 import org.openhab.binding.hdl.internal.device.ML01;
 import org.openhab.binding.hdl.internal.device.MPL848FH;
+import org.openhab.binding.hdl.internal.device.MPT0448;
 import org.openhab.binding.hdl.internal.device.MR04xx;
 import org.openhab.binding.hdl.internal.device.MR08xx;
 import org.openhab.binding.hdl.internal.device.MR12xx;
@@ -119,7 +120,9 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
 
             if (hdlBridge != null && getThing().getStatus().equals(ThingStatus.ONLINE)) {
                 sendUpdatePackets(hdlBridge);
-                if (refreshRate != 0) {
+                // refreshRate == -1 means event-only refresh (currently only used by hdl:MPT04): no fixed-delay
+                // job is scheduled, status is instead requested reactively, see onDeviceStateChanged.
+                if (refreshRate > 0) {
                     if (refreshJob == null || refreshJob.isCancelled()) {
                         refreshJob = scheduler.scheduleWithFixedDelay(refreshRunnable, 1, refreshRate,
                                 TimeUnit.SECONDS);
@@ -190,6 +193,17 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                                 getThing().getThingTypeUID().getAsString(), deviceID);
                     }
                     break;
+                case "hdl:MPT04": {
+                    // Needs one request per button (key 1-4), so send them directly here instead of
+                    // relying on the single-packet send below.
+                    var bridge = bridgeHandler;
+                    if (bridge != null) {
+                        sendMpt04StatusProbe(bridge);
+                    }
+                    logger.debug("For Thing Type: {} with device id: {} with Refresh Interval: {} command is sent.",
+                            getThing().getThingTypeUID().getAsString(), deviceID, refreshRate);
+                    return;
+                }
 
                 /*
                  * case "hdl:MRDA06":
@@ -323,6 +337,13 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                 logger.debug("For Thing Type: {} command: Refresh is sent.",
                         getThing().getThingTypeUID().getAsString());
                 break;
+            case "hdl:MPT04":
+                // One request per button (key 1-4); see MPT0448's Panel Control handling for the same
+                // not-yet-verified key/value assumption this relies on.
+                hdlPacketList.addAll(buildMpt04StatusProbePackets());
+                logger.debug("For Thing Type: {} command: Refresh is sent.",
+                        getThing().getThingTypeUID().getAsString());
+                break;
             default:
                 logger.debug("For Thing Type: {} command: Refresh not supported.",
                         getThing().getThingTypeUID().getAsString());
@@ -336,6 +357,38 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
             }
         } catch (IOException e) {
             logger.warn("Could not send msg to bridge, got error msg: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Builds one {@link CommandType#Read_Status_of_Panel_Control} request per button (key 1-4) for a
+     * hdl:MPT04 thing, targeting this handler's configured subnet/device.
+     */
+    private Collection<HdlPacket> buildMpt04StatusProbePackets() {
+        Collection<HdlPacket> packets = new ArrayList<HdlPacket>();
+        for (byte key = 1; key <= 4; key++) {
+            HdlPacket buttonRequest = new HdlPacket();
+            buttonRequest.setTargetSubnetID(subNet);
+            buttonRequest.setTargetDeviceId(deviceID);
+            buttonRequest.setCommandType(CommandType.Read_Status_of_Panel_Control);
+            buttonRequest.setData(new byte[] { key });
+            packets.add(buttonRequest);
+        }
+        return packets;
+    }
+
+    /**
+     * Sends a status probe (see {@link #buildMpt04StatusProbePackets()}) for a hdl:MPT04 thing, used both
+     * by the fixed-delay {@link #refreshRunnable} and by the event-only ({@code refreshRate == -1}) reactive
+     * trigger in {@link #onDeviceStateChanged}.
+     */
+    private void sendMpt04StatusProbe(HdlBridgeHandler hdlBridge) {
+        for (HdlPacket packet : buildMpt04StatusProbePackets()) {
+            try {
+                hdlBridge.sendPacket(packet);
+            } catch (IOException e) {
+                logger.warn("Could not send msg to bridge, got error msg: {}", e.getMessage());
+            }
         }
     }
 
@@ -1569,6 +1622,40 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                     // ((MW02) device).getStopMoveShutter1Status());
                     // }
                     // break;
+                    case MPT04_48: {
+                        var button1Value = ((MPT0448) device).getbutton1Value();
+                        if (button1Value != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BUTTON1),
+                                    button1Value);
+                        }
+                    } {
+                        var button2Value = ((MPT0448) device).getbutton2Value();
+                        if (button2Value != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BUTTON2),
+                                    button2Value);
+                        }
+                    } {
+                        var button3Value = ((MPT0448) device).getbutton3Value();
+                        if (button3Value != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BUTTON3),
+                                    button3Value);
+                        }
+                    } {
+                        var button4Value = ((MPT0448) device).getbutton4Value();
+                        if (button4Value != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BUTTON4),
+                                    button4Value);
+                        }
+                    } {
+                        // Event-only refresh (refreshRate == -1): the panel just actively controlled
+                        // something (see MPT0448#treatHDLPacketForDevice), so request a fresh status read
+                        // instead of waiting on a fixed-delay poll.
+                        var hdlBridge = bridgeHandler;
+                        if (refreshRate == -1 && hdlBridge != null && ((MPT0448) device).consumeControlEvent()) {
+                            sendMpt04StatusProbe(hdlBridge);
+                        }
+                    }
+                        break;
                     default:
                         logger.debug("Device Type: {} unhandled", device.getType());
                         break;

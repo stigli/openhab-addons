@@ -102,6 +102,7 @@ public abstract class Device {
             case MR0416_431:
             case MR0410_431:
                 return new MR04xx(c);
+            case MRDA0610_432:
             case MRDA06:
                 return new MRDA06(c);
             case MSP08M_4C:
@@ -166,6 +167,7 @@ public abstract class Device {
                 MR04xx mr0416 = (MR04xx) device;
                 mr0416.treatHDLPacketForDevice(p);
                 break;
+            case MRDA0610_432:
             case MRDA06:
                 MRDA06 mrda06 = (MRDA06) device;
                 mrda06.treatHDLPacketForDevice(p);
