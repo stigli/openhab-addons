@@ -185,6 +185,11 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                     logger.debug("For Thing Type: {} with device id: {} with Refresh Interval: {} command is sent.",
                             getThing().getThingTypeUID().getAsString(), deviceID, refreshRate);
                     break;
+                case "hdl:MRDA06":
+                    p.setCommandType(CommandType.Read_Status_of_Channels);
+                    logger.debug("For Thing Type: {} with device id: {} with Refresh Interval: {} command is sent.",
+                            getThing().getThingTypeUID().getAsString(), deviceID, refreshRate);
+                    break;
                 case "hdl:MFH06":
                     if (channelNumber != 0) {
                         p.setCommandType(CommandType.Read_Floor_Heating_Status);
@@ -560,11 +565,16 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                 case HdlBindingConstants.CHANNEL_DIMCHANNEL4:
                 case HdlBindingConstants.CHANNEL_DIMCHANNEL5:
                 case HdlBindingConstants.CHANNEL_DIMCHANNEL6:
-                    if (command instanceof PercentType) {
-                        PercentType dimValue = (PercentType) command;
+                    Integer dimPercent = null;
+                    if (command instanceof PercentType percentCommand) {
+                        dimPercent = percentCommand.intValue();
+                    } else if (command instanceof OnOffType onOffCommand) {
+                        dimPercent = onOffCommand == OnOffType.ON ? 100 : 0;
+                    }
+                    if (dimPercent != null) {
                         p.setCommandType(CommandType.Single_Channel_Control);
                         int channelNr = HdlBindingConstants.DimChannelNr.valueOf(channelUID.getId()).getValue();
-                        p.setData(new byte[] { (byte) channelNr, (byte) dimValue.intValue(), 0, 0 });
+                        p.setData(new byte[] { (byte) channelNr, (byte) dimPercent.intValue(), 0, 0 });
                         sendCommand = true;
                     }
                     break;
