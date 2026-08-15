@@ -30,8 +30,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The {@link HdlDeviceDiscoveryService} To be able to automatically find new devices.
- * is ignored for now since don't see a reason to use it yet.
+ * The {@link HdlDeviceDiscoveryService} finds devices on the HDL bus, both passively (any device that
+ * sends traffic is picked up via {@link #onDeviceAdded}) and actively (a broadcast Discover_Device
+ * request is sent on {@link #startScan()} and once at bridge startup; see
+ * HdlBridgeHandler#sendDiscoverDeviceBroadcast()).
  * based on MAX Discovery Service from MAX! binding to OpenHAB 2
  *
  * @author stigla - Initial contribution
@@ -140,10 +142,7 @@ public class HdlDeviceDiscoveryService extends AbstractDiscoveryService implemen
 
     @Override
     protected void startScan() {
-        // if (HdlBridgeHandler != null) {
-        // HdlBridgeHandler.clearDeviceList();
-        // HdlBridgeHandler.deviceInclusion();
-        // }
+        hdlBridgeHandler.sendDiscoverDeviceBroadcast();
     }
 
     @Override

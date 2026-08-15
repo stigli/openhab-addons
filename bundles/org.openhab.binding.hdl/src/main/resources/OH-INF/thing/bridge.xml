@@ -6,6 +6,10 @@
 	<bridge-type id="bridge">
 		<label>HDL server</label>
 		<description>This bridge represents a HDL server.</description>
+		<channels>
+			<channel id="BusMessageRate" typeId="busMessageRate"></channel>
+			<channel id="BusInvalidPacketCount" typeId="busInvalidPacketCount"></channel>
+		</channels>
 		<config-description>
 			<parameter name="ip" type="text" required="true">
 				<label>Network Address</label>
@@ -20,4 +24,20 @@
 			</parameter>
 		</config-description>
 	</bridge-type>
+
+	<channel-type id="busMessageRate">
+		<item-type>Number</item-type>
+		<label>Bus Message Rate</label>
+		<description>Average HDL bus message rate over the last update period (see the "busstats" console
+			command for a
+			detailed breakdown).</description>
+		<state pattern="%.1f /s" readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="busInvalidPacketCount">
+		<item-type>Number</item-type>
+		<label>Bus Invalid Packet Count</label>
+		<description>Total count of unparseable/invalid packets seen since the bridge started.</description>
+		<state pattern="%d" readOnly="true"/>
+	</channel-type>
 </thing:thing-descriptions>

@@ -30,7 +30,27 @@ Thing names are using the article number that HDL are using.
 
 ## Discovery
 
-Discovery has not been added yet, so all Things and Items need to be defined in things and items files.
+The bridge actively searches the HDL bus for devices once when it comes online, and again whenever a manual
+Inbox scan is triggered; devices found this way, as well as any device that is seen sending traffic for other
+reasons, show up in the Inbox. Not every discovered device type maps to a supported Thing type yet (see
+`HdlDeviceDiscoveryService`), and this is a new, hardware-unverified feature, so things and items may still need
+to be defined manually.
+
+## Bus Statistics
+
+The bridge Thing has two channels for trending bus load over time:
+
+| Channel Type ID        | Item Type | Description                                                        |
+|-------------------------|-----------|---------------------------------------------------------------------|
+| BusMessageRate          | Number    | Average messages/second seen on the bus since the last update (updated every 60s). |
+| BusInvalidPacketCount   | Number    | Total count of unparseable/invalid packets seen since the bridge started.           |
+
+For a detailed on-demand breakdown (average/peak rate, total messages, and the top 5 sending and receiving
+addresses on the bus), use the console command:
+
+```shell
+openhab:hdl busstats
+```
 
 ## Binding Configuration
 

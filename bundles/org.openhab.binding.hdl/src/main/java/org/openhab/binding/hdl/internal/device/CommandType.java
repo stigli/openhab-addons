@@ -36,6 +36,10 @@ public enum CommandType {
     Response_Read_Scene_Information(1),
     Modify_Scene_Information(8),
     Response_Modify_Scene_Information(9),
+    // Broadcast to subnet/device 255/255; every device on the bus replies with Discover_Device_Response,
+    // used to actively search the bus instead of only picking up devices passively from other traffic.
+    Discover_Device(14),
+    Discover_Device_Response(15),
     Sequence_Control(26),
     Response_Sequence_Control(27),
     Read_Status_of_Sequence(57364),

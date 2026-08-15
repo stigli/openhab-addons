@@ -37,10 +37,12 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.HdlBindingConstants;
+import org.openhab.binding.hdl.internal.device.CommandType;
 import org.openhab.binding.hdl.internal.device.Device;
 import org.openhab.binding.hdl.internal.device.DeviceConfiguration;
 import org.openhab.binding.hdl.internal.device.DeviceType;
 import org.openhab.core.config.core.Configuration;
+import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.ThingStatus;
@@ -70,6 +72,10 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
     private final Lock lock = new ReentrantLock();
 
     private @Nullable ScheduledFuture<?> listeningJob;
+    private @Nullable ScheduledFuture<?> statisticsJob;
+    private final HdlBusStatistics busStatistics = new HdlBusStatistics();
+
+    public static final int STATISTICS_UPDATE_INTERVAL_SECONDS = 60;
 
     public static final int CONNECTION_REFRESH_INTERVAL_MILLISECONDS = 100;
     public static final int MAX_PACKET_SIZE = 512;
@@ -121,10 +127,32 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
                 }
             }
             onConnectionResumed();
+            sendDiscoverDeviceBroadcast();
+
+            if (statisticsJob == null || statisticsJob.isCancelled()) {
+                statisticsJob = scheduler.scheduleWithFixedDelay(this::updateStatisticsChannels,
+                        STATISTICS_UPDATE_INTERVAL_SECONDS, STATISTICS_UPDATE_INTERVAL_SECONDS, TimeUnit.SECONDS);
+            }
         } else {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
                     "IP address or port number not set");
         }
+    }
+
+    /**
+     * Updates the BusMessageRate/BusInvalidPacketCount channels from {@link #busStatistics}; for the
+     * full breakdown (top senders/receivers, peak rate, etc.) see the "busstats" console command
+     * (HdlConsoleCommandExtension), which reads {@link #getBusStatistics()} directly.
+     */
+    private void updateStatisticsChannels() {
+        updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BUS_MESSAGE_RATE),
+                new DecimalType(busStatistics.takeRecentAverageRatePerSecond()));
+        updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BUS_INVALID_PACKET_COUNT),
+                new DecimalType(busStatistics.getInvalidPacketCount()));
+    }
+
+    public HdlBusStatistics getBusStatistics() {
+        return busStatistics;
     }
 
     protected void onRead(ByteBuffer byteBuffer, DatagramChannel datagramChannel) {
@@ -133,8 +161,11 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
 
         HdlPacket p = HdlPacket.parse(byteBuffer.array(), byteBuffer.position());
         if (p == null) {
+            busStatistics.recordInvalidPacket();
             return;
         }
+        busStatistics.recordPacket(p.sourceSubnetID, p.sourceDeviceID, p.sourcedeviceType, p.targetSubnetID,
+                p.targetDeviceID);
 
         try {
             if (p.sourcedeviceType != DeviceType.Invalid) {
@@ -214,6 +245,26 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
         onWritable(bytes, channel);
     }
 
+    /**
+     * Sends a broadcast {@link CommandType#Discover_Device} request (target subnet/device 255/255, the
+     * HDL Buspro broadcast address); every device on the bus should reply, which feeds into the same
+     * passive discovery pipeline used for regular traffic (see {@link #onRead}), so no separate handling
+     * of the response is needed. Called once at bridge startup and whenever the Inbox "Scan" is triggered
+     * (see HdlDeviceDiscoveryService#startScan()).
+     */
+    public void sendDiscoverDeviceBroadcast() {
+        HdlPacket p = new HdlPacket();
+        p.setTargetSubnetID(255);
+        p.setTargetDeviceId(255);
+        p.setCommandType(CommandType.Discover_Device);
+        try {
+            sendPacket(p);
+            logger.debug("Sent Discover_Device broadcast to 255.255, searching for devices on the HDL bus.");
+        } catch (IOException e) {
+            logger.warn("Could not send discover device broadcast, got error msg: {}", e.getMessage());
+        }
+    }
+
     @Override
     public void dispose() {
         try {
@@ -238,6 +289,10 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
         if (listeningJob != null && !listeningJob.isCancelled()) {
             listeningJob.cancel(true);
             listeningJob = null;
+        }
+        if (statisticsJob != null && !statisticsJob.isCancelled()) {
+            statisticsJob.cancel(true);
+            statisticsJob = null;
         }
         clearDeviceList();
         logger.debug("Handler disposed.");

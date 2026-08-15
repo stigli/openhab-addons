@@ -66,6 +66,8 @@ public class HdlBindingConstants {
     public static final ThingTypeUID THING_TYPE_MS24 = new ThingTypeUID(BINDING_ID, "MS24"); // Sensor Input Module
 
     // List of all Channel ids
+    public static final String CHANNEL_BUS_MESSAGE_RATE = "BusMessageRate";
+    public static final String CHANNEL_BUS_INVALID_PACKET_COUNT = "BusInvalidPacketCount";
     public static final String CHANNEL_TEMPERATUR = "temperature";
     public static final String CHANNEL_TIME = "time";
     public static final String CHANNEL_BRIGHTNESS = "Brightness";
