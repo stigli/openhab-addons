@@ -99,6 +99,13 @@ public class MDT04015 extends Device {
                 setDimChannel3(PercentType.valueOf(Integer.toString(p.data[valuesStart + 2])));
                 setDimChannel4(PercentType.valueOf(Integer.toString(p.data[valuesStart + 3])));
                 break;
+            case Broadcast_Status_of_Sequence:
+                // Known and intentionally ignored: confirmed via the caligo-mentis/smart-bus reference
+                // implementation that this is a per-area "which sequence is currently active" broadcast (a
+                // sequence is a separate HDL concept from a scene - a timed/ordered chain of scenes), always
+                // seen as all-zero (no sequence running) on real hardware. Nothing in this binding has a
+                // sequence channel to reflect it.
+                break;
             case Response_Scene_Control:
                 // Confirmed on real hardware (2026-08-15, on a sibling MDT0601 device - see MDT0601.java for
                 // the derivation): data[1] is the scene number that just became active in this device's

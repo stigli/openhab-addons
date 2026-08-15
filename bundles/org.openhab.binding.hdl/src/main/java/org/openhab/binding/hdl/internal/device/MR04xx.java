@@ -68,6 +68,13 @@ public class MR04xx extends Device {
                     setRelayChannel(ch, (p.data[bitmaskStart] & bit) != 0 ? OnOffType.ON : OnOffType.OFF);
                 }
                 break;
+            case Broadcast_Status_of_Sequence:
+                // Known and intentionally ignored: confirmed via the caligo-mentis/smart-bus reference
+                // implementation that this is a per-area "which sequence is currently active" broadcast (a
+                // sequence is a separate HDL concept from a scene - a timed/ordered chain of scenes), always
+                // seen as all-zero (no sequence running) on real hardware. Nothing in this binding has a
+                // sequence channel to reflect it.
+                break;
             default:
                 LOGGER.debug("For type: {}, Unhandled CommandType: {}.", p.sourcedeviceType, p.commandType);
                 break;
