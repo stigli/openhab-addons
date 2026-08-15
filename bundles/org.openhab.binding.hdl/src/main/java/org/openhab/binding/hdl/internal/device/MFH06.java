@@ -34,7 +34,13 @@ import org.openhab.core.library.types.OnOffType;
 public class MFH06 extends Device {
     private int channelNr;
 
-    private double temperatureValue;
+    /**
+     * These are @Nullable and stay null until real data has actually been received: HdlHandler relies on
+     * being able to tell "never received" apart from "received as 0" both when pushing channel state and
+     * when guarding against sending a command before the real device state is known (see MPL848FH, which
+     * had the same bug when these were plain primitive doubles defaulting to 0.0).
+     **/
+    private @Nullable Double temperatureValue;
     private @Nullable OnOffType uvSwitch1 = null; // Status On/OFf
     private @Nullable OnOffType uvSwitch2 = null; // Normal Mode
     private @Nullable OnOffType uvSwitch3 = null; // Day Mode
@@ -43,14 +49,14 @@ public class MFH06 extends Device {
     private @Nullable OnOffType uvSwitch6 = null; // Timer Mode
 
     private @Nullable String floorHeatingTemperaturType;
-    private double floorHeatingCurrentTemperatur;
+    private @Nullable Double floorHeatingCurrentTemperatur;
     private @Nullable OnOffType floorHeatingStatus;
     private @Nullable EnumFHMode floorHeatingMode;
 
-    private double floorHeatingSetNormalTemperatur;
-    private double floorHeatingSetDayTemperatur;
-    private double floorHeatingSetNightTemperatur;
-    private double floorHeatingSetAwayTemperatur;
+    private @Nullable Double floorHeatingSetNormalTemperatur;
+    private @Nullable Double floorHeatingSetDayTemperatur;
+    private @Nullable Double floorHeatingSetNightTemperatur;
+    private @Nullable Double floorHeatingSetAwayTemperatur;
     private @Nullable String floorHeatingTimer;
 
     /** Device type for this Button Panel (DLP) with AC, Music, Clock, Floor Heating **/
@@ -139,18 +145,18 @@ public class MFH06 extends Device {
      */
 
     public void setTemperatureValue(double value) {
-        if (this.temperatureValue != value) {
+        if (!Objects.equals(this.temperatureValue, value)) {
             setUpdated(true);
         }
         this.temperatureValue = value;
     }
 
     /**
-     * the Temperature as <code>DecimalType</code>
+     * the Temperature as <code>DecimalType</code>, or null if not yet received.
      */
-    public DecimalType getTemperatureValue() {
-        BigDecimal temperatureValue = BigDecimal.valueOf(this.temperatureValue);// .setScale(1, RoundingMode.HALF_UP);
-        return new DecimalType(temperatureValue);
+    public @Nullable DecimalType getTemperatureValue() {
+        Double value = this.temperatureValue;
+        return value != null ? new DecimalType(BigDecimal.valueOf(value)) : null;
     }
 
     public void setUVSwitch1(OnOffType UVSwitch1) {
@@ -231,15 +237,15 @@ public class MFH06 extends Device {
     }
 
     public void setFloorHeatingCurrentTemperatur(double FloorHeatingCurrentTemperatur) {
-        if (this.floorHeatingCurrentTemperatur != FloorHeatingCurrentTemperatur) {
+        if (!Objects.equals(this.floorHeatingCurrentTemperatur, FloorHeatingCurrentTemperatur)) {
             setUpdated(true);
         }
         this.floorHeatingCurrentTemperatur = FloorHeatingCurrentTemperatur;
     }
 
-    public DecimalType getFloorHeatingCurrentTemperatur() {
-        BigDecimal floorHeatingCurrentTemperaturValue = BigDecimal.valueOf(this.floorHeatingCurrentTemperatur);
-        return new DecimalType(floorHeatingCurrentTemperaturValue);
+    public @Nullable DecimalType getFloorHeatingCurrentTemperatur() {
+        Double value = this.floorHeatingCurrentTemperatur;
+        return value != null ? new DecimalType(BigDecimal.valueOf(value)) : null;
     }
 
     public void setFloorHeatingStatus(OnOffType FloorHeatingStatus) {
@@ -265,7 +271,7 @@ public class MFH06 extends Device {
     }
 
     public void setFloorHeatingSetNormalTemperatur(double FloorHeatingSetNormalTemperatur) {
-        if (this.floorHeatingSetNormalTemperatur != FloorHeatingSetNormalTemperatur) {
+        if (!Objects.equals(this.floorHeatingSetNormalTemperatur, FloorHeatingSetNormalTemperatur)) {
             setUpdated(true);
         }
         this.floorHeatingSetNormalTemperatur = FloorHeatingSetNormalTemperatur;
@@ -275,13 +281,13 @@ public class MFH06 extends Device {
         }
     }
 
-    public DecimalType getFloorHeatingSetNormalTemperatur() {
-        BigDecimal floorHeatingSetNormalTemperaturValue = BigDecimal.valueOf(this.floorHeatingSetNormalTemperatur);
-        return new DecimalType(floorHeatingSetNormalTemperaturValue);
+    public @Nullable DecimalType getFloorHeatingSetNormalTemperatur() {
+        Double value = this.floorHeatingSetNormalTemperatur;
+        return value != null ? new DecimalType(BigDecimal.valueOf(value)) : null;
     }
 
     public void setFloorHeatingSetDayTemperatur(double FloorHeatingSetDayTemperatur) {
-        if (this.floorHeatingSetDayTemperatur != FloorHeatingSetDayTemperatur) {
+        if (!Objects.equals(this.floorHeatingSetDayTemperatur, FloorHeatingSetDayTemperatur)) {
             setUpdated(true);
         }
         this.floorHeatingSetDayTemperatur = FloorHeatingSetDayTemperatur;
@@ -295,13 +301,13 @@ public class MFH06 extends Device {
         }
     }
 
-    public DecimalType getFloorHeatingSetDayTemperatur() {
-        BigDecimal floorHeatingSetDayTemperaturValue = BigDecimal.valueOf(this.floorHeatingSetDayTemperatur);
-        return new DecimalType(floorHeatingSetDayTemperaturValue);
+    public @Nullable DecimalType getFloorHeatingSetDayTemperatur() {
+        Double value = this.floorHeatingSetDayTemperatur;
+        return value != null ? new DecimalType(BigDecimal.valueOf(value)) : null;
     }
 
     public void setFloorHeatingSetNightTemperatur(double FloorHeatingSetNightTemperatur) {
-        if (this.floorHeatingSetNightTemperatur != FloorHeatingSetNightTemperatur) {
+        if (!Objects.equals(this.floorHeatingSetNightTemperatur, FloorHeatingSetNightTemperatur)) {
             setUpdated(true);
         }
         this.floorHeatingSetNightTemperatur = FloorHeatingSetNightTemperatur;
@@ -310,18 +316,18 @@ public class MFH06 extends Device {
             setFloorHeatingCurrentTemperatur(FloorHeatingSetNightTemperatur);
         }
 
-        if (this.floorHeatingMode.equals(EnumFHMode.Timer) && "Night".equals(this.floorHeatingTimer)) {
+        if (Objects.equals(this.floorHeatingMode, EnumFHMode.Timer) && "Night".equals(this.floorHeatingTimer)) {
             setFloorHeatingCurrentTemperatur(FloorHeatingSetNightTemperatur);
         }
     }
 
-    public DecimalType getFloorHeatingSetNightTemperatur() {
-        BigDecimal floorHeatingSetNightTemperaturValue = BigDecimal.valueOf(this.floorHeatingSetNightTemperatur);
-        return new DecimalType(floorHeatingSetNightTemperaturValue);
+    public @Nullable DecimalType getFloorHeatingSetNightTemperatur() {
+        Double value = this.floorHeatingSetNightTemperatur;
+        return value != null ? new DecimalType(BigDecimal.valueOf(value)) : null;
     }
 
     public void setFloorHeatingSetAwayTemperatur(double FloorHeatingSetAwayTemperatur) {
-        if (this.floorHeatingSetAwayTemperatur != FloorHeatingSetAwayTemperatur) {
+        if (!Objects.equals(this.floorHeatingSetAwayTemperatur, FloorHeatingSetAwayTemperatur)) {
             setUpdated(true);
         }
         this.floorHeatingSetAwayTemperatur = FloorHeatingSetAwayTemperatur;
@@ -331,9 +337,9 @@ public class MFH06 extends Device {
         }
     }
 
-    public DecimalType getFloorHeatingSetAwayTemperatur() {
-        BigDecimal floorHeatingSetAwayTemperaturValue = BigDecimal.valueOf(this.floorHeatingSetAwayTemperatur);
-        return new DecimalType(floorHeatingSetAwayTemperaturValue);
+    public @Nullable DecimalType getFloorHeatingSetAwayTemperatur() {
+        Double value = this.floorHeatingSetAwayTemperatur;
+        return value != null ? new DecimalType(BigDecimal.valueOf(value)) : null;
     }
 
     public void setFloorHeatingTimer(String FloorHeatingTimer) {

@@ -915,12 +915,14 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_TEMPERATUR),
                                     temperatureValue);
                         }
-                    }
-                        if (((MFH06) device).getFloorHeatingSetNormalTemperatur() != null) {
+                    } {
+                        var mfh06SetNormalTemperatur = ((MFH06) device).getFloorHeatingSetNormalTemperatur();
+                        if (mfh06SetNormalTemperatur != null) {
                             updateState(
                                     new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHNORMALTEMPSET),
-                                    ((MFH06) device).getFloorHeatingSetNormalTemperatur());
-                        } {
+                                    mfh06SetNormalTemperatur);
+                        }
+                    } {
                         var floorHeatingSetAwayTemperatur = ((MFH06) device).getFloorHeatingSetAwayTemperatur();
                         if (floorHeatingSetAwayTemperatur != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHAWAYTEMPSET),
@@ -938,16 +940,19 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHNIGHTTEMPSET),
                                     floorHeatingSetNightTemperatur);
                         }
-                    }
-                        if (((MFH06) device).getFloorHeatingCurrentTemperatur() != null) {
+                    } {
+                        var mfh06CurrentTemperatur = ((MFH06) device).getFloorHeatingCurrentTemperatur();
+                        if (mfh06CurrentTemperatur != null) {
                             updateState(
                                     new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHCURRENTTEMPSET),
-                                    ((MFH06) device).getFloorHeatingCurrentTemperatur());
+                                    mfh06CurrentTemperatur);
                         }
-                        if (((MFH06) device).getFloorHeatingMode() != null) {
+                        var mfh06Mode = ((MFH06) device).getFloorHeatingMode();
+                        if (mfh06Mode != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHMODE),
-                                    new StringType(((MFH06) device).getFloorHeatingMode().toString()));
+                                    new StringType(mfh06Mode.toString()));
                         }
+                    }
 
                         org.openhab.core.library.types.OnOffType u1 = ((MFH06) device).getUVSwitch1();
                         if (u1 != null) {
