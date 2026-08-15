@@ -52,6 +52,13 @@ addresses on the bus), use the console command:
 openhab:hdl busstats
 ```
 
+## Diagnosing Curtain Commands
+
+Every curtain-related command seen anywhere on the bus (not just ones going through this binding) is logged
+at DEBUG level, including the sending device's address - useful for tracking down a panel that is
+unexpectedly driving a curtain directly (bypassing openHAB). Enable debug logging for
+`org.openhab.binding.hdl` and look for log lines starting with `Curtain command:`.
+
 ## Binding Configuration
 
 No binding wide settings.
@@ -87,7 +94,7 @@ DryContact(1-24)Status  means that that it can be 24 Dry Contact channels. What 
 | Sonic                         | Switch           | This channel indicates if there is any movement.               | MS12                                          |
 | temperature                   | Number           | This channel indicates the measured temperature (in °C).       | MPL8_48_FH, MS08, MS12                        |
 | time                          | DateTime         | Current time.                                                 | ML01                                          |
-| Shutter(1-2)Control           | Rollershutter    | Device control (UP, DOWN, MOVE/STOP, closure 0-100%).           | MW02                                          |
+| Shutter(1-2)Control           | Rollershutter    | Device control: send UP/DOWN/STOP commands; state reflects the last known UP/DOWN direction (percentage closure is not implemented). | MW02                                          |
 | FHMode                        | String           | Floor heating mode (Normal, Day, Night, Away, Timer). Writable on MPL8_48_FH.         | MPL8_48_FH, MFH06                             |
 | FHNormalTempSet / FHTempSet / FHNightTempSet / FHAwayTempSet | Number:Temperature | Floor heating setpoint temperatures. Individually writable on MPL8_48_FH.       | MPL8_48_FH, MFH06                             |
 | FHCurrentTempSet              | Number:Temperature | Current floor heating temperature.                            | MPL8_48_FH, MFH06                             |

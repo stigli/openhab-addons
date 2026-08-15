@@ -166,6 +166,7 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
         }
         busStatistics.recordPacket(p.sourceSubnetID, p.sourceDeviceID, p.sourcedeviceType, p.targetSubnetID,
                 p.targetDeviceID);
+        logCurtainControlDiagnostics(p);
 
         try {
             if (p.sourcedeviceType != DeviceType.Invalid) {
@@ -263,6 +264,52 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
         } catch (IOException e) {
             logger.warn("Could not send discover device broadcast, got error msg: {}", e.getMessage());
         }
+    }
+
+    /**
+     * Logs every curtain-related command seen anywhere on the bus, regardless of whether it's addressed to
+     * a Thing this binding manages: per-device routing (see {@link #onRead}) only ever delivers a packet
+     * to the {@link Device} matching its SOURCE address, so a command sent directly from one device to
+     * another (e.g. a rogue panel driving a curtain controller without going through openHAB) would
+     * otherwise never be visible anywhere in the log. Channel/action decoding matches MW02's own
+     * handling, at DEBUG so enable debug logging for org.openhab.binding.hdl to catch this.
+     */
+    private void logCurtainControlDiagnostics(HdlPacket p) {
+        switch (p.commandType) {
+            case Curtain_Switch_Control:
+            case Response_Curtain_Switch_Control:
+            case Read_Status_of_Curtain_Switch:
+            case Response_Read_Status_of_Curtain_Switch:
+            case Broadcast_Status_of_Status_of_Curtain_Switches:
+                break;
+            default:
+                return;
+        }
+        String action;
+        if (p.data.length < 2) {
+            action = "unknown (short packet, data length " + p.data.length + ")";
+        } else {
+            switch (p.data[1]) {
+                case (byte) 0:
+                    action = "Stop";
+                    break;
+                case (byte) 1:
+                    action = "Open";
+                    break;
+                case (byte) 2:
+                    action = "Close";
+                    break;
+                default:
+                    action = "unknown (" + p.data[1] + ")";
+                    break;
+            }
+        }
+        int channel = p.data.length > 0 ? p.data[0] : -1;
+        logger.debug(
+                "Curtain command: {} channel {} action {} from {}.{} (type {}) to {}.{}. If this wasn't sent by "
+                        + "openHAB, {}.{} is the device that sent it.",
+                p.commandType, channel, action, p.sourceSubnetID, p.sourceDeviceID, p.sourcedeviceType,
+                p.targetSubnetID, p.targetDeviceID, p.sourceSubnetID, p.sourceDeviceID);
     }
 
     @Override

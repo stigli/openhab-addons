@@ -40,6 +40,7 @@ import org.openhab.binding.hdl.internal.device.MRDA06;
 import org.openhab.binding.hdl.internal.device.MS08;
 import org.openhab.binding.hdl.internal.device.MS12;
 import org.openhab.binding.hdl.internal.device.MS24;
+import org.openhab.binding.hdl.internal.device.MW02;
 import org.openhab.core.config.core.Configuration;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.OnOffType;
@@ -1653,12 +1654,24 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         }
                     }
                         break;
-                    // case MW02_231:
-                    // if (((MW02) device).getStopMoveShutter1Status() != null) {
-                    // updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_SHUTTER1CONTROL),
-                    // ((MW02) device).getStopMoveShutter1Status());
-                    // }
-                    // break;
+                    case MW02: {
+                        // StopMoveType (unlike UpDownType) isn't a valid channel State, only a Command, so a
+                        // Stop event (see MW02#handleCurtainSwitchStatus) has no state of its own to push here.
+                        var upDownShutter1Status = ((MW02) device).getUpDownShutter1Status();
+                        if (upDownShutter1Status != null) {
+                            updateState(
+                                    new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_SHUTTER1CONTROL),
+                                    upDownShutter1Status);
+                        }
+                    } {
+                        var upDownShutter2Status = ((MW02) device).getUpDownShutter2Status();
+                        if (upDownShutter2Status != null) {
+                            updateState(
+                                    new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_SHUTTER2CONTROL),
+                                    upDownShutter2Status);
+                        }
+                    }
+                        break;
                     case MPT04_48: {
                         var button1Value = ((MPT0448) device).getbutton1Value();
                         if (button1Value != null) {
