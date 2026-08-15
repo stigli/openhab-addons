@@ -192,6 +192,7 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                 case "hdl:MDT0601":
                 case "hdl:MDT04015":
                 case "hdl:MR16xx":
+                case "hdl:MR12xx":
                     p.setCommandType(CommandType.Read_Status_of_Channels);
                     logger.debug("For Thing Type: {} with device id: {} with Refresh Interval: {} command is sent.",
                             getThing().getThingTypeUID().getAsString(), deviceID, refreshRate);
