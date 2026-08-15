@@ -14,6 +14,8 @@ package org.openhab.binding.hdl.internal.handler;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -42,6 +44,7 @@ import org.openhab.binding.hdl.internal.device.MS12;
 import org.openhab.binding.hdl.internal.device.MS24;
 import org.openhab.binding.hdl.internal.device.MW02;
 import org.openhab.core.config.core.Configuration;
+import org.openhab.core.library.types.DateTimeType;
 import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.PercentType;
@@ -1311,6 +1314,12 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         break;
                     case ML01: {
                         ML01 ml = (ML01) device;
+                        var dateSetpoint = ml.getDateSetpoint();
+                        if (dateSetpoint != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_TIME),
+                                    new DateTimeType(
+                                            ZonedDateTime.ofInstant(dateSetpoint.toInstant(), ZoneId.systemDefault())));
+                        }
                         org.openhab.core.library.types.OnOffType u200 = ml.getUVSwitch200();
                         if (u200 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH200),

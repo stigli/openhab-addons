@@ -83,13 +83,22 @@ public class ML01 extends Device {
     public void treatHDLPacketForDevice(HdlPacket p) {
         switch (p.commandType) {
             case Broadcast_System_Date_and_Time_Every_Minute:
-                Date aDate = new Date(p.data[0] + 2100, p.data[1], p.data[2], p.data[3], p.data[4], p.data[5]);
+                // p.data[0] is years since 2000; Date's deprecated (year, ...) constructor adds 1900
+                // internally, so the year argument must be (years since 2000) + 100, not +2100.
+                Date aDate = new Date(p.data[0] + 100, p.data[1], p.data[2], p.data[3], p.data[4], p.data[5]);
                 setDateSetpoint(aDate);
                 setUpdated(true);
                 // LOGGER.debug("Time is: {}", aDate);
                 break;
             case Response_UV_Switch_Control:
                 switch (p.data[0]) {
+                    case (byte) 200:
+                        if (p.data[1] == 1) {
+                            setUVSwitch200(OnOffType.ON);
+                        } else {
+                            setUVSwitch200(OnOffType.OFF);
+                        }
+                        break;
                     case (byte) 201:
                         if (p.data[1] == 1) {
                             setUVSwitch201(OnOffType.ON);
