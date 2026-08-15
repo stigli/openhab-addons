@@ -640,10 +640,6 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
         lastActiveDevices.clear();
     }
 
-    public void addTolastActiveDeviceList(String HdlHandlerSerialnr) {
-        lastActiveDevices.add(HdlHandlerSerialnr);
-    }
-
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
     }

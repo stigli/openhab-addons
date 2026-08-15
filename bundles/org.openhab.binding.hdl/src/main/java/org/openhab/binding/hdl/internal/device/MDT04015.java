@@ -34,6 +34,14 @@ public class MDT04015 extends Device {
     private @Nullable PercentType dimChannel3 = null;
     private @Nullable PercentType dimChannel4 = null;
 
+    /**
+     * Set when a scene changed this device's channels (see {@link #treatHDLPacketForDevice}) - confirmed on
+     * real hardware that {@code Response_Scene_Control}'s payload only reports which scene fired
+     * ({@code [area, scene, ...]}), not the resulting channel percentages, so the handler needs to request a
+     * fresh status read instead. Consumed (and cleared) via {@link #consumeControlEvent()}.
+     */
+    private boolean controlEventPending;
+
     public MDT04015(DeviceConfiguration c) {
         super(c);
     }
@@ -77,12 +85,42 @@ public class MDT04015 extends Device {
                 }
                 break;
             case Broadcast_Status_of_Scene:
-                LOGGER.debug("For type: {}, CommandType: {} Needs a lot of work.", p.sourcedeviceType, p.commandType);
+                // Header confirmed via real hardware capture (2026-08-15, on a sibling MR12xx device -
+                // see MR12xx.java for the derivation): data[0] = N, the number of area slots this
+                // device's channels are divided into (varies per device, NOT a fixed value), data[1..N]
+                // = per-area active scene number (not needed here), data[N+1] = channel count for this
+                // device. Percentage-per-channel encoding of the values themselves (matching
+                // Response_Read_Status_of_Channels above) is NOT yet confirmed against a real dimmer
+                // device's scene broadcast specifically.
+                int areaCount = p.data[0];
+                int valuesStart = areaCount + 2;
+                setDimChannel1(PercentType.valueOf(Integer.toString(p.data[valuesStart])));
+                setDimChannel2(PercentType.valueOf(Integer.toString(p.data[valuesStart + 1])));
+                setDimChannel3(PercentType.valueOf(Integer.toString(p.data[valuesStart + 2])));
+                setDimChannel4(PercentType.valueOf(Integer.toString(p.data[valuesStart + 3])));
+                break;
+            case Response_Scene_Control:
+                // Confirmed on real hardware (2026-08-15, on a sibling MDT0601 device - see MDT0601.java for
+                // the derivation): data[1] is the scene number that just became active in this device's
+                // area, not a channel percentage, so just flag it for the handler to request a fresh status
+                // read.
+                controlEventPending = true;
+                setUpdated(true);
                 break;
             default:
                 LOGGER.debug("For type: {}, Unhandled CommandType: {}.", p.sourcedeviceType, p.commandType);
                 break;
         }
+    }
+
+    /**
+     * Returns whether a scene changed this device's channels (see {@link #treatHDLPacketForDevice}) since
+     * the last call, and clears the flag.
+     */
+    public boolean consumeControlEvent() {
+        boolean pending = controlEventPending;
+        controlEventPending = false;
+        return pending;
     }
 
     public void setDimChannel1(@Nullable PercentType DimChannel1) {

@@ -279,14 +279,6 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
             if (handler instanceof HdlBridgeHandler) {
                 this.bridgeHandler = (HdlBridgeHandler) handler;
                 this.bridgeHandler.registerDeviceStatusListener(this);
-                // Pre-seed this already-configured device as "known" so its first packet after a bridge
-                // restart doesn't spuriously trigger onDeviceAdded()/an "Adding new Hdl!" discovery log -
-                // lastActiveDevices gets cleared on every handler dispose (see unregisterDeviceStatusListener),
-                // and nothing else was ever repopulating it for devices that already have a configured Thing.
-                String serial = hdldeviceSerial;
-                if (serial != null) {
-                    this.bridgeHandler.addTolastActiveDeviceList(serial);
-                }
                 updateStatus(ThingStatus.ONLINE);
             } else {
                 logger.debug("No available bridge handler found for {} bridge {} .", hdldeviceSerial, bridge.getUID());
@@ -1022,6 +1014,11 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL6),
                                     md6);
                         }
+                        // A scene just changed this device's channels but didn't report the resulting
+                        // percentages (see MDT0601#treatHDLPacketForDevice) - request a fresh status read.
+                        if (((MDT0601) device).consumeControlEvent()) {
+                            refreshRunnable.run();
+                        }
                         break;
                     case MDT04015_433:
                         PercentType m1 = ((MDT04015) device).getDimChannel1State();
@@ -1043,6 +1040,11 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         if (m4 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL4),
                                     m4);
+                        }
+                        // A scene just changed this device's channels but didn't report the resulting
+                        // percentages (see MDT04015#treatHDLPacketForDevice) - request a fresh status read.
+                        if (((MDT04015) device).consumeControlEvent()) {
+                            refreshRunnable.run();
                         }
                         break;
                     case MRDA06:
@@ -1075,6 +1077,11 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         if (mr6 != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_DIMCHANNEL6),
                                     mr6);
+                        }
+                        // A scene just changed this device's channels but didn't report the resulting
+                        // percentages (see MRDA06#treatHDLPacketForDevice) - request a fresh status read.
+                        if (((MRDA06) device).consumeControlEvent()) {
+                            refreshRunnable.run();
                         }
                         break;
                     case MR1610_433: {

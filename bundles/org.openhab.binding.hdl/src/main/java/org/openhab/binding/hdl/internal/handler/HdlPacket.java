@@ -85,6 +85,22 @@ public class HdlPacket {
         return ((h << 8) & 0xff00) | (l & 0xff);
     }
 
+    /**
+     * Renders a byte array as a space-separated, index-labelled hex dump (unsigned byte values), e.g.
+     * "[0]=04 [1]=FE [2]=FE" - used for debug logging so real captured traffic can be inspected byte by
+     * byte without guessing at signed/unsigned interpretation.
+     */
+    protected static String toHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < bytes.length; i++) {
+            if (i > 0) {
+                sb.append(' ');
+            }
+            sb.append('[').append(i).append("]=").append(String.format("%02X", ubyte(bytes[i])));
+        }
+        return sb.toString();
+    }
+
     protected static int computeCRC16(byte[] data, int offset, int count) {
         int crc = 0;
         int dat;
@@ -143,9 +159,9 @@ public class HdlPacket {
 
         logger.debug(
                 "From Source: Subnet: {}, DeviceID: {} For DeviceNr: {} found DeviceType: {}, command: {}, commandType: {}"
-                        + " To target: Subnet: {}, DeviceID: {}.",
+                        + " To target: Subnet: {}, DeviceID: {}. Data: {}",
                 packet.sourceSubnetID, packet.sourceDeviceID, packet.sourceDevice, packet.sourcedeviceType,
-                packet.command, packet.commandType, packet.targetSubnetID, packet.targetDeviceID);
+                packet.command, packet.commandType, packet.targetSubnetID, packet.targetDeviceID, toHex(packet.data));
 
         return packet;
     }

@@ -68,8 +68,7 @@ public class HdlDeviceDiscoveryService extends AbstractDiscoveryService implemen
 
     @Override
     public void onDeviceAdded(Bridge bridge, Device device) {
-        // should be trace not warn
-        logger.warn("Adding new Hdl! {} with id '{}' to smarthome inbox", device.getType(), device.getdeviceID());
+        logger.debug("Adding new Hdl! {} with id '{}' to smarthome inbox", device.getType(), device.getdeviceID());
         ThingUID thingUID = null;
         switch (device.getType()) {
             case MDT0601_233:

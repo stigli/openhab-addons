@@ -55,7 +55,18 @@ public class MR04xx extends Device {
                 }
                 break;
             case Broadcast_Status_of_Scene:
-                LOGGER.debug("For type: {}, CommandType: {} Needs a lot of work.", p.sourcedeviceType, p.commandType);
+                // Confirmed via real hardware capture (2026-08-15, on a sibling MR12xx device - see
+                // MR12xx.java for the derivation): data[0] = N, the number of area slots this device's
+                // channels are divided into (varies per device based on its own HDL Setup Tool config,
+                // NOT a fixed value), data[1..N] = per-area active scene number (not needed here),
+                // data[N+1] = channel count for this device, data[N+2] = per-channel bitmask, same
+                // pattern as Response_Single_Channel_Control above (single byte, <= 8 channels).
+                int areaCount = p.data[0];
+                int bitmaskStart = areaCount + 2;
+                for (int ch = 1; ch <= CHANNEL_COUNT; ch++) {
+                    int bit = 1 << (ch - 1);
+                    setRelayChannel(ch, (p.data[bitmaskStart] & bit) != 0 ? OnOffType.ON : OnOffType.OFF);
+                }
                 break;
             default:
                 LOGGER.debug("For type: {}, Unhandled CommandType: {}.", p.sourcedeviceType, p.commandType);

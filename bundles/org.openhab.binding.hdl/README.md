@@ -59,6 +59,18 @@ at DEBUG level, including the sending device's address - useful for tracking dow
 unexpectedly driving a curtain directly (bypassing openHAB). Enable debug logging for
 `org.openhab.binding.hdl` and look for log lines starting with `Curtain command:`.
 
+## HDL Scenes
+
+If a scene configured in the HDL Setup Tool changes a dimmer/relay's channels (whether triggered from a
+physical panel, another scene, or anywhere else on the bus), the affected `DimChannel`/`RelayCh` channels on
+`MDT0601`, `MDT04015`, `MRDA06`, `MR16xx`, `MR12xx`, `MR08xx`, and `MR04xx` update automatically to reflect
+the new state - no separate "Scene" Thing or configuration needed. This binding does not (yet) support
+triggering a scene from openHAB itself, only reflecting scenes triggered elsewhere.
+
+This is based on the HDL Buspro `Broadcast_Status_of_Scene` message; the exact byte layout was reconstructed
+from third-party protocol documentation rather than confirmed HDL hardware traffic, so double-check it
+reflects reality correctly on your own setup after a scene runs.
+
 ## Binding Configuration
 
 No binding wide settings.
