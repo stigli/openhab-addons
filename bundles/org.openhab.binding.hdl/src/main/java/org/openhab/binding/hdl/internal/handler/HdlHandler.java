@@ -279,6 +279,14 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
             if (handler instanceof HdlBridgeHandler) {
                 this.bridgeHandler = (HdlBridgeHandler) handler;
                 this.bridgeHandler.registerDeviceStatusListener(this);
+                // Pre-seed this already-configured device as "known" so its first packet after a bridge
+                // restart doesn't spuriously trigger onDeviceAdded()/an "Adding new Hdl!" discovery log -
+                // lastActiveDevices gets cleared on every handler dispose (see unregisterDeviceStatusListener),
+                // and nothing else was ever repopulating it for devices that already have a configured Thing.
+                String serial = hdldeviceSerial;
+                if (serial != null) {
+                    this.bridgeHandler.addTolastActiveDeviceList(serial);
+                }
                 updateStatus(ThingStatus.ONLINE);
             } else {
                 logger.debug("No available bridge handler found for {} bridge {} .", hdldeviceSerial, bridge.getUID());

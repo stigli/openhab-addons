@@ -61,6 +61,11 @@ public class MW02 extends Device {
 
     private void handleCurtainSwitchStatus(HdlPacket p) {
         // data[0] holds the 1-based curtain channel (17 = percentage, not yet supported).
+        // TODO: confirmed on real hardware (2026-08-15) that pushing raw UpDownType state makes the
+        // Rollershutter item's percentage jump straight to 0%/100% the instant a move starts, instead of
+        // tracking the curtain's actual physical travel over time. Fixing this needs a simulated/interpolated
+        // PercentType position (e.g. a scheduled job that ramps 0<->100 over a configured travel-time while
+        // MOVE is in progress, snapping to whatever it's at on STOP) - deferred, needs its own design pass.
         int channel = p.data[0];
         if (channel < 1 || channel > CHANNEL_COUNT) {
             return;
