@@ -280,6 +280,40 @@ public class MPL848FH extends Device {
                         LOGGER.debug("For type: {}, Unhandled UV Switch Number: {}.", p.sourcedeviceType, p.data[0]);
                         break;
                 }
+                break;
+            case Broadcast_Status_of_Status_of_UV_Switches:
+                // Confirmed via the caligo-mentis/smart-bus reference implementation (same source already
+                // confirmed twice on real hardware this session, for the relay Scene bitmask and the
+                // Sequence broadcast) - not yet independently confirmed against real MPL8_48_FH traffic
+                // specifically: data[0] = N, the number of UV switches reported (up to 6 here), data[1..N]
+                // = one status byte per switch (0 = off, non-zero = on), in order for switches 1..N.
+                int uvSwitchCount = p.data[0] & 0xff;
+                if (uvSwitchCount >= 1) {
+                    setUVSwitch1(p.data[1] != 0 ? OnOffType.ON : OnOffType.OFF);
+                }
+                if (uvSwitchCount >= 2) {
+                    setUVSwitch2(p.data[2] != 0 ? OnOffType.ON : OnOffType.OFF);
+                }
+                if (uvSwitchCount >= 3) {
+                    setUVSwitch3(p.data[3] != 0 ? OnOffType.ON : OnOffType.OFF);
+                }
+                if (uvSwitchCount >= 4) {
+                    setUVSwitch4(p.data[4] != 0 ? OnOffType.ON : OnOffType.OFF);
+                }
+                if (uvSwitchCount >= 5) {
+                    setUVSwitch5(p.data[5] != 0 ? OnOffType.ON : OnOffType.OFF);
+                }
+                if (uvSwitchCount >= 6) {
+                    setUVSwitch6(p.data[6] != 0 ? OnOffType.ON : OnOffType.OFF);
+                }
+                break;
+            case Scene_Control:
+            case Single_Channel_Control:
+                // Known and intentionally ignored: this panel's keys are programmed (via the HDL Buspro
+                // Setup Tool) to directly drive another device instead of reporting their own state - same
+                // situation already confirmed on real hardware for MPT0448's touch buttons (see
+                // MPT0448#treatHDLPacketForDevice). Nothing in this device's own state to update from these.
+                break;
             default:
                 LOGGER.debug("For type: {}, Unhandled CommandType: {}.", p.sourcedeviceType, p.commandType);
                 break;
