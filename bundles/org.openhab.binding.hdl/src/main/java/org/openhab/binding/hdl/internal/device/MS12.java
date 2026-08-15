@@ -15,6 +15,7 @@ package org.openhab.binding.hdl.internal.device;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
+import java.util.Objects;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -36,8 +37,8 @@ public class MS12 extends Device {
 
     private static final int CHANNEL_COUNT = 2;
 
-    private double temperatureValue;
-    private double brightnessValue;
+    private @Nullable Double temperatureValue;
+    private @Nullable Double brightnessValue;
     private @Nullable StopMoveType motionSensorValue = null;
     private @Nullable StopMoveType sonicValue = null;
 
@@ -209,19 +210,19 @@ public class MS12 extends Device {
      * @param value the Brightness value as provided
      */
     public void setBrightnessValue(double value) {
-        if (this.brightnessValue != value) {
+        if (!Objects.equals(this.brightnessValue, value)) {
             setUpdated(true);
         }
         this.brightnessValue = value;
     }
 
     /**
-     * the Brightness Value as <code>DecimalType</code>
+     * the Brightness Value as <code>DecimalType</code>, or null if not yet received.
      */
 
-    public DecimalType getBrightnessValue() {
-        BigDecimal brightnessValue = BigDecimal.valueOf(this.brightnessValue).setScale(1, RoundingMode.HALF_UP);
-        return new DecimalType(brightnessValue);
+    public @Nullable DecimalType getBrightnessValue() {
+        Double value = this.brightnessValue;
+        return value != null ? new DecimalType(BigDecimal.valueOf(value).setScale(1, RoundingMode.HALF_UP)) : null;
     }
 
     /**
@@ -230,17 +231,17 @@ public class MS12 extends Device {
      * @param value the actual temperature value as provided
      */
     public void setTemperatureValue(double value) {
-        if (this.temperatureValue != value) {
+        if (!Objects.equals(this.temperatureValue, value)) {
             setUpdated(true);
         }
         this.temperatureValue = value;
     }
 
     /**
-     * the Temperature as <code>DecimalType</code>
+     * the Temperature as <code>DecimalType</code>, or null if not yet received.
      */
-    public DecimalType getTemperatureValue() {
-        BigDecimal temperatureValue = BigDecimal.valueOf(this.temperatureValue);// .setScale(1, RoundingMode.HALF_UP);
-        return new DecimalType(temperatureValue);
+    public @Nullable DecimalType getTemperatureValue() {
+        Double value = this.temperatureValue;
+        return value != null ? new DecimalType(BigDecimal.valueOf(value)) : null;
     }
 }
