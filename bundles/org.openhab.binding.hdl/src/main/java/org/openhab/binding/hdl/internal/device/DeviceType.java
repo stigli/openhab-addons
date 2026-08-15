@@ -1413,6 +1413,12 @@ public enum DeviceType {
                 return MDLED0401_432;
             case 624:
                 return MHD02R18;
+            // Confirmed via real hardware capture (2026-08-15): this device family reports itself with
+            // this product code on the bus, which wasn't in this list - its Response_Read_Status_of_Channels
+            // was being classified as DeviceType.Invalid and silently dropped before ever reaching the
+            // MRDA06 device class.
+            case 662:
+                return MRDA0610_432;
             case 700:
                 return MW02;
             case 701:
