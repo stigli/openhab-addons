@@ -41,10 +41,13 @@ import org.openhab.binding.hdl.internal.device.MS08;
 import org.openhab.binding.hdl.internal.device.MS12;
 import org.openhab.binding.hdl.internal.device.MS24;
 import org.openhab.core.config.core.Configuration;
+import org.openhab.core.library.types.DecimalType;
 import org.openhab.core.library.types.OnOffType;
 import org.openhab.core.library.types.PercentType;
+import org.openhab.core.library.types.QuantityType;
 import org.openhab.core.library.types.StopMoveType;
 import org.openhab.core.library.types.StringType;
+import org.openhab.core.library.unit.SIUnits;
 import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
@@ -392,6 +395,49 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
         }
     }
 
+    /**
+     * Maps a FHMode command/state string ("Normal"/"Day"/"Night"/"Away"/"Timer", case-insensitive) to the
+     * wire value used by {@link CommandType#Control_Floor_Heating_Status_DLP}.
+     */
+    private static int floorHeatingModeNameToInt(String modeName) {
+        switch (modeName.toLowerCase()) {
+            case "normal":
+                return 1;
+            case "day":
+                return 2;
+            case "night":
+                return 3;
+            case "away":
+                return 4;
+            case "timer":
+                return 5;
+            default:
+                return 0;
+        }
+    }
+
+    /**
+     * Builds a {@link CommandType#Control_Floor_Heating_Status_DLP} packet, reusing the device's cached
+     * temperature-unit and on/off status (only the mode and the four setpoints are ever commanded from
+     * openHAB). Returns null if the device hasn't reported real status yet, since sending this command
+     * with a default/unknown temperature unit or on/off status could write bad state to real hardware.
+     */
+    private @Nullable HdlPacket buildFloorHeatingControlDlpPacket(MPL848FH device, int modenr, int normalTemp,
+            int dayTemp, int nightTemp, int awayTemp) {
+        String tempType = device.getFloorHeatingTemperaturType();
+        OnOffType status = device.getFloorHeatingStatus();
+        if (tempType == null || status == null) {
+            return null;
+        }
+        int tempTypenr = "C".equals(tempType) ? 0 : 1;
+        int statusNr = status == OnOffType.OFF ? 0 : 1;
+        HdlPacket packet = new HdlPacket();
+        packet.setData(new byte[] { (byte) tempTypenr, (byte) statusNr, (byte) modenr, (byte) normalTemp,
+                (byte) dayTemp, (byte) nightTemp, (byte) awayTemp });
+        packet.setCommandType(CommandType.Control_Floor_Heating_Status_DLP);
+        return packet;
+    }
+
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
         HdlBridgeHandler hdlBridge = getHdlBridgeHandler();
@@ -416,99 +462,72 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
         } else {
             switch (channelUID.getId()) {
                 case HdlBindingConstants.CHANNEL_FHMODE:
-                    int modenr;
-                    // What Command to send:
-                    switch (command.toString().toLowerCase()) {
-                        case "normal":
-                            modenr = 1;
-                            break;
-                        case "day":
-                            modenr = 2;
-                            break;
-                        case "night":
-                            modenr = 3;
-                            break;
-                        case "away":
-                            modenr = 4;
-                            break;
-                        case "timer":
-                            modenr = 5;
-                            break;
-                        default:
-                            modenr = 0;
-                    }
-
-                    if (getThing().getThingTypeUID().getAsString().equals("hdl:MPL8_48_FH")) {
-                        sendCommand = true;
-
-                        // Get status from existing values
-                        int tempTypenr;
-                        int statusNr;
-
-                        if (((MPL848FH) chDevice).getFloorHeatingTemperaturType() != null) {
-                            String tempType = ((MPL848FH) chDevice).getFloorHeatingTemperaturType();
-
-                            if ("C".equals(tempType)) {
-                                tempTypenr = 0;
-                            } else {
-                                tempTypenr = 1;
+                    if (getThing().getThingTypeUID().getAsString().equals("hdl:MPL8_48_FH")
+                            && chDevice instanceof MPL848FH mplDevice) {
+                        var normalTemp = mplDevice.getFloorHeatingSetNormalTemperatur();
+                        var dayTemp = mplDevice.getFloorHeatingSetDayTemperatur();
+                        var nightTemp = mplDevice.getFloorHeatingSetNightTemperatur();
+                        var awayTemp = mplDevice.getFloorHeatingSetAwayTemperatur();
+                        if (normalTemp != null && dayTemp != null && nightTemp != null && awayTemp != null) {
+                            HdlPacket packet = buildFloorHeatingControlDlpPacket(mplDevice,
+                                    floorHeatingModeNameToInt(command.toString()), normalTemp.intValue(),
+                                    dayTemp.intValue(), nightTemp.intValue(), awayTemp.intValue());
+                            if (packet != null) {
+                                p = packet;
+                                sendCommand = true;
                             }
-                        } else {
-                            tempTypenr = 0;
-                            sendCommand = false;
                         }
-
-                        if (((MPL848FH) chDevice).getFloorHeatingStatus() != null) {
-                            OnOffType fhStatus = ((MPL848FH) chDevice).getFloorHeatingStatus();
-
-                            if (fhStatus == OnOffType.OFF) {
-                                statusNr = 0;
-                            } else {
-                                statusNr = 1;
-                            }
-
-                        } else {
-                            sendCommand = false;
-                            statusNr = 0;
-                        }
-
-                        int setNormalTemp;
-                        if (((MPL848FH) chDevice).getFloorHeatingSetNormalTemperatur() != null) {
-                            setNormalTemp = ((MPL848FH) chDevice).getFloorHeatingSetNormalTemperatur().intValue();
-                        } else {
-                            sendCommand = false;
-                            setNormalTemp = 0;
-                        }
-
-                        int setDayTemp;
-                        if (((MPL848FH) chDevice).getFloorHeatingSetDayTemperatur() != null) {
-                            setDayTemp = ((MPL848FH) chDevice).getFloorHeatingSetDayTemperatur().intValue();
-                        } else {
-                            sendCommand = false;
-                            setDayTemp = 0;
-                        }
-
-                        int setNightTemp;
-                        if (((MPL848FH) chDevice).getFloorHeatingSetNightTemperatur() != null) {
-                            setNightTemp = ((MPL848FH) chDevice).getFloorHeatingSetNightTemperatur().intValue();
-                        } else {
-                            sendCommand = false;
-                            setNightTemp = 0;
-                        }
-
-                        int setAwayTemp;
-                        if (((MPL848FH) chDevice).getFloorHeatingSetAwayTemperatur() != null) {
-                            setAwayTemp = ((MPL848FH) chDevice).getFloorHeatingSetAwayTemperatur().intValue();
-                        } else {
-                            sendCommand = false;
-                            setAwayTemp = 0;
-                        }
-                        p.setData(new byte[] { (byte) tempTypenr, (byte) statusNr, (byte) modenr, (byte) setNormalTemp,
-                                (byte) setDayTemp, (byte) setNightTemp, (byte) setAwayTemp });
-
-                        p.setCommandType(CommandType.Control_Floor_Heating_Status_DLP);
                     }
-
+                    break;
+                case HdlBindingConstants.CHANNEL_FHNORMALTEMPSET:
+                case HdlBindingConstants.CHANNEL_FHDAYTEMPSET:
+                case HdlBindingConstants.CHANNEL_FHNIGHTTEMPSET:
+                case HdlBindingConstants.CHANNEL_FHAWAYTEMPSET:
+                    Integer newSetpoint = null;
+                    if (command instanceof QuantityType<?> quantityCommand) {
+                        QuantityType<?> celsius = quantityCommand.toUnit(SIUnits.CELSIUS);
+                        if (celsius != null) {
+                            newSetpoint = celsius.intValue();
+                        }
+                    } else if (command instanceof DecimalType decimalCommand) {
+                        newSetpoint = decimalCommand.intValue();
+                    }
+                    if (getThing().getThingTypeUID().getAsString().equals("hdl:MPL8_48_FH")
+                            && chDevice instanceof MPL848FH mplDevice && newSetpoint != null) {
+                        var mode = mplDevice.getFloorHeatingMode();
+                        var normalTemp = mplDevice.getFloorHeatingSetNormalTemperatur();
+                        var dayTemp = mplDevice.getFloorHeatingSetDayTemperatur();
+                        var nightTemp = mplDevice.getFloorHeatingSetNightTemperatur();
+                        var awayTemp = mplDevice.getFloorHeatingSetAwayTemperatur();
+                        if (mode != null && normalTemp != null && dayTemp != null && nightTemp != null
+                                && awayTemp != null) {
+                            int normalTempNr = normalTemp.intValue();
+                            int dayTempNr = dayTemp.intValue();
+                            int nightTempNr = nightTemp.intValue();
+                            int awayTempNr = awayTemp.intValue();
+                            switch (channelUID.getId()) {
+                                case HdlBindingConstants.CHANNEL_FHNORMALTEMPSET:
+                                    normalTempNr = newSetpoint.intValue();
+                                    break;
+                                case HdlBindingConstants.CHANNEL_FHDAYTEMPSET:
+                                    dayTempNr = newSetpoint.intValue();
+                                    break;
+                                case HdlBindingConstants.CHANNEL_FHNIGHTTEMPSET:
+                                    nightTempNr = newSetpoint.intValue();
+                                    break;
+                                case HdlBindingConstants.CHANNEL_FHAWAYTEMPSET:
+                                    awayTempNr = newSetpoint.intValue();
+                                    break;
+                            }
+                            HdlPacket packet = buildFloorHeatingControlDlpPacket(mplDevice,
+                                    floorHeatingModeNameToInt(mode.toString()), normalTempNr, dayTempNr, nightTempNr,
+                                    awayTempNr);
+                            if (packet != null) {
+                                p = packet;
+                                sendCommand = true;
+                            }
+                        }
+                    }
                     break;
                 case HdlBindingConstants.CHANNEL_SHUTTER1CONTROL:
                 case HdlBindingConstants.CHANNEL_SHUTTER2CONTROL:
@@ -757,10 +776,11 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                                     temperatureValue);
                         }
                     }
-                        if (((MPL848FH) device).getFloorHeatingSetNormalTemperatur() != null) {
+                        var floorHeatingSetNormalTemperatur = ((MPL848FH) device).getFloorHeatingSetNormalTemperatur();
+                        if (floorHeatingSetNormalTemperatur != null) {
                             updateState(
                                     new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHNORMALTEMPSET),
-                                    ((MPL848FH) device).getFloorHeatingSetNormalTemperatur());
+                                    floorHeatingSetNormalTemperatur);
                         } {
                         var floorHeatingSetAwayTemperatur = ((MPL848FH) device).getFloorHeatingSetAwayTemperatur();
                         if (floorHeatingSetAwayTemperatur != null) {
@@ -780,30 +800,47 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                                     floorHeatingSetNightTemperatur);
                         }
                     }
-                        if (((MPL848FH) device).getFloorHeatingCurrentTemperatur() != null) {
+                        var floorHeatingCurrentTemperatur = ((MPL848FH) device).getFloorHeatingCurrentTemperatur();
+                        if (floorHeatingCurrentTemperatur != null) {
                             updateState(
                                     new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHCURRENTTEMPSET),
-                                    ((MPL848FH) device).getFloorHeatingCurrentTemperatur());
+                                    floorHeatingCurrentTemperatur);
                         }
-                        if (((MPL848FH) device).getFloorHeatingMode() != null) {
+                        var floorHeatingMode = ((MPL848FH) device).getFloorHeatingMode();
+                        if (floorHeatingMode != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHMODE),
-                                    new StringType(((MPL848FH) device).getFloorHeatingMode().toString()));
+                                    new StringType(floorHeatingMode.toString()));
                         } {
+                        var floorHeatingTemperaturType = ((MPL848FH) device).getFloorHeatingTemperaturType();
+                        if (floorHeatingTemperaturType != null) {
+                            updateState(
+                                    new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHTEMPERATURTYPE),
+                                    new StringType(floorHeatingTemperaturType));
+                        }
+                    } {
+                        var floorHeatingTimer = ((MPL848FH) device).getFloorHeatingTimer();
+                        if (floorHeatingTimer != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHTIMER),
+                                    new StringType(floorHeatingTimer));
+                        }
+                    } {
                         var aCAutoTemperatur = ((MPL848FH) device).getACAutoTemperatur();
                         if (aCAutoTemperatur != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_ACAUTOTEMPSET),
                                     aCAutoTemperatur);
                         }
                     }
-                        if (((MPL848FH) device).getACCoolingTemperatur() != null) {
+                        var aCCoolingTemperatur = ((MPL848FH) device).getACCoolingTemperatur();
+                        if (aCCoolingTemperatur != null) {
                             updateState(
                                     new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_ACCOOLINGTEMPSET),
-                                    ((MPL848FH) device).getACCoolingTemperatur());
+                                    aCCoolingTemperatur);
                         }
-                        if (((MPL848FH) device).getACCurrentTemperatur() != null) {
+                        var aCCurrentTemperatur = ((MPL848FH) device).getACCurrentTemperatur();
+                        if (aCCurrentTemperatur != null) {
                             updateState(
                                     new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_ACCURRENTTEMPSET),
-                                    ((MPL848FH) device).getACCurrentTemperatur());
+                                    aCCurrentTemperatur);
                         } {
                         var aCDryTemperatur = ((MPL848FH) device).getACDryTemperatur();
                         if (aCDryTemperatur != null) {

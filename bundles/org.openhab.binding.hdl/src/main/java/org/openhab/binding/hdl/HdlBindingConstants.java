@@ -78,11 +78,15 @@ public class HdlBindingConstants {
     public static final String CHANNEL_BUTTON3 = "Button3";
     public static final String CHANNEL_BUTTON4 = "Button4";
     public static final String CHANNEL_FHNORMALTEMPSET = "FHNormalTempSet";
-    public static final String CHANNEL_FHDAYTEMPSET = "FHDayTempSet";
+    // Matches the "FHTempSet" channel id actually declared in thing-types.xml for both MPL8_48_FH and MFH06
+    // (the Java constant name keeps "Day" for readability at call sites; the string value must not).
+    public static final String CHANNEL_FHDAYTEMPSET = "FHTempSet";
     public static final String CHANNEL_FHNIGHTTEMPSET = "FHNightTempSet";
     public static final String CHANNEL_FHAWAYTEMPSET = "FHAwayTempSet";
     public static final String CHANNEL_FHCURRENTTEMPSET = "FHCurrentTempSet";
     public static final String CHANNEL_FHMODE = "FHMode";
+    public static final String CHANNEL_FHTEMPERATURTYPE = "FHTemperaturType";
+    public static final String CHANNEL_FHTIMER = "FHTimer";
     public static final String CHANNEL_ACMODE = "ACMode";
     public static final String CHANNEL_ACFANSPEED = "ACFanSpeed";
     public static final String CHANNEL_ACCOOLINGTEMPSET = "ACCoolingTempSet";

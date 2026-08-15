@@ -88,12 +88,14 @@ DryContact(1-24)Status  means that that it can be 24 Dry Contact channels. What 
 | temperature                   | Number           | This channel indicates the measured temperature (in °C).       | MPL8_48_FH, MS08, MS12                        |
 | time                          | DateTime         | Current time.                                                 | ML01                                          |
 | Shutter(1-2)Control           | Rollershutter    | Device control (UP, DOWN, MOVE/STOP, closure 0-100%).           | MW02                                          |
-| FHMode                        | String           | Floor heating mode (Normal, Day, Night, Away, Timer).           | MPL8_48_FH, MFH06                             |
-| FHNormalTempSet / FHTempSet / FHNightTempSet / FHAwayTempSet | Number:Temperature | Floor heating setpoint temperatures.       | MPL8_48_FH, MFH06                             |
+| FHMode                        | String           | Floor heating mode (Normal, Day, Night, Away, Timer). Writable on MPL8_48_FH.         | MPL8_48_FH, MFH06                             |
+| FHNormalTempSet / FHTempSet / FHNightTempSet / FHAwayTempSet | Number:Temperature | Floor heating setpoint temperatures. Individually writable on MPL8_48_FH.       | MPL8_48_FH, MFH06                             |
 | FHCurrentTempSet              | Number:Temperature | Current floor heating temperature.                            | MPL8_48_FH, MFH06                             |
-| ACMode                        | String           | AC mode (COOLING, HEATING, FAN, AUTO, DEHUMIDFY).               | MPL8_48_FH                                    |
-| ACFanSpeed                    | String           | AC fan speed (AUTO, HIGH, MEDIUM, LOW).                         | MPL8_48_FH                                    |
-| ACCoolingTempSet / ACHeatTempSet / ACAutoTempSet / ACDryTempSet | Number:Temperature | AC setpoint temperatures.                | MPL8_48_FH                                    |
+| FHTemperaturType              | String           | Temperature unit (C or F) the panel is reporting setpoints in.  | MPL8_48_FH                                    |
+| FHTimer                       | String           | Active schedule period (Day or Night); only meaningful when FHMode is Timer.  | MPL8_48_FH                                    |
+| ACMode                        | String           | AC mode (Cooling, Heating, Fan, Auto, Dehumidfy). Read-only - view only, HDL doesn't expose a documented way to control AC via the DLP panel yet.  | MPL8_48_FH                                    |
+| ACFanSpeed                    | String           | AC fan speed (Auto, High, Medium, Low). Read-only, see ACMode.                  | MPL8_48_FH                                    |
+| ACCoolingTempSet / ACHeatTempSet / ACAutoTempSet / ACDryTempSet | Number:Temperature | AC setpoint temperatures. Read-only, see ACMode.        | MPL8_48_FH                                    |
 | ACCurrentTempSet              | Number:Temperature | Current AC temperature.                                        | MPL8_48_FH                                    |
 
 ## Full Example
