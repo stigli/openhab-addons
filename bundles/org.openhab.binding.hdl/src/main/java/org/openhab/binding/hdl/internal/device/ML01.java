@@ -85,7 +85,9 @@ public class ML01 extends Device {
             case Broadcast_System_Date_and_Time_Every_Minute:
                 // p.data[0] is years since 2000; Date's deprecated (year, ...) constructor adds 1900
                 // internally, so the year argument must be (years since 2000) + 100, not +2100.
-                Date aDate = new Date(p.data[0] + 100, p.data[1], p.data[2], p.data[3], p.data[4], p.data[5]);
+                // p.data[1] is the month as 1-12 (confirmed against real hardware: without the -1, the
+                // reported date was consistently one month ahead), but Date's constructor expects 0-11.
+                Date aDate = new Date(p.data[0] + 100, p.data[1] - 1, p.data[2], p.data[3], p.data[4], p.data[5]);
                 setDateSetpoint(aDate);
                 setUpdated(true);
                 // LOGGER.debug("Time is: {}", aDate);
