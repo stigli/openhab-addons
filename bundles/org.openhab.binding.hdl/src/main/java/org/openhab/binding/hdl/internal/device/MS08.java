@@ -14,6 +14,7 @@ package org.openhab.binding.hdl.internal.device;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Objects;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -34,8 +35,8 @@ public class MS08 extends Device {
 
     private static final int CHANNEL_COUNT = 2;
 
-    private double temperatureValue;
-    private double brightnessValue;
+    private @Nullable Double temperatureValue;
+    private @Nullable Double brightnessValue;
     private @Nullable StopMoveType motionSensorValue = null;
 
     /** Dry contact state per channel; 1-indexed to match the HDL protocol, index 0 is unused. **/
@@ -53,7 +54,6 @@ public class MS08 extends Device {
             case Broadcast_Sensors_Status_Automatically:
                 setTemperatureValue(p.data[0] - 20);
                 setBrightnessValue(ushort(p.data[2], p.data[1]));
-                setMotionSensorValue(p.data[3] == 1 ? StopMoveType.MOVE : StopMoveType.STOP);
                 setMotionSensorValue(p.data[4] == 1 ? StopMoveType.MOVE : StopMoveType.STOP);
                 setDryContactValue(1, p.data[5] == 1 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
                 setDryContactValue(2, p.data[6] == 1 ? OpenClosedType.CLOSED : OpenClosedType.OPEN);
@@ -140,18 +140,18 @@ public class MS08 extends Device {
      * @param value the Brightness value as provided
      */
     public void setBrightnessValue(double value) {
-        if (this.brightnessValue != value) {
+        if (!Objects.equals(this.brightnessValue, value)) {
             setUpdated(true);
         }
         this.brightnessValue = value;
     }
 
     /**
-     * the BrightnessHighValue as <code>DecimalType</code>
+     * the BrightnessHighValue as <code>DecimalType</code>, or null if not yet received.
      */
-    public DecimalType getBrightnessValue() {
-        BigDecimal brightnessValue = BigDecimal.valueOf(this.brightnessValue).setScale(1, RoundingMode.HALF_UP);
-        return new DecimalType(brightnessValue);
+    public @Nullable DecimalType getBrightnessValue() {
+        Double value = this.brightnessValue;
+        return value != null ? new DecimalType(BigDecimal.valueOf(value).setScale(1, RoundingMode.HALF_UP)) : null;
     }
 
     /**
@@ -160,21 +160,20 @@ public class MS08 extends Device {
      * @param value the actual temperature raw value as provided by the L message
      */
     public void setTemperatureValue(double value) {
-        if (this.temperatureValue != value) {
+        if (!Objects.equals(this.temperatureValue, value)) {
             setUpdated(true);
         }
         this.temperatureValue = value;
     }
 
     /**
-     * Returns the measured temperature of this sensor.
-     * 0�C is displayed if no actual is measured.
+     * Returns the measured temperature of this sensor, or null if not yet received.
      *
      * @return
      *         the actual temperature as <code>DecimalType</code>
      */
-    public DecimalType getTemperatureValue() {
-        BigDecimal temperatureValue = BigDecimal.valueOf(this.temperatureValue);// .setScale(1, RoundingMode.HALF_UP);
-        return new DecimalType(temperatureValue);
+    public @Nullable DecimalType getTemperatureValue() {
+        Double value = this.temperatureValue;
+        return value != null ? new DecimalType(BigDecimal.valueOf(value)) : null;
     }
 }
