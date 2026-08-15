@@ -335,6 +335,10 @@
 				<label>Device ID</label>
 				<description>What device id the Relay has.</description>
 			</parameter>
+			<parameter name="refreshInterval" type="integer" min="0" required="false">
+				<label>Refresh Rate</label>
+				<description>How often the things status should be requested.</description>
+			</parameter>
 		</config-description>
 	</thing-type>
 

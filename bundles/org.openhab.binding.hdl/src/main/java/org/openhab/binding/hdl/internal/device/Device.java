@@ -95,6 +95,7 @@ public abstract class Device {
             case MR1216_233:
             case MR1210_433:
                 return new MR12xx(c);
+            case MR0816_432:
             case MR0810_432:
                 return new MR08xx(c);
             case MR0416_C:
