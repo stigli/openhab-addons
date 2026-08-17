@@ -84,6 +84,8 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
     private int deviceID;
     private int refreshRate;
     private int channelNumber;
+    private int area;
+    private int scene;
     private @Nullable ScheduledFuture<?> refreshJob;
 
     public HdlHandler(Thing thing) {
@@ -107,6 +109,18 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                 channelNumber = ((BigDecimal) config.get(HdlBindingConstants.PROPERTY_CHANNELNUMBER)).intValueExact();
             } catch (Exception e) {
                 channelNumber = 0;
+            }
+
+            try {
+                area = ((BigDecimal) config.get(HdlBindingConstants.PROPERTY_AREA)).intValueExact();
+            } catch (Exception e) {
+                area = 0;
+            }
+
+            try {
+                scene = ((BigDecimal) config.get(HdlBindingConstants.PROPERTY_SCENE)).intValueExact();
+            } catch (Exception e) {
+                scene = 0;
             }
 
             if (channelNumber != 0) {
@@ -222,6 +236,17 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             getThing().getThingTypeUID().getAsString(), deviceID, refreshRate);
                     return;
                 }
+                case "hdl:MS24": {
+                    // Needs one request per dry-contact channel (1-24), so send them directly here instead
+                    // of relying on the single-packet send below.
+                    var bridge = bridgeHandler;
+                    if (bridge != null) {
+                        sendMs24StatusProbe(bridge);
+                    }
+                    logger.debug("For Thing Type: {} with device id: {} with Refresh Interval: {} command is sent.",
+                            getThing().getThingTypeUID().getAsString(), deviceID, refreshRate);
+                    return;
+                }
 
                 /*
                  * case "hdl:MRDA06":
@@ -330,6 +355,13 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                 logger.debug("For Thing Type: {} command: Refresh is sent.",
                         getThing().getThingTypeUID().getAsString());
                 break;
+            case "hdl:MS24":
+                // One request per dry-contact channel (1-24); see buildMs24StatusProbePackets for the
+                // confirmed byte layout.
+                hdlPacketList.addAll(buildMs24StatusProbePackets());
+                logger.debug("For Thing Type: {} command: Refresh is sent.",
+                        getThing().getThingTypeUID().getAsString());
+                break;
             case "hdl:MFH06":
                 if (channelNumber != 0) {
                     p.setCommandType(CommandType.Read_Floor_Heating_Status);
@@ -402,6 +434,43 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
      */
     private void sendMpt04StatusProbe(HdlBridgeHandler hdlBridge) {
         for (HdlPacket packet : buildMpt04StatusProbePackets()) {
+            try {
+                hdlBridge.sendPacket(packet);
+            } catch (IOException e) {
+                logger.warn("Could not send msg to bridge, got error msg: {}", e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Builds one {@link CommandType#Read_Dry_Contact_Status} request per channel (1-24) for a hdl:MS24
+     * thing, targeting this handler's configured subnet/device. Payload is {@code [area, channel]};
+     * confirmed via two independent external HDL Buspro implementations
+     * ({@code eyesoft/home_assistant_buspro}, {@code caligo-mentis/smart-bus}), which both also agree with
+     * this binding's own existing {@code Response_Read_Dry_Contact_Status} parsing in {@link MS24} (channel
+     * at data[1], state at data[2]). Neither reference source documents what area value MS24 actually
+     * expects here though - {@code area = 1} is what eyesoft/home_assistant_buspro's own example uses, not
+     * independently confirmed against real hardware.
+     */
+    private Collection<HdlPacket> buildMs24StatusProbePackets() {
+        Collection<HdlPacket> packets = new ArrayList<HdlPacket>();
+        for (byte channel = 1; channel <= 24; channel++) {
+            HdlPacket channelRequest = new HdlPacket();
+            channelRequest.setTargetSubnetID(subNet);
+            channelRequest.setTargetDeviceId(deviceID);
+            channelRequest.setCommandType(CommandType.Read_Dry_Contact_Status);
+            channelRequest.setData(new byte[] { (byte) 1, channel });
+            packets.add(channelRequest);
+        }
+        return packets;
+    }
+
+    /**
+     * Sends a status probe (see {@link #buildMs24StatusProbePackets()}) for a hdl:MS24 thing, used by both
+     * the one-time startup probe in {@link #sendUpdatePackets} and the fixed-delay {@link #refreshRunnable}.
+     */
+    private void sendMs24StatusProbe(HdlBridgeHandler hdlBridge) {
+        for (HdlPacket packet : buildMs24StatusProbePackets()) {
             try {
                 hdlBridge.sendPacket(packet);
             } catch (IOException e) {
@@ -669,6 +738,17 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         }
                         int uvswitchNr = HdlBindingConstants.UVSwitchNr.valueOf(channelUID.getId()).getValue();
                         p.setData(new byte[] { (byte) uvswitchNr, (byte) uvswitchValue });
+                        sendCommand = true;
+                    }
+                    break;
+                case HdlBindingConstants.CHANNEL_SCENETRIGGER:
+                    // Confirmed via two independent external HDL Buspro implementations
+                    // (eyesoft/home_assistant_buspro, caligo-mentis/smart-bus): Scene_Control's payload is
+                    // simply [area, scene]. Only ON triggers - scenes are fire-once, not stateful, so OFF is
+                    // intentionally ignored.
+                    if (command.equals(OnOffType.ON)) {
+                        p.setCommandType(CommandType.Scene_Control);
+                        p.setData(new byte[] { (byte) area, (byte) scene });
                         sendCommand = true;
                     }
                     break;

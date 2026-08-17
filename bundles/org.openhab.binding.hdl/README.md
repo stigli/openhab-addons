@@ -148,7 +148,7 @@ Bridge hdl:bridge:Setup [Ip="192.168.10.250", Port=6000]{
     Thing MFH06 1072 [Subnet=1, DeviceID=72, channelNumber=1, refreshInterval=120]
     Thing MPT04 1090 [Subnet=1, DeviceID=90]
     Thing MPT04 1093 [Subnet=1, DeviceID=93, refreshInterval=-1]
-    Thing MS24 1100 [Subnet=1, DeviceID=100]
+    Thing MS24 1100 [Subnet=1, DeviceID=100, refreshInterval=120]
     Thing ML01 1101 [Subnet=1, DeviceID=101]
     Thing MPT04 1110 [Subnet=1, DeviceID=110]
 }

@@ -524,6 +524,50 @@
 				<label>Device ID</label>
 				<description>What device id the Sensor Input Module has.</description>
 			</parameter>
+			<parameter name="refreshInterval" type="integer" min="0" required="false">
+				<label>Refresh Rate</label>
+				<description>How often the things status should be requested.</description>
+			</parameter>
+		</config-description>
+	</thing-type>
+
+	<thing-type id="Scene">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="bridge"/>
+		</supported-bridge-type-refs>
+		<label>Scene</label>
+		<description>Triggers an existing scene, programmed via the HDL Buspro Setup Tool, from openHAB. This is
+			not a physical
+			device - Subnet/DeviceID identify which device on the bus to send the trigger to (any
+			device that is a member of the
+			target area works), Area/Scene identify which scene to run.</description>
+		<channels>
+			<channel id="Trigger" typeId="switch">
+				<description>Sending ON triggers the configured scene. The state is not read back from the bus -
+					this only sends a
+					Scene_Control command, it does not track the scene's resulting channel
+					values (see the DimChannel/RelayCh channels
+					on the affected dimmer/relay Things for that).
+				</description>
+			</channel>
+		</channels>
+		<config-description>
+			<parameter name="Subnet" type="integer" min="1" required="true">
+				<label>Subnet</label>
+				<description>Subnet of the device to send the scene trigger to.</description>
+			</parameter>
+			<parameter name="DeviceID" type="integer" min="1" required="true">
+				<label>Device ID</label>
+				<description>Device ID of the device to send the scene trigger to.</description>
+			</parameter>
+			<parameter name="area" type="integer" min="1" required="true">
+				<label>Area</label>
+				<description>The area number the scene is configured under (see the HDL Buspro Setup Tool).</description>
+			</parameter>
+			<parameter name="scene" type="integer" min="0" required="true">
+				<label>Scene</label>
+				<description>The scene number to trigger (see the HDL Buspro Setup Tool).</description>
+			</parameter>
 		</config-description>
 	</thing-type>
 

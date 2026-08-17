@@ -42,6 +42,8 @@ public class HdlBindingConstants {
     public static final String PROPERTY_CHANNEL = "Channel";
     public static final String PROPERTY_REFRESHRATE = "refreshInterval";
     public static final String PROPERTY_CHANNELNUMBER = "channelNumber";
+    public static final String PROPERTY_AREA = "area";
+    public static final String PROPERTY_SCENE = "scene";
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_BRIDGE = new ThingTypeUID(BINDING_ID, "bridge");
 
@@ -64,6 +66,9 @@ public class HdlBindingConstants {
     public static final ThingTypeUID THING_TYPE_MS12 = new ThingTypeUID(BINDING_ID, "MS12"); // 12 i 1
     public static final ThingTypeUID THING_TYPE_MS08 = new ThingTypeUID(BINDING_ID, "MS08"); // 8 i 1 sensor
     public static final ThingTypeUID THING_TYPE_MS24 = new ThingTypeUID(BINDING_ID, "MS24"); // Sensor Input Module
+    // Virtual thing - not a real device type on the bus, so it's not part of SUPPORTED_DEVICE_THING_TYPES_UIDS
+    // (discovery); triggers an existing scene programmed via the HDL Setup Tool, doesn't represent hardware.
+    public static final ThingTypeUID THING_TYPE_SCENE = new ThingTypeUID(BINDING_ID, "Scene");
 
     // List of all Channel ids
     public static final String CHANNEL_BUS_MESSAGE_RATE = "BusMessageRate";
@@ -77,6 +82,7 @@ public class HdlBindingConstants {
     public static final String CHANNEL_BUTTON2 = "Button2";
     public static final String CHANNEL_BUTTON3 = "Button3";
     public static final String CHANNEL_BUTTON4 = "Button4";
+    public static final String CHANNEL_SCENETRIGGER = "Trigger";
     public static final String CHANNEL_FHNORMALTEMPSET = "FHNormalTempSet";
     // Matches the "FHTempSet" channel id actually declared in thing-types.xml for both MPL8_48_FH and MFH06
     // (the Java constant name keeps "Day" for readability at call sites; the string value must not).
@@ -365,7 +371,7 @@ public class HdlBindingConstants {
             .unmodifiableSet(Stream.of(THING_TYPE_BRIDGE, THING_TYPE_ML01, THING_TYPE_MDT0601, THING_TYPE_MPL8_48_FH,
                     THING_TYPE_MFH06, THING_TYPE_MPT04_48, THING_TYPE_MR16XX, THING_TYPE_MR12XX, THING_TYPE_MR08XX,
                     THING_TYPE_MW02, THING_TYPE_MS12, THING_TYPE_MS08, THING_TYPE_MS24, THING_TYPE_MRDA06,
-                    THING_TYPE_MR04XX, THING_TYPE_MDT04015).collect(Collectors.toSet()));
+                    THING_TYPE_MR04XX, THING_TYPE_MDT04015, THING_TYPE_SCENE).collect(Collectors.toSet()));
 
     public static final Set<ThingTypeUID> SUPPORTED_DEVICE_THING_TYPES_UIDS = Collections.unmodifiableSet(Stream
             .of(THING_TYPE_ML01, THING_TYPE_MDT0601, THING_TYPE_MPL8_48_FH, THING_TYPE_MFH06, THING_TYPE_MPT04_48,
