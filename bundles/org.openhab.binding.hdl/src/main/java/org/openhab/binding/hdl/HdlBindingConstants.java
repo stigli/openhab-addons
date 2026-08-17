@@ -151,53 +151,11 @@ public class HdlBindingConstants {
     public static final String CHANNEL_RELAYCH14 = "RelayCh14";
     public static final String CHANNEL_RELAYCH15 = "RelayCh15";
     public static final String CHANNEL_RELAYCH16 = "RelayCh16";
-    public static final String CHANNEL_UVSWITCH1 = "UVSwitch1";
-    public static final String CHANNEL_UVSWITCH2 = "UVSwitch2";
-    public static final String CHANNEL_UVSWITCH3 = "UVSwitch3";
-    public static final String CHANNEL_UVSWITCH4 = "UVSwitch4";
-    public static final String CHANNEL_UVSWITCH5 = "UVSwitch5";
-    public static final String CHANNEL_UVSWITCH6 = "UVSwitch6";
-    public static final String CHANNEL_UVSWITCH200 = "UVSwitch200";
-    public static final String CHANNEL_UVSWITCH201 = "UVSwitch201";
-    public static final String CHANNEL_UVSWITCH202 = "UVSwitch202";
-    public static final String CHANNEL_UVSWITCH203 = "UVSwitch203";
-    public static final String CHANNEL_UVSWITCH204 = "UVSwitch204";
-    public static final String CHANNEL_UVSWITCH205 = "UVSwitch205";
-    public static final String CHANNEL_UVSWITCH206 = "UVSwitch206";
-    public static final String CHANNEL_UVSWITCH207 = "UVSwitch207";
-    public static final String CHANNEL_UVSWITCH208 = "UVSwitch208";
-    public static final String CHANNEL_UVSWITCH209 = "UVSwitch209";
-    public static final String CHANNEL_UVSWITCH210 = "UVSwitch210";
-    public static final String CHANNEL_UVSWITCH211 = "UVSwitch211";
-    public static final String CHANNEL_UVSWITCH212 = "UVSwitch212";
-    public static final String CHANNEL_UVSWITCH213 = "UVSwitch213";
-    public static final String CHANNEL_UVSWITCH214 = "UVSwitch214";
-    public static final String CHANNEL_UVSWITCH215 = "UVSwitch215";
-    public static final String CHANNEL_UVSWITCH216 = "UVSwitch216";
-    public static final String CHANNEL_UVSWITCH217 = "UVSwitch217";
-    public static final String CHANNEL_UVSWITCH218 = "UVSwitch218";
-    public static final String CHANNEL_UVSWITCH219 = "UVSwitch219";
-    public static final String CHANNEL_UVSWITCH220 = "UVSwitch220";
-    public static final String CHANNEL_UVSWITCH221 = "UVSwitch221";
-    public static final String CHANNEL_UVSWITCH222 = "UVSwitch222";
-    public static final String CHANNEL_UVSWITCH223 = "UVSwitch223";
-    public static final String CHANNEL_UVSWITCH224 = "UVSwitch224";
-    public static final String CHANNEL_UVSWITCH225 = "UVSwitch225";
-    public static final String CHANNEL_UVSWITCH226 = "UVSwitch226";
-    public static final String CHANNEL_UVSWITCH227 = "UVSwitch227";
-    public static final String CHANNEL_UVSWITCH228 = "UVSwitch228";
-    public static final String CHANNEL_UVSWITCH229 = "UVSwitch229";
-    public static final String CHANNEL_UVSWITCH230 = "UVSwitch230";
-    public static final String CHANNEL_UVSWITCH231 = "UVSwitch231";
-    public static final String CHANNEL_UVSWITCH232 = "UVSwitch232";
-    public static final String CHANNEL_UVSWITCH233 = "UVSwitch233";
-    public static final String CHANNEL_UVSWITCH234 = "UVSwitch234";
-    public static final String CHANNEL_UVSWITCH235 = "UVSwitch235";
-    public static final String CHANNEL_UVSWITCH236 = "UVSwitch236";
-    public static final String CHANNEL_UVSWITCH237 = "UVSwitch237";
-    public static final String CHANNEL_UVSWITCH238 = "UVSwitch238";
-    public static final String CHANNEL_UVSWITCH239 = "UVSwitch239";
-    public static final String CHANNEL_UVSWITCH240 = "UVSwitch240";
+    // Universal Switch channels are added dynamically per-Thing instead of a fixed per-number list here -
+    // how many a device exposes, and what each is assigned to, is a per-installation HDL Setup Tool config
+    // choice (see the "UVSwitch" extensible channel-type and its "switchNumber" config parameter).
+    public static final String CHANNELTYPE_UVSWITCH = "UVSwitch";
+    public static final String CHANNEL_CONFIG_SWITCHNUMBER = "switchNumber";
 
     public enum EnumFHMode {
         Normal,
@@ -251,66 +209,6 @@ public class HdlBindingConstants {
         private int value;
 
         private CurtainNr(int value) {
-            this.value = value;
-        }
-
-        public int getValue() {
-            return value;
-        }
-    }
-
-    public enum UVSwitchNr {
-        UVSwitch1(1),
-        UVSwitch2(2),
-        UVSwitch3(3),
-        UVSwitch4(4),
-        UVSwitch5(5),
-        UVSwitch6(6),
-        UVSwitch200(200),
-        UVSwitch201(201),
-        UVSwitch202(202),
-        UVSwitch203(203),
-        UVSwitch204(204),
-        UVSwitch205(205),
-        UVSwitch206(206),
-        UVSwitch207(207),
-        UVSwitch208(208),
-        UVSwitch209(209),
-        UVSwitch210(210),
-        UVSwitch211(211),
-        UVSwitch212(212),
-        UVSwitch213(213),
-        UVSwitch214(214),
-        UVSwitch215(215),
-        UVSwitch216(216),
-        UVSwitch217(217),
-        UVSwitch218(218),
-        UVSwitch219(219),
-        UVSwitch220(220),
-        UVSwitch221(221),
-        UVSwitch222(222),
-        UVSwitch223(223),
-        UVSwitch224(224),
-        UVSwitch225(225),
-        UVSwitch226(226),
-        UVSwitch227(227),
-        UVSwitch228(228),
-        UVSwitch229(229),
-        UVSwitch230(230),
-        UVSwitch231(231),
-        UVSwitch232(232),
-        UVSwitch233(233),
-        UVSwitch234(234),
-        UVSwitch235(235),
-        UVSwitch236(236),
-        UVSwitch237(237),
-        UVSwitch238(238),
-        UVSwitch239(239),
-        UVSwitch240(240);
-
-        private int value;
-
-        private UVSwitchNr(int value) {
             this.value = value;
         }
 

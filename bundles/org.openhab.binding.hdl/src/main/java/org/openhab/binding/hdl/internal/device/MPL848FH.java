@@ -13,6 +13,8 @@
 package org.openhab.binding.hdl.internal.device;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -30,7 +32,7 @@ import org.openhab.core.library.types.OnOffType;
  * @author stigla - Initial contribution
  */
 @NonNullByDefault
-public class MPL848FH extends Device {
+public class MPL848FH extends Device implements UniversalSwitchDevice {
     /**
      * All the temperature-ish fields below are @Nullable and stay null until real data has actually been
      * received for them: several call sites (state-push in HdlHandler#onDeviceStateChanged, and the
@@ -38,12 +40,9 @@ public class MPL848FH extends Device {
      * being able to tell "never received" apart from "received as 0".
      **/
     private @Nullable Double temperatureValue;
-    private @Nullable OnOffType uvSwitch1 = null; // Status On/OFf
-    private @Nullable OnOffType uvSwitch2 = null; // Normal Mode
-    private @Nullable OnOffType uvSwitch3 = null; // Day Mode
-    private @Nullable OnOffType uvSwitch4 = null; // Night Mode
-    private @Nullable OnOffType uvSwitch5 = null; // Away Mode
-    private @Nullable OnOffType uvSwitch6 = null; // Timer Mode
+
+    /** Universal switch state, keyed by switch number (see {@link UniversalSwitchDevice}). **/
+    private final Map<Integer, OnOffType> uvSwitches = new HashMap<>();
 
     // Floor Heating
     private @Nullable String floorHeatingTemperaturType;
@@ -233,78 +232,17 @@ public class MPL848FH extends Device {
 
                 break;
             case Response_UV_Switch_Control:
-                switch (p.data[0]) {
-                    case (byte) 1:
-                        if (p.data[1] == 1) {
-                            setUVSwitch1(OnOffType.ON);
-                        } else {
-                            setUVSwitch1(OnOffType.OFF);
-                        }
-                        break;
-                    case (byte) 2:
-                        if (p.data[1] == 2) {
-                            setUVSwitch2(OnOffType.ON);
-                        } else {
-                            setUVSwitch2(OnOffType.OFF);
-                        }
-                        break;
-                    case (byte) 3:
-                        if (p.data[1] == 3) {
-                            setUVSwitch3(OnOffType.ON);
-                        } else {
-                            setUVSwitch3(OnOffType.OFF);
-                        }
-                        break;
-                    case (byte) 4:
-                        if (p.data[1] == 4) {
-                            setUVSwitch4(OnOffType.ON);
-                        } else {
-                            setUVSwitch4(OnOffType.OFF);
-                        }
-                        break;
-                    case (byte) 5:
-                        if (p.data[1] == 5) {
-                            setUVSwitch5(OnOffType.ON);
-                        } else {
-                            setUVSwitch5(OnOffType.OFF);
-                        }
-                        break;
-                    case (byte) 6:
-                        if (p.data[1] == 6) {
-                            setUVSwitch6(OnOffType.ON);
-                        } else {
-                            setUVSwitch6(OnOffType.OFF);
-                        }
-                        break;
-                    default:
-                        LOGGER.debug("For type: {}, Unhandled UV Switch Number: {}.", p.sourcedeviceType, p.data[0]);
-                        break;
-                }
+                setUVSwitch(p.data[0] & 0xff, p.data[1] == 1 ? OnOffType.ON : OnOffType.OFF);
                 break;
             case Broadcast_Status_of_Status_of_UV_Switches:
                 // Confirmed via the caligo-mentis/smart-bus reference implementation (same source already
                 // confirmed twice on real hardware this session, for the relay Scene bitmask and the
                 // Sequence broadcast) - not yet independently confirmed against real MPL8_48_FH traffic
-                // specifically: data[0] = N, the number of UV switches reported (up to 6 here), data[1..N]
-                // = one status byte per switch (0 = off, non-zero = on), in order for switches 1..N.
+                // specifically: data[0] = N, the number of UV switches reported, data[1..N] = one status
+                // byte per switch (0 = off, non-zero = on), in order for switches 1..N.
                 int uvSwitchCount = p.data[0] & 0xff;
-                if (uvSwitchCount >= 1) {
-                    setUVSwitch1(p.data[1] != 0 ? OnOffType.ON : OnOffType.OFF);
-                }
-                if (uvSwitchCount >= 2) {
-                    setUVSwitch2(p.data[2] != 0 ? OnOffType.ON : OnOffType.OFF);
-                }
-                if (uvSwitchCount >= 3) {
-                    setUVSwitch3(p.data[3] != 0 ? OnOffType.ON : OnOffType.OFF);
-                }
-                if (uvSwitchCount >= 4) {
-                    setUVSwitch4(p.data[4] != 0 ? OnOffType.ON : OnOffType.OFF);
-                }
-                if (uvSwitchCount >= 5) {
-                    setUVSwitch5(p.data[5] != 0 ? OnOffType.ON : OnOffType.OFF);
-                }
-                if (uvSwitchCount >= 6) {
-                    setUVSwitch6(p.data[6] != 0 ? OnOffType.ON : OnOffType.OFF);
+                for (int switchNumber = 1; switchNumber <= uvSwitchCount; switchNumber++) {
+                    setUVSwitch(switchNumber, p.data[switchNumber] != 0 ? OnOffType.ON : OnOffType.OFF);
                 }
                 break;
             case Scene_Control:
@@ -356,70 +294,16 @@ public class MPL848FH extends Device {
         return value != null ? new DecimalType(BigDecimal.valueOf(value)) : null;
     }
 
-    public void setUVSwitch1(@Nullable OnOffType UVSwitch1) {
-        if (!Objects.equals(this.uvSwitch1, UVSwitch1)) {
+    public void setUVSwitch(int switchNumber, OnOffType value) {
+        if (!Objects.equals(uvSwitches.get(switchNumber), value)) {
             setUpdated(true);
         }
-        this.uvSwitch1 = UVSwitch1;
+        uvSwitches.put(switchNumber, value);
     }
 
-    public @Nullable OnOffType getUVSwitch1() {
-        return uvSwitch1;
-    }
-
-    public void setUVSwitch2(@Nullable OnOffType UVSwitch2) {
-        if (!Objects.equals(this.uvSwitch2, UVSwitch2)) {
-            setUpdated(true);
-        }
-        this.uvSwitch2 = UVSwitch2;
-    }
-
-    public @Nullable OnOffType getUVSwitch2() {
-        return uvSwitch2;
-    }
-
-    public void setUVSwitch3(@Nullable OnOffType UVSwitch3) {
-        if (!Objects.equals(this.uvSwitch3, UVSwitch3)) {
-            setUpdated(true);
-        }
-        this.uvSwitch3 = UVSwitch3;
-    }
-
-    public @Nullable OnOffType getUVSwitch3() {
-        return uvSwitch3;
-    }
-
-    public void setUVSwitch4(@Nullable OnOffType UVSwitch4) {
-        if (!Objects.equals(this.uvSwitch4, UVSwitch4)) {
-            setUpdated(true);
-        }
-        this.uvSwitch4 = UVSwitch4;
-    }
-
-    public @Nullable OnOffType getUVSwitch4() {
-        return uvSwitch4;
-    }
-
-    public void setUVSwitch5(@Nullable OnOffType UVSwitch5) {
-        if (!Objects.equals(this.uvSwitch5, UVSwitch5)) {
-            setUpdated(true);
-        }
-        this.uvSwitch5 = UVSwitch5;
-    }
-
-    public @Nullable OnOffType getUVSwitch5() {
-        return uvSwitch5;
-    }
-
-    public void setUVSwitch6(@Nullable OnOffType UVSwitch6) {
-        if (!Objects.equals(this.uvSwitch6, UVSwitch6)) {
-            setUpdated(true);
-        }
-        this.uvSwitch6 = UVSwitch6;
-    }
-
-    public @Nullable OnOffType getUVSwitch6() {
-        return uvSwitch6;
+    @Override
+    public @Nullable OnOffType getUVSwitchState(int switchNumber) {
+        return uvSwitches.get(switchNumber);
     }
 
     public void setFloorHeatingTemperaturType(String FloorHeatingTemperaturType) {

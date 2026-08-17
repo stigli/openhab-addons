@@ -71,6 +71,33 @@ This is based on the HDL Buspro `Broadcast_Status_of_Scene` message; the exact b
 from third-party protocol documentation rather than confirmed HDL hardware traffic, so double-check it
 reflects reality correctly on your own setup after a scene runs.
 
+## Universal Switches (UVSwitch)
+
+HDL Buspro "Universal Switch" (UV Switch) is a generic on/off flag - a physical device can expose any number
+of them, and what each one is assigned to is decided per-installation in the HDL Setup Tool, not something
+this binding can know in advance. Because of that, `ML01`, `MPL8_48_FH`, and `MFH06` don't declare a fixed
+set of UVSwitch channels: they're `extensible` Thing types, and you add exactly the switch numbers you need
+directly in the Thing definition, each as its own channel with a `switchNumber` parameter:
+
+```java
+Thing ML01 1101 [Subnet=1, DeviceID=101] {
+    Type UVSwitch : UVSwitch201 "Alarm Status" [ switchNumber=201 ]
+    Type UVSwitch : UVSwitch205 "Something Else" [ switchNumber=205 ]
+}
+```
+
+**Valid switch number range:** HDL documents the overall Universal Switch range as 1-248. On a Logic module
+(`ML01`) specifically, numbers 201-248 are reserved for that purpose (2 per Logic module) - use a number in
+that sub-range there, not 1-200. For other panels (`MPL8_48_FH`, `MFH06`), 1-200 is the general range,
+though what's actually assigned to a given number is entirely down to your HDL Setup Tool project.
+
+The channel id (`UVSwitch201` above) is yours to choose - it doesn't have to match the switch number, though
+keeping them aligned makes `.items` files easier to read. **Note for existing setups:** earlier versions of
+this binding declared a fixed list of channels (`UVSwitch1`-`6` on `MPL8_48_FH`, `UVSwitch200`-`240` on
+`ML01`) directly in the thing type. If you're upgrading, add explicit `Type UVSwitch : ...` lines (as above)
+for whichever switch numbers you were already using, using the same channel id, so your existing `.items`
+links keep working without changes.
+
 ## Binding Configuration
 
 No binding wide settings.
@@ -99,7 +126,7 @@ DryContact(1-24)Status  means that that it can be 24 Dry Contact channels. What 
 | DimChannel(1-6)               | Dimmer           | This channel indicates the value of the dimmer.              | MDT0601, MDT04015(1-4), MRDA06                |
 | DryContact(1-24)Status        | Contact          | This channel indicates the status of the dry contact.        | MS24, MS08(1-2), MS12(1-2)                    |
 | RelayCh(1-16)                 | Switch           | This channel indicates the value of the relay.                | MR16xx(1-16), MR12xx(1-12), MR08xx(1-8), MR04xx(1-4), MS12(1-2) |
-| UVSwitch(1-240)               | Switch           | This channel indicates the value of the UV Switch.             | ML01(200-240), MPL8_48_FH(1-6)                |
+| UVSwitch (dynamic)            | Switch           | Universal Switch - add one per switch number you need (see "Universal Switches (UVSwitch)" above); not a fixed channel list.             | ML01, MPL8_48_FH, MFH06                |
 | Button(1-4)                   | Switch           | This channel indicates the state of a touch panel button.      | MPT04                                         |
 | Brightness                    | Number           | This channel indicates the measured lumen.                    | MS08, MS12                                    |
 | MotionSensor                  | Switch           | This channel indicates if there is any movement.               | MS08, MS12                                    |
@@ -149,7 +176,9 @@ Bridge hdl:bridge:Setup [Ip="192.168.10.250", Port=6000]{
     Thing MPT04 1090 [Subnet=1, DeviceID=90]
     Thing MPT04 1093 [Subnet=1, DeviceID=93, refreshInterval=-1]
     Thing MS24 1100 [Subnet=1, DeviceID=100, refreshInterval=120]
-    Thing ML01 1101 [Subnet=1, DeviceID=101]
+    Thing ML01 1101 [Subnet=1, DeviceID=101] {
+        Type UVSwitch : UVSwitch201 "Alarm Status" [ switchNumber=201 ]
+    }
     Thing MPT04 1110 [Subnet=1, DeviceID=110]
 }
 ```
@@ -179,4 +208,5 @@ Number  E2R5DLP01CurTemp"Set Temperatur [%.1f °C]"          <temperature>      
 String  E2R5DLP01FHM    "Heat Mode: [%s]"                                       {channel="hdl:MPL8_48_FH:Setup:1081:FHMode"}
 Rollershutter E2R5MW02  "Rollershutter [%s]"                                    {channel="hdl:MW02:Setup:1038:Shutter1Control"}
 Switch  E2R5MPT04B1     "Panel Button 1"                                        {channel="hdl:MPT04:Setup:1093:Button1"}
+Switch  E2R1UVAlarm     "Alarm Status"                                          {channel="hdl:ML01:Setup:1101:UVSwitch201"}
 ```

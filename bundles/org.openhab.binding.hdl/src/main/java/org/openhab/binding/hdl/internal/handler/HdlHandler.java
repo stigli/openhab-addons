@@ -18,6 +18,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
@@ -43,6 +44,7 @@ import org.openhab.binding.hdl.internal.device.MS08;
 import org.openhab.binding.hdl.internal.device.MS12;
 import org.openhab.binding.hdl.internal.device.MS24;
 import org.openhab.binding.hdl.internal.device.MW02;
+import org.openhab.binding.hdl.internal.device.UniversalSwitchDevice;
 import org.openhab.core.config.core.Configuration;
 import org.openhab.core.library.types.DateTimeType;
 import org.openhab.core.library.types.DecimalType;
@@ -53,6 +55,7 @@ import org.openhab.core.library.types.StopMoveType;
 import org.openhab.core.library.types.StringType;
 import org.openhab.core.library.unit.SIUnits;
 import org.openhab.core.thing.Bridge;
+import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
@@ -61,6 +64,7 @@ import org.openhab.core.thing.ThingStatusInfo;
 import org.openhab.core.thing.ThingUID;
 import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.thing.binding.ThingHandler;
+import org.openhab.core.thing.type.ChannelTypeUID;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
 import org.slf4j.Logger;
@@ -87,6 +91,15 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
     private int area;
     private int scene;
     private @Nullable ScheduledFuture<?> refreshJob;
+
+    /**
+     * Which universal switch number each of this Thing's dynamically-added UVSwitch channels represents
+     * (read from that channel's own "switchNumber" config - see {@link HdlBindingConstants#CHANNELTYPE_UVSWITCH}),
+     * populated once in {@link #initialize()}. Built per-Thing instead of a fixed channel-id list since how
+     * many universal switches a device exposes, and which numbers matter, is a per-installation HDL Setup
+     * Tool config choice this binding can't enumerate in advance.
+     */
+    private Map<ChannelUID, Integer> uvSwitchChannels = new HashMap<>();
 
     public HdlHandler(Thing thing) {
         super(thing);
@@ -122,6 +135,8 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
             } catch (Exception e) {
                 scene = 0;
             }
+
+            uvSwitchChannels = buildUvSwitchChannelMap();
 
             if (channelNumber != 0) {
                 hdldeviceSerial = Integer.toString(subNet * 1000 + deviceID) + "_" + Integer.toString(channelNumber);
@@ -285,6 +300,32 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
     @Override
     public void thingUpdated(Thing thing) {
         super.thingUpdated(thing);
+    }
+
+    /**
+     * Scans this Thing's channels for ones using the {@code UVSwitch} channel-type (added dynamically per
+     * Thing instance, not declared in thing-types.xml - see {@link HdlBindingConstants#CHANNELTYPE_UVSWITCH})
+     * and reads each one's own {@code switchNumber} config parameter, so
+     * {@link #handleCommand}/{@link #onDeviceStateChanged} can look up which switch number a given channel
+     * represents without needing a fixed per-number channel-id list.
+     */
+    private Map<ChannelUID, Integer> buildUvSwitchChannelMap() {
+        Map<ChannelUID, Integer> result = new HashMap<>();
+        ChannelTypeUID uvSwitchTypeUID = new ChannelTypeUID(HdlBindingConstants.BINDING_ID,
+                HdlBindingConstants.CHANNELTYPE_UVSWITCH);
+        for (Channel channel : getThing().getChannels()) {
+            if (uvSwitchTypeUID.equals(channel.getChannelTypeUID())) {
+                try {
+                    int switchNumber = ((BigDecimal) channel.getConfiguration()
+                            .get(HdlBindingConstants.CHANNEL_CONFIG_SWITCHNUMBER)).intValueExact();
+                    result.put(channel.getUID(), switchNumber);
+                } catch (Exception e) {
+                    logger.warn("Channel {} is a UVSwitch channel without a valid switchNumber, ignoring it.",
+                            channel.getUID());
+                }
+            }
+        }
+        return result;
     }
 
     /*
@@ -541,8 +582,18 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
         @Nullable
         Device chDevice = hdlBridge.getDevice(serial);
 
+        Integer uvSwitchNumber = uvSwitchChannels.get(channelUID);
         if (command instanceof RefreshType) {
             sendUpdatePackets(hdlBridge);
+        } else if (uvSwitchNumber != null) {
+            // Dynamically-added UVSwitch channel (see initialize()/uvSwitchChannels) - the switch number
+            // lives in this channel's own config, not in a fixed per-number channel-id list.
+            if (command instanceof OnOffType) {
+                p.setCommandType(CommandType.UV_Switch_Control);
+                int uvswitchValue = command.equals(OnOffType.ON) ? 255 : 0;
+                p.setData(new byte[] { uvSwitchNumber.byteValue(), (byte) uvswitchValue });
+                sendCommand = true;
+            }
         } else {
             switch (channelUID.getId()) {
                 case HdlBindingConstants.CHANNEL_FHMODE:
@@ -680,64 +731,6 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         }
                         int channelNr = HdlBindingConstants.RelayChannelNr.valueOf(channelUID.getId()).getValue();
                         p.setData(new byte[] { (byte) channelNr, (byte) relayValue, 0, 0 });
-                        sendCommand = true;
-                    }
-                    break;
-                case HdlBindingConstants.CHANNEL_UVSWITCH1:
-                case HdlBindingConstants.CHANNEL_UVSWITCH2:
-                case HdlBindingConstants.CHANNEL_UVSWITCH3:
-                case HdlBindingConstants.CHANNEL_UVSWITCH4:
-                case HdlBindingConstants.CHANNEL_UVSWITCH5:
-                case HdlBindingConstants.CHANNEL_UVSWITCH6:
-                case HdlBindingConstants.CHANNEL_UVSWITCH200:
-                case HdlBindingConstants.CHANNEL_UVSWITCH201:
-                case HdlBindingConstants.CHANNEL_UVSWITCH202:
-                case HdlBindingConstants.CHANNEL_UVSWITCH203:
-                case HdlBindingConstants.CHANNEL_UVSWITCH204:
-                case HdlBindingConstants.CHANNEL_UVSWITCH205:
-                case HdlBindingConstants.CHANNEL_UVSWITCH206:
-                case HdlBindingConstants.CHANNEL_UVSWITCH207:
-                case HdlBindingConstants.CHANNEL_UVSWITCH208:
-                case HdlBindingConstants.CHANNEL_UVSWITCH209:
-                case HdlBindingConstants.CHANNEL_UVSWITCH210:
-                case HdlBindingConstants.CHANNEL_UVSWITCH211:
-                case HdlBindingConstants.CHANNEL_UVSWITCH212:
-                case HdlBindingConstants.CHANNEL_UVSWITCH213:
-                case HdlBindingConstants.CHANNEL_UVSWITCH214:
-                case HdlBindingConstants.CHANNEL_UVSWITCH215:
-                case HdlBindingConstants.CHANNEL_UVSWITCH216:
-                case HdlBindingConstants.CHANNEL_UVSWITCH217:
-                case HdlBindingConstants.CHANNEL_UVSWITCH218:
-                case HdlBindingConstants.CHANNEL_UVSWITCH219:
-                case HdlBindingConstants.CHANNEL_UVSWITCH220:
-                case HdlBindingConstants.CHANNEL_UVSWITCH221:
-                case HdlBindingConstants.CHANNEL_UVSWITCH222:
-                case HdlBindingConstants.CHANNEL_UVSWITCH223:
-                case HdlBindingConstants.CHANNEL_UVSWITCH224:
-                case HdlBindingConstants.CHANNEL_UVSWITCH225:
-                case HdlBindingConstants.CHANNEL_UVSWITCH226:
-                case HdlBindingConstants.CHANNEL_UVSWITCH227:
-                case HdlBindingConstants.CHANNEL_UVSWITCH228:
-                case HdlBindingConstants.CHANNEL_UVSWITCH229:
-                case HdlBindingConstants.CHANNEL_UVSWITCH230:
-                case HdlBindingConstants.CHANNEL_UVSWITCH231:
-                case HdlBindingConstants.CHANNEL_UVSWITCH232:
-                case HdlBindingConstants.CHANNEL_UVSWITCH233:
-                case HdlBindingConstants.CHANNEL_UVSWITCH234:
-                case HdlBindingConstants.CHANNEL_UVSWITCH235:
-                case HdlBindingConstants.CHANNEL_UVSWITCH236:
-                case HdlBindingConstants.CHANNEL_UVSWITCH237:
-                case HdlBindingConstants.CHANNEL_UVSWITCH238:
-                case HdlBindingConstants.CHANNEL_UVSWITCH239:
-                case HdlBindingConstants.CHANNEL_UVSWITCH240:
-                    if (command instanceof OnOffType) {
-                        p.setCommandType(CommandType.UV_Switch_Control);
-                        int uvswitchValue = 0;
-                        if (command.equals(OnOffType.ON)) {
-                            uvswitchValue = 255;
-                        }
-                        int uvswitchNr = HdlBindingConstants.UVSwitchNr.valueOf(channelUID.getId()).getValue();
-                        p.setData(new byte[] { (byte) uvswitchNr, (byte) uvswitchValue });
                         sendCommand = true;
                     }
                     break;
@@ -962,36 +955,6 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_ACMODE),
                                     new StringType(((MPL848FH) device).getACMode()));
                         }
-                        OnOffType uvSwitch1 = ((MPL848FH) device).getUVSwitch1();
-                        if (uvSwitch1 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH1),
-                                    uvSwitch1);
-                        }
-                        OnOffType uvSwitch2 = ((MPL848FH) device).getUVSwitch2();
-                        if (uvSwitch2 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH2),
-                                    uvSwitch2);
-                        }
-                        OnOffType uvSwitch3 = ((MPL848FH) device).getUVSwitch3();
-                        if (uvSwitch3 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH3),
-                                    uvSwitch3);
-                        }
-                        OnOffType uvSwitch4 = ((MPL848FH) device).getUVSwitch4();
-                        if (uvSwitch4 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH4),
-                                    uvSwitch4);
-                        }
-                        OnOffType uvSwitch5 = ((MPL848FH) device).getUVSwitch5();
-                        if (uvSwitch5 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH5),
-                                    uvSwitch5);
-                        }
-                        OnOffType uvSwitch6 = ((MPL848FH) device).getUVSwitch6();
-                        if (uvSwitch6 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH6),
-                                    uvSwitch6);
-                        }
                         break;
                     case MFH06_432: {
                         var temperatureValue = ((MFH06) device).getTemperatureValue();
@@ -1036,33 +999,8 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_FHMODE),
                                     new StringType(mfh06Mode.toString()));
                         }
-                    }
-
-                        org.openhab.core.library.types.OnOffType u1 = ((MFH06) device).getUVSwitch1();
-                        if (u1 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH1), u1);
-                        }
-                        org.openhab.core.library.types.OnOffType u2 = ((MFH06) device).getUVSwitch2();
-                        if (u2 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH2), u2);
-                        }
-                        org.openhab.core.library.types.OnOffType u3 = ((MFH06) device).getUVSwitch3();
-                        if (u3 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH3), u3);
-                        }
-                        org.openhab.core.library.types.OnOffType u4 = ((MFH06) device).getUVSwitch4();
-                        if (u4 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH4), u4);
-                        }
-                        org.openhab.core.library.types.OnOffType u5 = ((MFH06) device).getUVSwitch5();
-                        if (u5 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH5), u5);
-                        }
-                        org.openhab.core.library.types.OnOffType u6 = ((MFH06) device).getUVSwitch6();
-                        if (u6 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH6), u6);
-                        }
                         break;
+                    }
                     case MDT0601_233:
                         PercentType md1 = ((MDT0601) device).getDimChannel1State();
                         if (md1 != null) {
@@ -1426,211 +1364,6 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                                     new DateTimeType(
                                             ZonedDateTime.ofInstant(dateSetpoint.toInstant(), ZoneId.systemDefault())));
                         }
-                        org.openhab.core.library.types.OnOffType u200 = ml.getUVSwitch200();
-                        if (u200 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH200),
-                                    u200);
-                        }
-                        org.openhab.core.library.types.OnOffType u201 = ml.getUVSwitch201();
-                        if (u201 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH201),
-                                    u201);
-                        }
-                        org.openhab.core.library.types.OnOffType u202 = ml.getUVSwitch202();
-                        if (u202 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH202),
-                                    u202);
-                        }
-                        org.openhab.core.library.types.OnOffType u203 = ml.getUVSwitch203();
-                        if (u203 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH203),
-                                    u203);
-                        }
-                        org.openhab.core.library.types.OnOffType u204 = ml.getUVSwitch204();
-                        if (u204 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH204),
-                                    u204);
-                        }
-                        org.openhab.core.library.types.OnOffType u205 = ml.getUVSwitch205();
-                        if (u205 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH205),
-                                    u205);
-                        }
-                        org.openhab.core.library.types.OnOffType u206 = ml.getUVSwitch206();
-                        if (u206 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH206),
-                                    u206);
-                        }
-                        org.openhab.core.library.types.OnOffType u207 = ml.getUVSwitch207();
-                        if (u207 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH207),
-                                    u207);
-                        }
-                        org.openhab.core.library.types.OnOffType u208 = ml.getUVSwitch208();
-                        if (u208 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH208),
-                                    u208);
-                        }
-                        org.openhab.core.library.types.OnOffType u209 = ml.getUVSwitch209();
-                        if (u209 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH209),
-                                    u209);
-                        }
-                        org.openhab.core.library.types.OnOffType u210 = ml.getUVSwitch210();
-                        if (u210 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH210),
-                                    u210);
-                        }
-                        org.openhab.core.library.types.OnOffType u211 = ml.getUVSwitch211();
-                        if (u211 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH211),
-                                    u211);
-                        }
-                        org.openhab.core.library.types.OnOffType u212 = ml.getUVSwitch212();
-                        if (u212 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH212),
-                                    u212);
-                        }
-                        org.openhab.core.library.types.OnOffType u213 = ml.getUVSwitch213();
-                        if (u213 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH213),
-                                    u213);
-                        }
-                        org.openhab.core.library.types.OnOffType u214 = ml.getUVSwitch214();
-                        if (u214 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH214),
-                                    u214);
-                        }
-                        org.openhab.core.library.types.OnOffType u215 = ml.getUVSwitch215();
-                        if (u215 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH215),
-                                    u215);
-                        }
-                        org.openhab.core.library.types.OnOffType u216 = ml.getUVSwitch216();
-                        if (u216 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH216),
-                                    u216);
-                        }
-                        org.openhab.core.library.types.OnOffType u217 = ml.getUVSwitch217();
-                        if (u217 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH217),
-                                    u217);
-                        }
-                        org.openhab.core.library.types.OnOffType u218 = ml.getUVSwitch218();
-                        if (u218 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH218),
-                                    u218);
-                        }
-                        org.openhab.core.library.types.OnOffType u219 = ml.getUVSwitch219();
-                        if (u219 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH219),
-                                    u219);
-                        }
-                        org.openhab.core.library.types.OnOffType u220 = ml.getUVSwitch220();
-                        if (u220 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH220),
-                                    u220);
-                        }
-                        org.openhab.core.library.types.OnOffType u221 = ml.getUVSwitch221();
-                        if (u221 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH221),
-                                    u221);
-                        }
-                        org.openhab.core.library.types.OnOffType u222 = ml.getUVSwitch222();
-                        if (u222 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH222),
-                                    u222);
-                        }
-                        org.openhab.core.library.types.OnOffType u223 = ml.getUVSwitch223();
-                        if (u223 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH223),
-                                    u223);
-                        }
-                        org.openhab.core.library.types.OnOffType u224 = ml.getUVSwitch224();
-                        if (u224 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH224),
-                                    u224);
-                        }
-                        org.openhab.core.library.types.OnOffType u225 = ml.getUVSwitch225();
-                        if (u225 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH225),
-                                    u225);
-                        }
-                        org.openhab.core.library.types.OnOffType u226 = ml.getUVSwitch226();
-                        if (u226 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH226),
-                                    u226);
-                        }
-                        org.openhab.core.library.types.OnOffType u227 = ml.getUVSwitch227();
-                        if (u227 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH227),
-                                    u227);
-                        }
-                        org.openhab.core.library.types.OnOffType u228 = ml.getUVSwitch228();
-                        if (u228 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH228),
-                                    u228);
-                        }
-                        org.openhab.core.library.types.OnOffType u229 = ml.getUVSwitch229();
-                        if (u229 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH229),
-                                    u229);
-                        }
-                        org.openhab.core.library.types.OnOffType u230 = ml.getUVSwitch230();
-                        if (u230 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH230),
-                                    u230);
-                        }
-                        org.openhab.core.library.types.OnOffType u231 = ml.getUVSwitch231();
-                        if (u231 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH231),
-                                    u231);
-                        }
-                        org.openhab.core.library.types.OnOffType u232 = ml.getUVSwitch232();
-                        if (u232 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH232),
-                                    u232);
-                        }
-                        org.openhab.core.library.types.OnOffType u233 = ml.getUVSwitch233();
-                        if (u233 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH233),
-                                    u233);
-                        }
-                        org.openhab.core.library.types.OnOffType u234 = ml.getUVSwitch234();
-                        if (u234 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH234),
-                                    u234);
-                        }
-                        org.openhab.core.library.types.OnOffType u235 = ml.getUVSwitch235();
-                        if (u235 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH235),
-                                    u235);
-                        }
-                        org.openhab.core.library.types.OnOffType u236 = ml.getUVSwitch236();
-                        if (u236 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH236),
-                                    u236);
-                        }
-                        org.openhab.core.library.types.OnOffType u237 = ml.getUVSwitch237();
-                        if (u237 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH237),
-                                    u237);
-                        }
-                        org.openhab.core.library.types.OnOffType u238 = ml.getUVSwitch238();
-                        if (u238 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH238),
-                                    u238);
-                        }
-                        org.openhab.core.library.types.OnOffType u239 = ml.getUVSwitch239();
-                        if (u239 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH239),
-                                    u239);
-                        }
-                        org.openhab.core.library.types.OnOffType u240 = ml.getUVSwitch240();
-                        if (u240 != null) {
-                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_UVSWITCH240),
-                                    u240);
-                        }
                     }
                         break;
                     case MS24: {
@@ -1834,6 +1567,18 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                     default:
                         logger.debug("Device Type: {} unhandled", device.getType());
                         break;
+                }
+                // Universal Switch channels are dynamically added per-Thing (see uvSwitchChannels /
+                // buildUvSwitchChannelMap()) instead of being handled per-device-type above, since which
+                // switch numbers matter is a per-installation config choice, not something tied to a
+                // specific device type.
+                if (device instanceof UniversalSwitchDevice uvDevice) {
+                    for (Map.Entry<ChannelUID, Integer> entry : uvSwitchChannels.entrySet()) {
+                        OnOffType uvSwitchValue = uvDevice.getUVSwitchState(entry.getValue());
+                        if (uvSwitchValue != null) {
+                            updateState(entry.getKey(), uvSwitchValue);
+                        }
+                    }
                 }
                 device.setUpdated(false);
             } else {

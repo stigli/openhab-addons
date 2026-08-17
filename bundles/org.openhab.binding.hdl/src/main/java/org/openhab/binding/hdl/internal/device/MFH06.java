@@ -13,6 +13,8 @@
 package org.openhab.binding.hdl.internal.device;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
@@ -31,7 +33,7 @@ import org.openhab.core.library.types.OnOffType;
  */
 
 @NonNullByDefault
-public class MFH06 extends Device {
+public class MFH06 extends Device implements UniversalSwitchDevice {
     private int channelNr;
 
     /**
@@ -41,12 +43,9 @@ public class MFH06 extends Device {
      * had the same bug when these were plain primitive doubles defaulting to 0.0).
      **/
     private @Nullable Double temperatureValue;
-    private @Nullable OnOffType uvSwitch1 = null; // Status On/OFf
-    private @Nullable OnOffType uvSwitch2 = null; // Normal Mode
-    private @Nullable OnOffType uvSwitch3 = null; // Day Mode
-    private @Nullable OnOffType uvSwitch4 = null; // Night Mode
-    private @Nullable OnOffType uvSwitch5 = null; // Away Mode
-    private @Nullable OnOffType uvSwitch6 = null; // Timer Mode
+
+    /** Universal switch state, keyed by switch number (see {@link UniversalSwitchDevice}). **/
+    private final Map<Integer, OnOffType> uvSwitches = new HashMap<>();
 
     private @Nullable String floorHeatingTemperaturType;
     private @Nullable Double floorHeatingCurrentTemperatur;
@@ -67,43 +66,46 @@ public class MFH06 extends Device {
     }
 
     public void treatHDLPacketForDevice(HdlPacket p) {
-        if (p.data[0] == channelNr) {
-            switch (p.commandType) {
-                case Response_Read_Floor_Heating_Status:
-                    setFloorHeatingTemperaturType(p.data[2] == 1 ? "F" : "C");
-                    if (p.data[3] == 1) {
-                        setFloorHeatingMode(EnumFHMode.Normal);
-                    } else if (p.data[3] == 2) {
-                        setFloorHeatingMode(EnumFHMode.Day);
-                    } else if (p.data[3] == 3) {
-                        setFloorHeatingMode(EnumFHMode.Night);
-                    } else if (p.data[3] == 4) {
-                        setFloorHeatingMode(EnumFHMode.Away);
-                    } else if (p.data[3] == 5) {
-                        setFloorHeatingMode(EnumFHMode.Timer);
-                    }
-
-                    if (p.data[8] == 1) {
-                        setFloorHeatingTimer("Night");
-                    } else {
-                        setFloorHeatingTimer("Day");
-                    }
-
-                    // This has to be done last so Current Temperature can be set correctly, since current temperature
-                    // needs
-                    // to know what FloorHeatingMode Floor heating module is in.
-                    setFloorHeatingSetNormalTemperatur(p.data[4]);
-                    setFloorHeatingSetDayTemperatur(p.data[5]);
-                    setFloorHeatingSetNightTemperatur(p.data[6]);
-                    setFloorHeatingSetAwayTemperatur(p.data[7]);
+        switch (p.commandType) {
+            case Response_Read_Floor_Heating_Status:
+                if (p.data[0] != channelNr) {
+                    LOGGER.debug("For type: {}, Channel number in in HDL packet is {}, but in config it is {}",
+                            p.sourcedeviceType, p.data[0], channelNr);
                     break;
-                default:
-                    LOGGER.debug("For type: {}, Unhandled CommandType: {}.", p.sourcedeviceType, p.commandType);
-                    break;
-            }
-        } else {
-            LOGGER.debug("For type: {}, Channel number in in HDL packet is {}, but in config it is {}",
-                    p.sourcedeviceType, p.data[0], channelNr);
+                }
+                setFloorHeatingTemperaturType(p.data[2] == 1 ? "F" : "C");
+                if (p.data[3] == 1) {
+                    setFloorHeatingMode(EnumFHMode.Normal);
+                } else if (p.data[3] == 2) {
+                    setFloorHeatingMode(EnumFHMode.Day);
+                } else if (p.data[3] == 3) {
+                    setFloorHeatingMode(EnumFHMode.Night);
+                } else if (p.data[3] == 4) {
+                    setFloorHeatingMode(EnumFHMode.Away);
+                } else if (p.data[3] == 5) {
+                    setFloorHeatingMode(EnumFHMode.Timer);
+                }
+
+                if (p.data[8] == 1) {
+                    setFloorHeatingTimer("Night");
+                } else {
+                    setFloorHeatingTimer("Day");
+                }
+
+                // This has to be done last so Current Temperature can be set correctly, since current temperature
+                // needs
+                // to know what FloorHeatingMode Floor heating module is in.
+                setFloorHeatingSetNormalTemperatur(p.data[4]);
+                setFloorHeatingSetDayTemperatur(p.data[5]);
+                setFloorHeatingSetNightTemperatur(p.data[6]);
+                setFloorHeatingSetAwayTemperatur(p.data[7]);
+                break;
+            case Response_UV_Switch_Control:
+                setUVSwitch(p.data[0] & 0xff, p.data[1] == 1 ? OnOffType.ON : OnOffType.OFF);
+                break;
+            default:
+                LOGGER.debug("For type: {}, Unhandled CommandType: {}.", p.sourcedeviceType, p.commandType);
+                break;
         }
     }
 
@@ -159,70 +161,16 @@ public class MFH06 extends Device {
         return value != null ? new DecimalType(BigDecimal.valueOf(value)) : null;
     }
 
-    public void setUVSwitch1(OnOffType UVSwitch1) {
-        if (!Objects.equals(this.uvSwitch1, UVSwitch1)) {
+    public void setUVSwitch(int switchNumber, OnOffType value) {
+        if (!Objects.equals(uvSwitches.get(switchNumber), value)) {
             setUpdated(true);
         }
-        this.uvSwitch1 = UVSwitch1;
+        uvSwitches.put(switchNumber, value);
     }
 
-    public @Nullable OnOffType getUVSwitch1() {
-        return uvSwitch1;
-    }
-
-    public void setUVSwitch2(OnOffType UVSwitch2) {
-        if (!Objects.equals(this.uvSwitch2, UVSwitch2)) {
-            setUpdated(true);
-        }
-        this.uvSwitch2 = UVSwitch2;
-    }
-
-    public @Nullable OnOffType getUVSwitch2() {
-        return uvSwitch2;
-    }
-
-    public void setUVSwitch3(OnOffType UVSwitch3) {
-        if (!Objects.equals(this.uvSwitch3, UVSwitch3)) {
-            setUpdated(true);
-        }
-        this.uvSwitch3 = UVSwitch3;
-    }
-
-    public @Nullable OnOffType getUVSwitch3() {
-        return uvSwitch3;
-    }
-
-    public void setUVSwitch4(OnOffType UVSwitch4) {
-        if (!Objects.equals(this.uvSwitch4, UVSwitch4)) {
-            setUpdated(true);
-        }
-        this.uvSwitch4 = UVSwitch4;
-    }
-
-    public @Nullable OnOffType getUVSwitch4() {
-        return uvSwitch4;
-    }
-
-    public void setUVSwitch5(OnOffType UVSwitch5) {
-        if (!Objects.equals(this.uvSwitch5, UVSwitch5)) {
-            setUpdated(true);
-        }
-        this.uvSwitch5 = UVSwitch5;
-    }
-
-    public @Nullable OnOffType getUVSwitch5() {
-        return uvSwitch5;
-    }
-
-    public void setUVSwitch6(OnOffType UVSwitch6) {
-        if (!Objects.equals(this.uvSwitch6, UVSwitch6)) {
-            setUpdated(true);
-        }
-        this.uvSwitch6 = UVSwitch6;
-    }
-
-    public @Nullable OnOffType getUVSwitch6() {
-        return uvSwitch6;
+    @Override
+    public @Nullable OnOffType getUVSwitchState(int switchNumber) {
+        return uvSwitches.get(switchNumber);
     }
 
     public void setFloorHeatingTemperaturType(String FloorHeatingTemperaturType) {

@@ -3,55 +3,19 @@
 	xmlns:thing="https://openhab.org/schemas/thing-description/v1.0.0"
 	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
 
-	<thing-type id="ML01">
+	<thing-type id="ML01" extensible="UVSwitch">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge"/>
 		</supported-bridge-type-refs>
 		<label>Logic</label>
-		<description>Device type for this Logic Panel</description>
+		<description>Device type for this Logic Panel. Add a "UVSwitch" channel per universal switch number you
+			need (see the
+			UVSwitch channel-type's "switchNumber" parameter) - there's no fixed channel list
+			here. HDL reserves universal switch
+			numbers 201-248 specifically for Logic modules (2 per module),
+			so switchNumber should be in that range here.</description>
 		<channels>
 			<channel id="time" typeId="dateTime"></channel>
-			<channel id="UVSwitch200" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch201" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch202" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch203" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch204" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch205" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch206" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch207" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch208" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch209" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch210" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch211" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch212" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch213" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch214" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch215" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch216" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch217" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch218" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch219" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch220" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch221" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch222" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch223" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch224" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch225" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch226" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch227" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch228" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch229" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch230" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch231" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch232" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch233" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch234" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch235" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch236" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch237" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch238" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch239" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch240" typeId="UVSwitch"></channel>
 		</channels>
 		<config-description>
 			<parameter name="Subnet" type="integer" min="1" required="true">
@@ -123,20 +87,17 @@
 		</config-description>
 	</thing-type>
 
-	<thing-type id="MPL8_48_FH">
+	<thing-type id="MPL8_48_FH" extensible="UVSwitch">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge"/>
 		</supported-bridge-type-refs>
 		<label>DLP Panel</label>
-		<description>DLP Panel with AC, Music, Clock and FloorHeating</description>
+		<description>DLP Panel with AC, Music, Clock and FloorHeating. Add a "UVSwitch" channel per universal
+			switch number you
+			need (see the UVSwitch channel-type's "switchNumber" parameter) - there's no
+			fixed channel list here.</description>
 		<channels>
 			<channel id="temperature" typeId="temperature"></channel>
-			<channel id="UVSwitch1" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch2" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch3" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch4" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch5" typeId="UVSwitch"></channel>
-			<channel id="UVSwitch6" typeId="UVSwitch"></channel>
 			<channel id="FHNormalTempSet" typeId="set_temp"></channel>
 			<channel id="FHTempSet" typeId="set_temp"></channel>
 			<channel id="FHNightTempSet" typeId="set_temp"></channel>
@@ -169,12 +130,14 @@
 		</config-description>
 	</thing-type>
 
-	<thing-type id="MFH06">
+	<thing-type id="MFH06" extensible="UVSwitch">
 		<supported-bridge-type-refs>
 			<bridge-type-ref id="bridge"/>
 		</supported-bridge-type-refs>
 		<label>Floor Heating Module</label>
-		<description>Floor Heating Module</description>
+		<description>Floor Heating Module. Add a "UVSwitch" channel per universal switch number you need (see
+			the UVSwitch
+			channel-type's "switchNumber" parameter) - there's no fixed channel list here.</description>
 		<channels>
 			<channel id="FHNormalTempSet" typeId="set_temp"></channel>
 			<channel id="FHTempSet" typeId="set_temp"></channel>
@@ -693,9 +656,25 @@
 	<channel-type id="UVSwitch">
 		<item-type>Switch</item-type>
 		<label>UV Switch</label>
-		<description>UV Switch</description>
+		<description>Universal Switch - a generic HDL Buspro on/off flag; what it's assigned to is decided in the
+			HDL Setup
+			Tool project, not by this binding. Add one of these per switch number you actually need
+			(see the "switchNumber"
+			parameter below) - this thing type does not declare a fixed list of channels.
+		</description>
 		<category>Switch</category>
-		<state pattern="%d %%"></state>
+		<config-description>
+			<parameter name="switchNumber" type="integer" min="1" max="248" required="true">
+				<label>Switch Number</label>
+				<description>Which HDL universal switch number this channel represents (see the HDL Setup Tool).
+					HDL's documented
+					range is 1-248; on a Logic module (ML01) specifically, only 201-248 are
+					valid (each Logic module gets 2 reserved
+					numbers in that range) - numbers below 201 won't
+					mean anything there.
+				</description>
+			</parameter>
+		</config-description>
 	</channel-type>
 
 	<channel-type id="Sonic">
