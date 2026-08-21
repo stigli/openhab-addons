@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.hdl.internal.device;
 
+import java.util.Arrays;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
@@ -35,8 +37,25 @@ public class MS24 extends Device {
     /** Dry contact state per channel; 1-indexed to match the HDL protocol, index 0 is unused. **/
     private final @Nullable OpenClosedType[] dryContacts = new OpenClosedType[CHANNEL_COUNT + 1];
 
+    /**
+     * Whether each channel has responded since the last {@link #resetProbeTracking()} call - separate from
+     * {@link #dryContacts}, which persists last-known values across probe attempts/restarts and so can't by
+     * itself tell "never responded this probe" apart from "responded earlier, nothing new to report".
+     * 1-indexed to match the HDL protocol, index 0 is unused. Added 2026-08-21 to support retrying only the
+     * channels that didn't answer a given probe pass (see HdlHandler#sendMs24StatusProbe).
+     */
+    private final boolean[] respondedThisProbe = new boolean[CHANNEL_COUNT + 1];
+
     public MS24(DeviceConfiguration c) {
         super(c);
+    }
+
+    public void resetProbeTracking() {
+        Arrays.fill(respondedThisProbe, false);
+    }
+
+    public boolean hasRespondedThisProbe(int channel) {
+        return channel >= 1 && channel <= CHANNEL_COUNT && respondedThisProbe[channel];
     }
 
     public void treatHDLPacketForDevice(HdlPacket p) {
@@ -48,6 +67,7 @@ public class MS24 extends Device {
                 int channel = p.data[1];
                 if (channel >= 1 && channel <= CHANNEL_COUNT) {
                     setDryContactValue(channel, p.data[2] == 1 ? OpenClosedType.OPEN : OpenClosedType.CLOSED);
+                    respondedThisProbe[channel] = true;
                 }
                 break;
             default:

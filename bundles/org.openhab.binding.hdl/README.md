@@ -145,6 +145,13 @@ requests a fresh status right after it sees the panel actively control something
 another device), which is how these panels are commonly configured. `0` disables refresh entirely, and any
 positive number polls every that many seconds, same as the other Things below.
 
+`MS24` needs one request per dry-contact channel (24 total) at startup, which real-hardware testing showed
+is unreliable if fired all at once - it competes with every other Thing's own startup requests for the
+shared bus. The binding handles this with an initial 6-second delay before the very first probe (letting
+the rest of the install's startup burst clear), 150ms pacing between requests, and automatic retry for any
+channel that didn't respond - confirmed reliable across repeated full-restart tests. No configuration needed
+for this, it's automatic; only the one-time startup probe is affected, not periodic `refreshInterval` polls.
+
 ## Channels
 
 Depending on the thing it supports different Channels

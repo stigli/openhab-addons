@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -253,10 +254,11 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                 }
                 case "hdl:MS24": {
                     // Needs one request per dry-contact channel (1-24), so send them directly here instead
-                    // of relying on the single-packet send below.
+                    // of relying on the single-packet send below. Periodic refresh, not the initial startup
+                    // probe, so no initial settle-down delay needed (see sendMs24StatusProbe's comment).
                     var bridge = bridgeHandler;
                     if (bridge != null) {
-                        sendMs24StatusProbe(bridge);
+                        sendMs24StatusProbe(bridge, false);
                     }
                     logger.debug("For Thing Type: {} with device id: {} with Refresh Interval: {} command is sent.",
                             getThing().getThingTypeUID().getAsString(), deviceID, refreshRate);
@@ -397,12 +399,13 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         getThing().getThingTypeUID().getAsString());
                 break;
             case "hdl:MS24":
-                // One request per dry-contact channel (1-24); see buildMs24StatusProbePackets for the
-                // confirmed byte layout.
-                hdlPacketList.addAll(buildMs24StatusProbePackets());
+                // One request per dry-contact channel (1-24), with retry for any that don't respond - see
+                // sendMs24StatusProbe's comment for the confirmed byte layout and why retry is needed.
+                // Sent via that paced/retrying method rather than the generic fast loop below.
                 logger.debug("For Thing Type: {} command: Refresh is sent.",
                         getThing().getThingTypeUID().getAsString());
-                break;
+                sendMs24StatusProbe(hdlBridge, true);
+                return;
             case "hdl:MFH06":
                 if (channelNumber != 0) {
                     p.setCommandType(CommandType.Read_Floor_Heating_Status);
@@ -501,7 +504,7 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
     }
 
     /**
-     * Builds one {@link CommandType#Read_Dry_Contact_Status} request per channel (1-24) for a hdl:MS24
+     * Builds one {@link CommandType#Read_Dry_Contact_Status} request for the given channel of a hdl:MS24
      * thing, targeting this handler's configured subnet/device. Payload is {@code [area, channel]};
      * confirmed via two independent external HDL Buspro implementations
      * ({@code eyesoft/home_assistant_buspro}, {@code caligo-mentis/smart-bus}), which both also agree with
@@ -510,30 +513,106 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
      * expects here though - {@code area = 1} is what eyesoft/home_assistant_buspro's own example uses, not
      * independently confirmed against real hardware.
      */
-    private Collection<HdlPacket> buildMs24StatusProbePackets() {
-        Collection<HdlPacket> packets = new ArrayList<HdlPacket>();
-        for (byte channel = 1; channel <= 24; channel++) {
-            HdlPacket channelRequest = new HdlPacket();
-            channelRequest.setTargetSubnetID(subNet);
-            channelRequest.setTargetDeviceId(deviceID);
-            channelRequest.setCommandType(CommandType.Read_Dry_Contact_Status);
-            channelRequest.setData(new byte[] { (byte) 1, channel });
-            packets.add(channelRequest);
-        }
-        return packets;
+    private HdlPacket buildMs24StatusProbePacket(byte channel) {
+        HdlPacket channelRequest = new HdlPacket();
+        channelRequest.setTargetSubnetID(subNet);
+        channelRequest.setTargetDeviceId(deviceID);
+        channelRequest.setCommandType(CommandType.Read_Dry_Contact_Status);
+        channelRequest.setData(new byte[] { (byte) 1, channel });
+        return channelRequest;
     }
 
+    private static final int MS24_PROBE_DELAY_MS = 150;
+    private static final int MS24_PROBE_RETRY_WAIT_MS = 800;
+    private static final int MS24_PROBE_MAX_ATTEMPTS = 3;
+    private static final int MS24_PROBE_INITIAL_STARTUP_DELAY_MS = 6000;
+
     /**
-     * Sends a status probe (see {@link #buildMs24StatusProbePackets()}) for a hdl:MS24 thing, used by both
-     * the one-time startup probe in {@link #sendUpdatePackets} and the fixed-delay {@link #refreshRunnable}.
+     * Sends a status probe for a hdl:MS24 thing (one {@link CommandType#Read_Dry_Contact_Status} request
+     * per channel, 1-24), used by both the one-time startup probe in {@link #sendUpdatePackets} and the
+     * fixed-delay {@link #refreshRunnable}.
+     *
+     * <p>
+     * Real-hardware testing (2026-08-21) found the 24-request burst unreliable regardless of pacing: no
+     * delay between sends lost almost all responses; 50ms pacing lost exactly channels 16-17 every time;
+     * bumping to 150ms fixed 16-17 but lost a *different* set (1, 2, 3, 8) instead - the failure count
+     * improved with more spacing but which channels failed kept shifting rather than settling, and an
+     * isolated single-channel probe confirmed 16/17 work fine on their own. That pattern - improving but not
+     * converging, and not tied to specific channels - points at time-varying contention on the shared
+     * bus/gateway (other Things on the same install issuing their own startup requests concurrently), not a
+     * fixed collision a bigger constant delay can reliably out-wait. Retrying (send the full pass at
+     * {@link #MS24_PROBE_DELAY_MS} spacing, wait {@link #MS24_PROBE_RETRY_WAIT_MS}, re-request only
+     * whichever channels haven't answered yet - tracked via {@link MS24#hasRespondedThisProbe} - up to
+     * {@link #MS24_PROBE_MAX_ATTEMPTS} passes) helped but didn't fully solve it: real captures showed the
+     * *first* attempt's failure rate tracked how busy the bus was at that exact moment - a run coinciding
+     * with the whole install's ~50+ other Things all sending their own startup requests concurrently lost
+     * 21/24 channels on attempt 1 (vs. much better first-attempt results when MS24 wasn't competing with a
+     * full system startup burst), and on that worst run even 3 retry passes couldn't fully recover. So
+     * {@code isInitialStartup} triggers an extra {@link #MS24_PROBE_INITIAL_STARTUP_DELAY_MS} wait before
+     * the very first request, giving the rest of the install's own startup burst time to clear before MS24
+     * starts competing for the bus at all - only for the true one-time startup call, not the periodic
+     * refresh, which doesn't coincide with a system-wide burst. Not yet confirmed against real hardware.
      */
-    private void sendMs24StatusProbe(HdlBridgeHandler hdlBridge) {
-        for (HdlPacket packet : buildMs24StatusProbePackets()) {
+    private void sendMs24StatusProbe(HdlBridgeHandler hdlBridge, boolean isInitialStartup) {
+        if (isInitialStartup) {
             try {
-                hdlBridge.sendPacket(packet);
-            } catch (IOException e) {
-                logger.warn("Could not send msg to bridge, got error msg: {}", e.getMessage());
+                Thread.sleep(MS24_PROBE_INITIAL_STARTUP_DELAY_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
             }
+        }
+        String serial = hdldeviceSerial;
+        if (serial != null && hdlBridge.getDevice(serial) instanceof MS24 ms24) {
+            ms24.resetProbeTracking();
+        }
+
+        List<Byte> channelsToRequest = new ArrayList<>();
+        for (byte channel = 1; channel <= 24; channel++) {
+            channelsToRequest.add(channel);
+        }
+
+        for (int attempt = 1; attempt <= MS24_PROBE_MAX_ATTEMPTS && !channelsToRequest.isEmpty(); attempt++) {
+            for (Byte channel : channelsToRequest) {
+                try {
+                    hdlBridge.sendPacket(buildMs24StatusProbePacket(channel));
+                } catch (IOException e) {
+                    logger.warn("Could not send msg to bridge, got error msg: {}", e.getMessage());
+                }
+                try {
+                    Thread.sleep(MS24_PROBE_DELAY_MS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+            try {
+                Thread.sleep(MS24_PROBE_RETRY_WAIT_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+
+            if (serial == null || !(hdlBridge.getDevice(serial) instanceof MS24 ms24)) {
+                // Nothing to check responses against yet (device object not created until its first
+                // response arrives) - keep retrying the same full list next pass.
+                continue;
+            }
+            List<Byte> stillMissing = new ArrayList<>();
+            for (Byte channel : channelsToRequest) {
+                if (!ms24.hasRespondedThisProbe(channel)) {
+                    stillMissing.add(channel);
+                }
+            }
+            if (!stillMissing.isEmpty() && attempt < MS24_PROBE_MAX_ATTEMPTS) {
+                logger.debug("MS24 {} channels {} did not respond on attempt {}/{}, retrying.", serial, stillMissing,
+                        attempt, MS24_PROBE_MAX_ATTEMPTS);
+            }
+            channelsToRequest = stillMissing;
+        }
+        if (!channelsToRequest.isEmpty()) {
+            logger.warn("MS24 {} channels {} never responded after {} attempts.", serial, channelsToRequest,
+                    MS24_PROBE_MAX_ATTEMPTS);
         }
     }
 
