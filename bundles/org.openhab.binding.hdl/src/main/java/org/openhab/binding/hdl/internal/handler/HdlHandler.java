@@ -425,6 +425,23 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                 p2.setData(new byte[] { (byte) 2 });
                 hdlPacketList.add(p2);
 
+                // One-time probe for each channel's configured travel duration (Curtain1Duration/
+                // Curtain2Duration channels) - see CommandType#Get_Curtain_Duration_Request for the
+                // real-hardware confirmation behind this.
+                HdlPacket p3 = new HdlPacket();
+                p3.setTargetSubnetID(subNet);
+                p3.setTargetDeviceId(deviceID);
+                p3.setCommandType(CommandType.Get_Curtain_Duration_Request);
+                p3.setData(new byte[] { (byte) 1 });
+                hdlPacketList.add(p3);
+
+                HdlPacket p4 = new HdlPacket();
+                p4.setTargetSubnetID(subNet);
+                p4.setTargetDeviceId(deviceID);
+                p4.setCommandType(CommandType.Get_Curtain_Duration_Request);
+                p4.setData(new byte[] { (byte) 2 });
+                hdlPacketList.add(p4);
+
                 logger.debug("For Thing Type: {} command: Refresh is sent.",
                         getThing().getThingTypeUID().getAsString());
                 break;
@@ -954,6 +971,11 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         if (((MPL848FH) device).getACMode() != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_ACMODE),
                                     new StringType(((MPL848FH) device).getACMode()));
+                        }
+                        var musicCommand = ((MPL848FH) device).getMusicCommand();
+                        if (musicCommand != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_MUSICCOMMAND),
+                                    new StringType(musicCommand));
                         }
                         break;
                     case MFH06_432: {
@@ -1527,6 +1549,20 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             updateState(
                                     new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_SHUTTER2CONTROL),
                                     upDownShutter2Status);
+                        }
+                    } {
+                        var curtainDurationShutter1 = ((MW02) device).getCurtainDurationShutter1();
+                        if (curtainDurationShutter1 != null) {
+                            updateState(
+                                    new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_CURTAIN1DURATION),
+                                    new DecimalType(curtainDurationShutter1));
+                        }
+                    } {
+                        var curtainDurationShutter2 = ((MW02) device).getCurtainDurationShutter2();
+                        if (curtainDurationShutter2 != null) {
+                            updateState(
+                                    new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_CURTAIN2DURATION),
+                                    new DecimalType(curtainDurationShutter2));
                         }
                     }
                         break;

@@ -40,6 +40,14 @@ public class MW02 extends Device {
     /** Shutter stop/move state per channel; 1-indexed to match the HDL protocol, index 0 is unused. **/
     private final @Nullable StopMoveType[] stopMoveStates = new StopMoveType[CHANNEL_COUNT + 1];
 
+    /**
+     * Configured full-travel duration per channel, as reported by the device itself via
+     * {@link org.openhab.binding.hdl.internal.device.CommandType#Get_Curtain_Duration_Response}; 1-indexed
+     * to match the HDL protocol, index 0 is unused. Unit assumed seconds (not formally confirmed) - see the
+     * comment on that CommandType entry.
+     **/
+    private final @Nullable Integer[] curtainDurations = new Integer[CHANNEL_COUNT + 1];
+
     public MW02(DeviceConfiguration c) {
         super(c);
     }
@@ -53,6 +61,15 @@ public class MW02 extends Device {
             case Response_Curtain_Switch_Control:
                 handleCurtainSwitchStatus(p);
                 break;
+            case Get_Curtain_Duration_Response:
+                // Confirmed via real hardware (2026-08-21): 3-byte payload [channel, duration(2B BE)], not
+                // the 4-byte [channel, reserved, duration(2B)] shape a reference implementation assumed.
+                int durationChannel = p.data[0];
+                if (durationChannel >= 1 && durationChannel <= CHANNEL_COUNT) {
+                    int duration = ((p.data[1] & 0xff) << 8) | (p.data[2] & 0xff);
+                    setCurtainDuration(durationChannel, duration);
+                }
+                break;
             default:
                 LOGGER.debug("For type: {}, Unhandled CommandType: {}.", p.sourcedeviceType, p.commandType);
                 break;
@@ -61,11 +78,14 @@ public class MW02 extends Device {
 
     private void handleCurtainSwitchStatus(HdlPacket p) {
         // data[0] holds the 1-based curtain channel (17 = percentage, not yet supported).
-        // TODO: confirmed on real hardware (2026-08-15) that pushing raw UpDownType state makes the
-        // Rollershutter item's percentage jump straight to 0%/100% the instant a move starts, instead of
-        // tracking the curtain's actual physical travel over time. Fixing this needs a simulated/interpolated
-        // PercentType position (e.g. a scheduled job that ramps 0<->100 over a configured travel-time while
-        // MOVE is in progress, snapping to whatever it's at on STOP) - deferred, needs its own design pass.
+        // Confirmed on real hardware (2026-08-15) that pushing raw UpDownType state makes the Rollershutter
+        // item's percentage jump straight to 0%/100% the instant a move starts, instead of tracking the
+        // curtain's actual physical travel over time. Not fixed here in the binding - openHAB core already
+        // ships a purpose-built solution for exactly this ("dumb" up/down/stop motor, no native percentage
+        // feedback): the org.openhab.transform.rollershutterposition add-on's ROLLERSHUTTERPOSITION profile,
+        // applied on the Item link (uptime/downtime config), simulates position without any binding code.
+        // See the README's "Curtain Position" section for real confirmed travel-time values from
+        // CommandType#Get_Curtain_Duration_Request.
         int channel = p.data[0];
         if (channel < 1 || channel > CHANNEL_COUNT) {
             return;
@@ -147,5 +167,26 @@ public class MW02 extends Device {
      */
     public @Nullable StopMoveType getStopMoveShutter2Status() {
         return getStopMoveStatus(2);
+    }
+
+    private void setCurtainDuration(int channel, int duration) {
+        if (!Integer.valueOf(duration).equals(curtainDurations[channel])) {
+            setUpdated(true);
+        }
+        curtainDurations[channel] = duration;
+    }
+
+    /**
+     * Configured full-travel duration for Shutter 1, as reported by the device itself.
+     */
+    public @Nullable Integer getCurtainDurationShutter1() {
+        return curtainDurations[1];
+    }
+
+    /**
+     * Configured full-travel duration for Shutter 2, as reported by the device itself.
+     */
+    public @Nullable Integer getCurtainDurationShutter2() {
+        return curtainDurations[2];
     }
 }

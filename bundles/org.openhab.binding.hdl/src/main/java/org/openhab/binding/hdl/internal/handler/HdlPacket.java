@@ -135,17 +135,17 @@ public class HdlPacket {
 
         // System.out.println("All Data: " + data);
 
-        packet.sourceSubnetID = data[offset];
+        packet.sourceSubnetID = data[offset] & 0xff;
         offset += 1;
-        packet.sourceDeviceID = data[offset];
+        packet.sourceDeviceID = data[offset] & 0xff;
         offset += 1;
         packet.sourceDevice = ushort(data[offset], data[offset + 1]);
         offset += 2;
         packet.command = ushort(data[offset], data[offset + 1]);
         offset += 2;
-        packet.targetSubnetID = data[offset];
+        packet.targetSubnetID = data[offset] & 0xff;
         offset += 1;
-        packet.targetDeviceID = data[offset];
+        packet.targetDeviceID = data[offset] & 0xff;
         offset += 1;
 
         packet.serialNr = Integer.toString(packet.sourceSubnetID * 1000 + packet.sourceDeviceID);

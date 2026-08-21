@@ -113,6 +113,7 @@
 			<channel id="ACCurrentTempSet" typeId="temperature"></channel>
 			<channel id="ACMode" typeId="acmode"/>
 			<channel id="ACFanSpeed" typeId="acfanspeed"/>
+			<channel id="MusicCommand" typeId="musiccommand"/>
 		</channels>
 		<config-description>
 			<parameter name="Subnet" type="integer" min="1" required="true">
@@ -372,6 +373,8 @@
 		<channels>
 			<channel id="Shutter1Control" typeId="control"></channel>
 			<channel id="Shutter2Control" typeId="control"></channel>
+			<channel id="Curtain1Duration" typeId="curtainduration"></channel>
+			<channel id="Curtain2Duration" typeId="curtainduration"></channel>
 		</channels>
 		<config-description>
 			<parameter name="Subnet" type="integer" min="1" required="true">
@@ -540,6 +543,20 @@
 		<description>Device control (UP, DOWN, MOVE/STOP, closure 0-100%)</description>
 	</channel-type>
 
+	<channel-type id="curtainduration">
+		<item-type>Number</item-type>
+		<label>Curtain Travel Duration</label>
+		<description>Full-travel duration for this curtain channel, as configured on the device itself and
+			queried
+			automatically at startup - use this value as the "uptime"/"downtime" parameter for the
+			ROLLERSHUTTERPOSITION profile
+			on the matching Shutter*Control channel's Item link (see the
+			README's "Curtain Position (MW02)" section). Unit assumed
+			seconds, not formally confirmed. Stays
+			undefined if the device doesn't respond to the query.</description>
+		<state pattern="%d s" readOnly="true"/>
+	</channel-type>
+
 	<channel-type id="fhmode">
 		<item-type>String</item-type>
 		<label>Floor Heating Mode</label>
@@ -616,6 +633,24 @@
 				<option value="Night">Night</option>
 			</options>
 		</state>
+	</channel-type>
+
+	<channel-type id="musiccommand">
+		<item-type>String</item-type>
+		<label>Music Command</label>
+		<description>Raw command the panel's "Music" tab sends its onboard Z-Audio engine when a Play/Stop/
+			source button is
+			pressed (e.g. "ON", "SRC+") - confirmed via real hardware capture that this panel
+			family talks a plain-text
+			"*Z&lt;zone&gt;&lt;command&gt;" protocol here regardless of what's
+			configured in the HDL Setup Tool's Music CMD list.
+			Updates on every button press, including
+			repeats of the same command, so rules should use an "received update" trigger
+			rather than
+			"changed" if you need every press to fire. The vocabulary beyond "ON"/"SRC+" is not fully mapped
+			yet -
+			treat unfamiliar values as new data points, not something already understood.</description>
+		<state pattern="%s" readOnly="true"/>
 	</channel-type>
 
 	<channel-type id="set_temp">

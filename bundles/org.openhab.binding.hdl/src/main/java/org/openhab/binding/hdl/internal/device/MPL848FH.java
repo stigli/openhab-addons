@@ -13,9 +13,12 @@
 package org.openhab.binding.hdl.internal.device;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -43,6 +46,11 @@ public class MPL848FH extends Device implements UniversalSwitchDevice {
 
     /** Universal switch state, keyed by switch number (see {@link UniversalSwitchDevice}). **/
     private final Map<Integer, OnOffType> uvSwitches = new HashMap<>();
+
+    private static final Pattern Z_AUDIO_COMMAND_PATTERN = Pattern.compile("^\\*Z\\d+(.+?)\\r?$");
+
+    /** Last command the panel's Music tab sent its onboard Z-Audio engine, e.g. "ON", "SRC+". **/
+    private @Nullable String musicCommand;
 
     // Floor Heating
     private @Nullable String floorHeatingTemperaturType;
@@ -252,10 +260,52 @@ public class MPL848FH extends Device implements UniversalSwitchDevice {
                 // situation already confirmed on real hardware for MPT0448's touch buttons (see
                 // MPT0448#treatHDLPacketForDevice). Nothing in this device's own state to update from these.
                 break;
+            case Read_Z_audio_Current_Status:
+            case Response_Read_Z_audio_Current_Status:
+                // Confirmed via real hardware capture (2026-08-18): the panel's Music tab Play/Stop/source
+                // buttons don't go through the Universal Switch config in the HDL Setup Tool's CMD list at
+                // all (that appears to be inert for these specific buttons, regardless of Mode) - instead
+                // the panel always drives its onboard Z-Audio engine directly with a plain-text
+                // "*Z<zone><command>\r" string, e.g. "*Z1ON" for Play, "*Z1SRC+" seen tied to a source
+                // change, and "*Z1STATUS?" as a repeating ~1-2s background poll (filtered out below as
+                // noise, not a real button press). The full command vocabulary beyond ON/SRC+ is not yet
+                // mapped - this just exposes whatever comes through verbatim.
+                parseZAudioCommand(p.data);
+                break;
             default:
                 LOGGER.debug("For type: {}, Unhandled CommandType: {}.", p.sourcedeviceType, p.commandType);
                 break;
         }
+    }
+
+    private void parseZAudioCommand(byte[] data) {
+        String raw = new String(data, StandardCharsets.US_ASCII);
+        Matcher matcher = Z_AUDIO_COMMAND_PATTERN.matcher(raw);
+        if (!matcher.matches()) {
+            LOGGER.debug("Music command from {} did not match the expected \"*Z<zone><command>\" format.", getType());
+            return;
+        }
+        String command = matcher.group(1);
+        if ("STATUS?".equals(command)) {
+            // Repeating background poll while the Music tab is open, not a real button press - not
+            // exposed as a channel update, it would spam every 1-2 seconds for no reason.
+            return;
+        }
+        setMusicCommand(command);
+    }
+
+    /**
+     * Always marks the device updated, even if the command repeats - each one represents a distinct
+     * button press, and a rule reacting to it needs every press to fire, not just the first of a run of
+     * identical ones.
+     */
+    public void setMusicCommand(String command) {
+        this.musicCommand = command;
+        setUpdated(true);
+    }
+
+    public @Nullable String getMusicCommand() {
+        return musicCommand;
     }
 
     @Override

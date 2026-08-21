@@ -59,6 +59,36 @@ at DEBUG level, including the sending device's address - useful for tracking dow
 unexpectedly driving a curtain directly (bypassing openHAB). Enable debug logging for
 `org.openhab.binding.hdl` and look for log lines starting with `Curtain command:`.
 
+## Curtain Position (MW02)
+
+`MW02`'s `Shutter1Control`/`Shutter2Control` channels only support `UP`/`DOWN`/`STOP` - there's no native
+percentage feedback, so a Rollershutter item bound directly to them jumps straight to 0%/100% the instant a
+move starts, instead of tracking real travel over time.
+
+openHAB core already ships a purpose-built fix for exactly this class of problem (motors with no position
+feedback, e.g. Somfy): the `org.openhab.transform.rollershutterposition` add-on's `ROLLERSHUTTERPOSITION`
+profile. Apply it on the Item link instead of writing any binding-specific code:
+
+```java
+Rollershutter E2R5MW02 "Rollershutter [%s]" {channel="hdl:MW02:Setup:1038:Shutter1Control"[profile="transform:ROLLERSHUTTERPOSITION", uptime=35, downtime=35]}
+```
+
+`uptime`/`downtime` are the full-travel time in seconds. Don't guess these - `MW02` queries the device's own
+configured travel time automatically at startup and exposes it on the read-only `Curtain1Duration`/
+`Curtain2Duration` channels; check those (e.g. link them to a temporary `Number` item, or view the Thing's
+channel state in MainUI) and copy the value straight into `uptime`/`downtime` above. Confirmed working
+against real MW02 hardware (2026-08-21, both channels returned `35`), though the specific unit (assumed
+seconds) isn't formally documented anywhere, just inferred from a plausible value.
+
+If a channel stays undefined, the device didn't respond to the query - you can retry it manually via the
+console, watching the log for a response:
+
+```text
+openhab:hdl curtainduration <subnet> <device> <channel>
+```
+
+(enable DEBUG logging for `org.openhab.binding.hdl` first, and look for `Get_Curtain_Duration_Response`).
+
 ## HDL Scenes
 
 If a scene configured in the HDL Setup Tool changes a dimmer/relay's channels (whether triggered from a
@@ -133,7 +163,8 @@ DryContact(1-24)Status  means that that it can be 24 Dry Contact channels. What 
 | Sonic                         | Switch           | This channel indicates if there is any movement.               | MS12                                          |
 | temperature                   | Number           | This channel indicates the measured temperature (in °C).       | MPL8_48_FH, MS08, MS12                        |
 | time                          | DateTime         | Current time.                                                 | ML01                                          |
-| Shutter(1-2)Control           | Rollershutter    | Device control: send UP/DOWN/STOP commands; state reflects the last known UP/DOWN direction (percentage closure is not implemented). | MW02                                          |
+| Shutter(1-2)Control           | Rollershutter    | Device control: send UP/DOWN/STOP commands; state reflects the last known UP/DOWN direction (no native percentage support - see "Curtain Position (MW02)" above for a fix). | MW02                                          |
+| Curtain(1-2)Duration           | Number           | Configured full-travel duration in seconds, queried from the device automatically at startup. Read-only. See "Curtain Position (MW02)" above.  | MW02                                          |
 | FHMode                        | String           | Floor heating mode (Normal, Day, Night, Away, Timer). Writable on MPL8_48_FH.         | MPL8_48_FH, MFH06                             |
 | FHNormalTempSet / FHTempSet / FHNightTempSet / FHAwayTempSet | Number:Temperature | Floor heating setpoint temperatures. Individually writable on MPL8_48_FH.       | MPL8_48_FH, MFH06                             |
 | FHCurrentTempSet              | Number:Temperature | Current floor heating temperature.                            | MPL8_48_FH, MFH06                             |
@@ -143,6 +174,30 @@ DryContact(1-24)Status  means that that it can be 24 Dry Contact channels. What 
 | ACFanSpeed                    | String           | AC fan speed (Auto, High, Medium, Low). Read-only, see ACMode.                  | MPL8_48_FH                                    |
 | ACCoolingTempSet / ACHeatTempSet / ACAutoTempSet / ACDryTempSet | Number:Temperature | AC setpoint temperatures. Read-only, see ACMode.        | MPL8_48_FH                                    |
 | ACCurrentTempSet              | Number:Temperature | Current AC temperature.                                        | MPL8_48_FH                                    |
+| MusicCommand                  | String           | Raw command the panel's Music tab sends its onboard Z-Audio engine (see "Music Tab / Z-Audio" below). Read-only.  | MPL8_48_FH                                    |
+
+## Music Tab / Z-Audio
+
+`MPL8_48_FH` panels have a "Music" tab in the HDL Setup Tool (SD Card/FTP/Radio/Audio IN, Play/Stop). It looks
+like a normal set of configurable buttons - each row lets you set a `Type` (Scene / Universal Switch / Single
+Channel Control) and target Subnet/Device, same as any other panel button - but **that configuration is
+inert for Play/Stop specifically**, confirmed on real hardware (2026-08-18) across multiple test rounds with
+otherwise valid, distinct, saved configurations. Pressing Play/Stop never sends the configured command at
+all; instead the panel always drives its own onboard Z-Audio engine directly with a plain-text serial-style
+command, `*Z<zone><command>\r` (e.g. `*Z1ON` for Play, `*Z1STATUS?` as a repeating ~1-2s background poll
+while the tab is open). This looks like a firmware-level restriction on this specific button type, not a
+configuration mistake - the Universal Switch/Scene/Single-Channel-Control options in that CMD list appear to
+be vestigial UI here.
+
+The `MusicCommand` channel exposes whatever command comes through verbatim (`STATUS?` filtered out as pure
+polling noise), so you can react to it in a rule - but in practice only `ON` (tied to a Play press) has ever
+been observed; **Stop never produces any distinguishable command at all**, on any test so far, regardless of
+CMD list configuration. This channel updates on every press, including repeats of the same value, so use a
+"received update" rule trigger rather than "changed" if you need every press to register.
+
+If you need a "stop" action, this specific button isn't a reliable way to get it - a Universal Switch
+elsewhere on the panel (a button not under the Music tab) is the better-supported route, since that
+mechanism is confirmed working elsewhere in this binding (see "Universal Switches (UVSwitch)" above).
 
 ## Full Example
 

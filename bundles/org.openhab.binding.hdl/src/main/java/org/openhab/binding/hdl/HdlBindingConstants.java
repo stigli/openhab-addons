@@ -95,6 +95,7 @@ public class HdlBindingConstants {
     public static final String CHANNEL_FHTIMER = "FHTimer";
     public static final String CHANNEL_ACMODE = "ACMode";
     public static final String CHANNEL_ACFANSPEED = "ACFanSpeed";
+    public static final String CHANNEL_MUSICCOMMAND = "MusicCommand";
     public static final String CHANNEL_ACCOOLINGTEMPSET = "ACCoolingTempSet";
     public static final String CHANNEL_ACHEATTEMPSET = "ACHeatTempSet";
     public static final String CHANNEL_ACAUTOTEMPSET = "ACAutoTempSet";
@@ -104,6 +105,8 @@ public class HdlBindingConstants {
     // public static final String CHANNEL_SHUTTER2UPDOWN = "Shutter2UpDown";
     public static final String CHANNEL_SHUTTER1CONTROL = "Shutter1Control";
     public static final String CHANNEL_SHUTTER2CONTROL = "Shutter2Control";
+    public static final String CHANNEL_CURTAIN1DURATION = "Curtain1Duration";
+    public static final String CHANNEL_CURTAIN2DURATION = "Curtain2Duration";
 
     public static final String CHANNEL_DRYCONTACT1 = "DryContact1Status";
     public static final String CHANNEL_DRYCONTACT2 = "DryContact2Status";

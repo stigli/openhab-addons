@@ -12,13 +12,16 @@
  */
 package org.openhab.binding.hdl.internal;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.openhab.binding.hdl.HdlBindingConstants;
+import org.openhab.binding.hdl.internal.device.CommandType;
 import org.openhab.binding.hdl.internal.handler.HdlBridgeHandler;
+import org.openhab.binding.hdl.internal.handler.HdlPacket;
 import org.openhab.core.io.console.Console;
 import org.openhab.core.io.console.extensions.AbstractConsoleCommandExtension;
 import org.openhab.core.io.console.extensions.ConsoleCommandExtension;
@@ -40,6 +43,7 @@ import org.osgi.service.component.annotations.Reference;
 public class HdlConsoleCommandExtension extends AbstractConsoleCommandExtension {
 
     private static final String SUBCMD_BUSSTATS = "busstats";
+    private static final String SUBCMD_CURTAINDURATION = "curtainduration";
     private final ThingRegistry thingRegistry;
 
     @Activate
@@ -52,6 +56,8 @@ public class HdlConsoleCommandExtension extends AbstractConsoleCommandExtension 
     public void execute(String[] args, Console console) {
         if (args.length > 0 && SUBCMD_BUSSTATS.equals(args[0])) {
             handleBusStats(console);
+        } else if (args.length == 4 && SUBCMD_CURTAINDURATION.equals(args[0])) {
+            handleCurtainDuration(console, args[1], args[2], args[3]);
         } else {
             printUsage(console);
         }
@@ -73,6 +79,48 @@ public class HdlConsoleCommandExtension extends AbstractConsoleCommandExtension 
         }
     }
 
+    /**
+     * Sends a {@link CommandType#Get_Curtain_Duration_Request} probe to the given Subnet/Device/channel and
+     * returns - the response (if the device supports this command at all) arrives asynchronously through
+     * the normal packet log, not this console session. Enable DEBUG logging on org.openhab.binding.hdl and
+     * watch for CommandType Get_Curtain_Duration_Response to see what comes back, if anything.
+     */
+    private void handleCurtainDuration(Console console, String subnetArg, String deviceArg, String channelArg) {
+        List<Thing> bridges = findBridges();
+        if (bridges.isEmpty()) {
+            console.println("No HDL bridge things found.");
+            return;
+        }
+        if (!(bridges.get(0).getHandler() instanceof HdlBridgeHandler handler)) {
+            console.println(bridges.get(0).getUID().toString() + ": no handler (not initialized)");
+            return;
+        }
+        int subnet;
+        int device;
+        int channel;
+        try {
+            subnet = Integer.parseInt(subnetArg);
+            device = Integer.parseInt(deviceArg);
+            channel = Integer.parseInt(channelArg);
+        } catch (NumberFormatException e) {
+            console.println("Subnet, device and channel must all be numbers.");
+            return;
+        }
+        HdlPacket p = new HdlPacket();
+        p.setTargetSubnetID(subnet);
+        p.setTargetDeviceId(device);
+        p.setCommandType(CommandType.Get_Curtain_Duration_Request);
+        p.setData(new byte[] { (byte) channel });
+        try {
+            handler.sendPacket(p);
+            console.println("Sent Get_Curtain_Duration_Request to " + subnet + "." + device + ", channel " + channel
+                    + " - check the DEBUG log for a Get_Curtain_Duration_Response (or nothing, if "
+                    + "this device doesn't support the command).");
+        } catch (IOException e) {
+            console.println("Failed to send: " + e.getMessage());
+        }
+    }
+
     private List<Thing> findBridges() {
         List<Thing> bridges = new ArrayList<>();
         for (Thing thing : thingRegistry.getAll()) {
@@ -85,7 +133,10 @@ public class HdlConsoleCommandExtension extends AbstractConsoleCommandExtension 
 
     @Override
     public List<String> getUsages() {
-        return Arrays.asList(buildCommandUsage(SUBCMD_BUSSTATS,
-                "Show HDL bus traffic statistics (message rate, top senders/receivers)"));
+        return Arrays.asList(
+                buildCommandUsage(SUBCMD_BUSSTATS,
+                        "Show HDL bus traffic statistics (message rate, top senders/receivers)"),
+                buildCommandUsage(SUBCMD_CURTAINDURATION + " <subnet> <device> <channel>",
+                        "Probe a curtain device for its configured travel duration (experimental, unconfirmed command)"));
     }
 }

@@ -71,6 +71,14 @@ public enum CommandType {
     Read_Status_of_Curtain_Switch(58338), // E3E2
     Response_Read_Status_of_Curtain_Switch(58339),
     Broadcast_Status_of_Status_of_Curtain_Switches(58340), // E3E4
+    // Confirmed via real MW02 hardware (2026-08-21, console-triggered probe): request payload [channel],
+    // response payload [channel, duration(2B, big-endian)] - only 3 bytes total, not the 4-byte
+    // [channel, reserved, duration(2B)] shape the caligo-mentis/smart-bus reference implementation's own
+    // test fixtures assumed. Unit not formally confirmed but almost certainly seconds (both curtain
+    // channels on stigla's real MW02 reported 0x0023 = 35, a plausible full-travel time; the alternative of
+    // deciseconds would mean 3.5s, implausibly short for a real curtain motor).
+    Get_Curtain_Duration_Request(59392), // E800
+    Get_Curtain_Duration_Response(59393), // E801
     GPRS_Control(58324),
     Response_GPRS_Control(58325),
     Panel_Control(58328), // 0xE3D8
@@ -249,6 +257,10 @@ public enum CommandType {
                 return Response_Read_Status_of_Curtain_Switch;
             case 58340:
                 return Broadcast_Status_of_Status_of_Curtain_Switches;
+            case 59392:
+                return Get_Curtain_Duration_Request;
+            case 59393:
+                return Get_Curtain_Duration_Response;
             case 58324:
                 return GPRS_Control;
             case 58325:
@@ -485,6 +497,10 @@ public enum CommandType {
                 return "Response_Read_Status_of_Curtain_Switch";
             case 58340:
                 return "Broadcast_Status_of_Status_of_Curtain_Switches";
+            case 59392:
+                return "Get_Curtain_Duration_Request";
+            case 59393:
+                return "Get_Curtain_Duration_Response";
             case 58324:
                 return "GPRS_Control";
             case 58325:
