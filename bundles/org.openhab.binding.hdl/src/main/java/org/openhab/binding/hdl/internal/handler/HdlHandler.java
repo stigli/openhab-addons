@@ -528,9 +528,14 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
     private static final int MS24_PROBE_INITIAL_STARTUP_DELAY_MS = 6000;
 
     /**
-     * Sends a status probe for a hdl:MS24 thing (one {@link CommandType#Read_Dry_Contact_Status} request
-     * per channel, 1-24), used by both the one-time startup probe in {@link #sendUpdatePackets} and the
-     * fixed-delay {@link #refreshRunnable}.
+     * Sends a status probe for a hdl:MS24 thing (one {@link CommandType#Read_Dry_Contact_Status} request per
+     * channel), used by both the one-time startup probe in {@link #sendUpdatePackets} and the fixed-delay
+     * {@link #refreshRunnable}. Only requests channels that are actually {@link #isLinked linked} to an Item
+     * (2026-08-22) - most installs use a fraction of the 24 available dry contacts, and skipping unused ones
+     * both cuts startup time and reduces this device's contribution to the bus contention described below.
+     * A channel linked after the initial startup probe has already run won't get a value until the next
+     * periodic refresh (if {@code refreshInterval} is set) or an unsolicited broadcast from the device -
+     * same tradeoff other dynamic/optional channels in this binding already have.
      *
      * <p>
      * Real-hardware testing (2026-08-21) found the 24-request burst unreliable regardless of pacing: no
@@ -569,7 +574,9 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
 
         List<Byte> channelsToRequest = new ArrayList<>();
         for (byte channel = 1; channel <= 24; channel++) {
-            channelsToRequest.add(channel);
+            if (isLinked(new ChannelUID(getThing().getUID(), "DryContact" + channel + "Status"))) {
+                channelsToRequest.add(channel);
+            }
         }
 
         for (int attempt = 1; attempt <= MS24_PROBE_MAX_ATTEMPTS && !channelsToRequest.isEmpty(); attempt++) {

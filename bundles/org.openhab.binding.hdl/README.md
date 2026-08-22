@@ -5,9 +5,9 @@ This binding allows you to integrate, view and control the HDL  items in the ope
 
 ## Supported Things
 
-This binding supports for now 15 different HDL items.
-More will be added as the binding are expanded.
-Thing names are using the article number that HDL are using.
+This binding supports for now 15 different physical HDL devices, plus a virtual `Scene` Thing for triggering
+scenes (see "HDL Scenes" below). More will be added as the binding are expanded.
+Thing names for physical devices use the article number that HDL are using.
 
 | Thing         | Type      | Description                                                   |
 |---------------|-----------|-----------------------------------------------------------------|
@@ -27,14 +27,14 @@ Thing names are using the article number that HDL are using.
 | MS12          | Thing     | HDL Sensor with 12 functions                                  |
 | MS24          | Thing     | HDL with 24 dry contacts                                      |
 | MW02          | Thing     | HDL Curtain controller for controlling off 3. parts curtains  |
+| Scene         | Thing     | Virtual - triggers an existing scene defined in the HDL Setup Tool; not a physical device, so it isn't discovered (see "HDL Scenes" below) |
 
 ## Discovery
 
 The bridge actively searches the HDL bus for devices once when it comes online, and again whenever a manual
 Inbox scan is triggered; devices found this way, as well as any device that is seen sending traffic for other
 reasons, show up in the Inbox. Not every discovered device type maps to a supported Thing type yet (see
-`HdlDeviceDiscoveryService`), and this is a new, hardware-unverified feature, so things and items may still need
-to be defined manually.
+`HdlDeviceDiscoveryService`). Confirmed working on real hardware.
 
 ## Bus Statistics
 
@@ -91,15 +91,37 @@ openhab:hdl curtainduration <subnet> <device> <channel>
 
 ## HDL Scenes
 
-If a scene configured in the HDL Setup Tool changes a dimmer/relay's channels (whether triggered from a
-physical panel, another scene, or anywhere else on the bus), the affected `DimChannel`/`RelayCh` channels on
-`MDT0601`, `MDT04015`, `MRDA06`, `MR16xx`, `MR12xx`, `MR08xx`, and `MR04xx` update automatically to reflect
-the new state - no separate "Scene" Thing or configuration needed. This binding does not (yet) support
-triggering a scene from openHAB itself, only reflecting scenes triggered elsewhere.
+### Automatic sync (no configuration needed)
 
-This is based on the HDL Buspro `Broadcast_Status_of_Scene` message; the exact byte layout was reconstructed
-from third-party protocol documentation rather than confirmed HDL hardware traffic, so double-check it
-reflects reality correctly on your own setup after a scene runs.
+If a scene configured in the HDL Setup Tool changes a dimmer/relay's channels (whether triggered from a
+physical panel, another scene, a `Scene` Thing below, or anywhere else on the bus), the affected
+`DimChannel`/`RelayCh` channels on `MDT0601`, `MDT04015`, `MRDA06`, `MR16xx`, `MR12xx`, `MR08xx`, and
+`MR04xx` update automatically to reflect the new state - no separate "Scene" Thing or configuration needed
+for this direction. Based on the HDL Buspro `Broadcast_Status_of_Scene` message. Confirmed working on real
+hardware.
+
+### Triggering a scene from openHAB
+
+Use a `Scene` Thing to fire an existing scene (defined once in the HDL Setup Tool) from openHAB:
+
+```java
+Thing Scene 1032_5_3 [Subnet=1, DeviceID=32, area=5, scene=3]
+```
+
+- `Subnet`/`DeviceID` - any device on the bus that's a member of the target area (commonly one of the
+  relay/dimmer devices affected by the scene) - scenes don't have their own bus address.
+- `area` - the area number the scene is configured under in the HDL Setup Tool.
+- `scene` - the scene number to run.
+
+It has one channel, `Trigger` (Switch): sending `ON` fires the scene. `OFF` does nothing - scenes are a
+fire-once action, not a stateful switch.
+
+```java
+Switch E2Scene1 "Evening Scene" {channel="hdl:Scene:Setup:1032_5_3:Trigger"}
+```
+
+Confirmed working end-to-end on real hardware (2026-08-22): the outbound `Scene_Control` command and the
+target device's resulting physical effect both matched exactly what was expected.
 
 ## Universal Switches (UVSwitch)
 
@@ -145,12 +167,14 @@ requests a fresh status right after it sees the panel actively control something
 another device), which is how these panels are commonly configured. `0` disables refresh entirely, and any
 positive number polls every that many seconds, same as the other Things below.
 
-`MS24` needs one request per dry-contact channel (24 total) at startup, which real-hardware testing showed
-is unreliable if fired all at once - it competes with every other Thing's own startup requests for the
-shared bus. The binding handles this with an initial 6-second delay before the very first probe (letting
-the rest of the install's startup burst clear), 150ms pacing between requests, and automatic retry for any
-channel that didn't respond - confirmed reliable across repeated full-restart tests. No configuration needed
-for this, it's automatic; only the one-time startup probe is affected, not periodic `refreshInterval` polls.
+`MS24` only queries the dry-contact channels that are actually linked to an Item - if you're only using 2 of
+the 24, only those 2 get polled, not all 24. For whichever channels are linked, firing all their requests at
+once at startup turned out to be unreliable on real hardware - it competes with every other Thing's own
+startup requests for the shared bus. The binding handles this with an initial 6-second delay before the very
+first probe (letting the rest of the install's startup burst clear), 150ms pacing between requests, and
+automatic retry for any channel that didn't respond - confirmed reliable across repeated full-restart tests.
+No configuration needed for any of this, it's automatic; only the one-time startup probe is affected, not
+periodic `refreshInterval` polls.
 
 ## Channels
 
@@ -208,7 +232,8 @@ mechanism is confirmed working elsewhere in this binding (see "Universal Switche
 
 ## Full Example
 
-Since auto discovery has not been added yet Things need to be defined manually. You need a `hdl:bridge` definition incl the right IP address of the HDL network item and its port number that should be 6000.
+While discovered devices show up in the Inbox automatically, defining Things manually (as below) gives you
+full control over config like `refreshInterval` up front. You need a `hdl:bridge` definition incl the right IP address of the HDL network item and its port number that should be 6000.
 
 hdl.things:
 
@@ -242,6 +267,7 @@ Bridge hdl:bridge:Setup [Ip="192.168.10.250", Port=6000]{
         Type UVSwitch : UVSwitch201 "Alarm Status" [ switchNumber=201 ]
     }
     Thing MPT04 1110 [Subnet=1, DeviceID=110]
+    Thing Scene 1032_5_3 [Subnet=1, DeviceID=32, area=5, scene=3]
 }
 ```
 
@@ -271,4 +297,5 @@ String  E2R5DLP01FHM    "Heat Mode: [%s]"                                       
 Rollershutter E2R5MW02  "Rollershutter [%s]"                                    {channel="hdl:MW02:Setup:1038:Shutter1Control"}
 Switch  E2R5MPT04B1     "Panel Button 1"                                        {channel="hdl:MPT04:Setup:1093:Button1"}
 Switch  E2R1UVAlarm     "Alarm Status"                                          {channel="hdl:ML01:Setup:1101:UVSwitch201"}
+Switch  E2Scene1        "Evening Scene"                                         {channel="hdl:Scene:Setup:1032_5_3:Trigger"}
 ```
