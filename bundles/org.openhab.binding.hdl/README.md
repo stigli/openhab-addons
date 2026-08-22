@@ -28,6 +28,7 @@ Thing names for physical devices use the article number that HDL are using.
 | MS24          | Thing     | HDL with 24 dry contacts                                      |
 | MW02          | Thing     | HDL Curtain controller for controlling off 3. parts curtains  |
 | Scene         | Thing     | Virtual - triggers an existing scene defined in the HDL Setup Tool; not a physical device, so it isn't discovered (see "HDL Scenes" below) |
+| AC            | Thing     | Virtual, send-only - controls a dedicated HDL AC gateway device; not discovered, not confirmed on real hardware (see "AC Control" below) |
 
 ## Discovery
 
@@ -123,6 +124,43 @@ Switch E2Scene1 "Evening Scene" {channel="hdl:Scene:Setup:1032_5_3:Trigger"}
 Confirmed working end-to-end on real hardware (2026-08-22): the outbound `Scene_Control` command and the
 target device's resulting physical effect both matched exactly what was expected.
 
+## AC Control
+
+**⚠️ Not confirmed on real hardware - no AC gateway was available to test against.** Implemented purely from
+the official "HDL-BUS Pro operation codes" reference document (2026-08-22). Use at your own risk, and check
+carefully that the AC unit actually does what you expect before relying on it.
+
+This is a **different thing from the `ACMode`/`ACFanSpeed`/`AC*TempSet` channels on `MPL8_48_FH`** - those
+are read-only and reflect what a DLP panel's own AC page is showing (see "Channels" below). The `AC` Thing
+here targets a **separate, dedicated AC gateway device** (HDL sells one under the name "CoolBox VRV
+Gateway") that manages one or more physical AC units, addressed by an `acNumber` (1-128) rather than by
+Subnet/DeviceID alone - one gateway can control multiple AC units.
+
+**This Thing is send-only.** The gateway that would answer these commands reports a device type this binding
+doesn't recognize (no real hardware was available to capture it from), so status can never be read back -
+every channel is write-only, with no confirmed state, and the Thing will not show real AC status anywhere.
+If you have this hardware and can capture its device type from the log (look for `Unhandled`/`Invalid`
+device type entries after sending a command), that's the one piece needed to add read support - it's a
+one-line addition to `DeviceType.java`, same as previous device compatibility fixes in this binding.
+
+```java
+Thing AC 1200 [Subnet=1, DeviceID=200, acNumber=1, temperatureType="C"]
+```
+
+```java
+Switch  E2ACPower       "AC Power"          {channel="hdl:AC:Setup:1200:Power"}
+String  E2ACMode        "AC Mode"           {channel="hdl:AC:Setup:1200:Mode"}
+String  E2ACFanSpeed    "AC Fan Speed"      {channel="hdl:AC:Setup:1200:FanSpeed"}
+Number:Temperature E2ACCoolSet "AC Cooling Setpoint [%.1f %unit%]" {channel="hdl:AC:Setup:1200:CoolingSetpoint"}
+```
+
+`Mode` accepts `Cooling`/`Heating`/`Fan`/`Auto`/`Dry`. `FanSpeed` accepts `Auto`/`High`/`Medium`/`Low`. Since
+there's no status readback, this binding tracks your last-sent values internally and re-sends all of them
+together whenever any one channel changes (the underlying `Control_AC` command requires the full state in
+every packet, not just the field that changed) - so the first command you send after a restart will use this
+binding's built-in defaults (Auto/Auto/22°C) for anything you haven't explicitly set yet, not whatever the
+AC unit's own actual last real state was.
+
 ## Universal Switches (UVSwitch)
 
 HDL Buspro "Universal Switch" (UV Switch) is a generic on/off flag - a physical device can expose any number
@@ -206,6 +244,10 @@ DryContact(1-24)Status  means that that it can be 24 Dry Contact channels. What 
 | ACCoolingTempSet / ACHeatTempSet / ACAutoTempSet / ACDryTempSet | Number:Temperature | AC setpoint temperatures. Read-only, see ACMode.        | MPL8_48_FH                                    |
 | ACCurrentTempSet              | Number:Temperature | Current AC temperature.                                        | MPL8_48_FH                                    |
 | MusicCommand                  | String           | Raw command the panel's Music tab sends its onboard Z-Audio engine (see "Music Tab / Z-Audio" below). Read-only.  | MPL8_48_FH                                    |
+| ACPower                       | Switch           | AC on/off, as shown on the DLP panel's own AC page. Read-only. Not confirmed on real hardware (see "AC Control" above for actually controlling AC). | MPL8_48_FH |
+| PanelKeyLock / LockAC / SetupPageLock | Switch    | Panel/AC/setup-page key-lock status. Read-only, not confirmed on real hardware. | MPL8_48_FH |
+| LCDBacklightStatus            | Switch           | Whether the panel's LCD backlight feature is on. Read-only, not confirmed on real hardware. | MPL8_48_FH |
+| PanelBacklight / StatusLight  | Number           | Panel backlight / status light brightness (0-100). Read-only, not confirmed on real hardware. | MPL8_48_FH |
 
 ## Music Tab / Z-Audio
 

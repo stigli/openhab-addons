@@ -44,6 +44,8 @@ public class HdlBindingConstants {
     public static final String PROPERTY_CHANNELNUMBER = "channelNumber";
     public static final String PROPERTY_AREA = "area";
     public static final String PROPERTY_SCENE = "scene";
+    public static final String PROPERTY_ACNUMBER = "acNumber";
+    public static final String PROPERTY_ACTEMPERATURETYPE = "temperatureType";
     // List of all Thing Type UIDs
     public static final ThingTypeUID THING_TYPE_BRIDGE = new ThingTypeUID(BINDING_ID, "bridge");
 
@@ -69,6 +71,10 @@ public class HdlBindingConstants {
     // Virtual thing - not a real device type on the bus, so it's not part of SUPPORTED_DEVICE_THING_TYPES_UIDS
     // (discovery); triggers an existing scene programmed via the HDL Setup Tool, doesn't represent hardware.
     public static final ThingTypeUID THING_TYPE_SCENE = new ThingTypeUID(BINDING_ID, "Scene");
+    // Virtual, send-only thing - the real device that answers AC control commands (a dedicated AC gateway,
+    // not a DLP panel) reports an unknown product code, so no Device object is ever created to receive
+    // responses; see CommandType#Control_AC. Not part of SUPPORTED_DEVICE_THING_TYPES_UIDS (discovery).
+    public static final ThingTypeUID THING_TYPE_AC = new ThingTypeUID(BINDING_ID, "AC");
 
     // List of all Channel ids
     public static final String CHANNEL_BUS_MESSAGE_RATE = "BusMessageRate";
@@ -83,6 +89,13 @@ public class HdlBindingConstants {
     public static final String CHANNEL_BUTTON3 = "Button3";
     public static final String CHANNEL_BUTTON4 = "Button4";
     public static final String CHANNEL_SCENETRIGGER = "Trigger";
+    public static final String CHANNEL_AC_POWER = "Power";
+    public static final String CHANNEL_AC_MODE = "Mode";
+    public static final String CHANNEL_AC_FANSPEED = "FanSpeed";
+    public static final String CHANNEL_AC_COOLINGSETPOINT = "CoolingSetpoint";
+    public static final String CHANNEL_AC_HEATINGSETPOINT = "HeatingSetpoint";
+    public static final String CHANNEL_AC_AUTOSETPOINT = "AutoSetpoint";
+    public static final String CHANNEL_AC_DRYSETPOINT = "DrySetpoint";
     public static final String CHANNEL_FHNORMALTEMPSET = "FHNormalTempSet";
     // Matches the "FHTempSet" channel id actually declared in thing-types.xml for both MPL8_48_FH and MFH06
     // (the Java constant name keeps "Day" for readability at call sites; the string value must not).
@@ -96,6 +109,13 @@ public class HdlBindingConstants {
     public static final String CHANNEL_ACMODE = "ACMode";
     public static final String CHANNEL_ACFANSPEED = "ACFanSpeed";
     public static final String CHANNEL_MUSICCOMMAND = "MusicCommand";
+    public static final String CHANNEL_ACPOWER = "ACPower";
+    public static final String CHANNEL_PANELKEYLOCK = "PanelKeyLock";
+    public static final String CHANNEL_LOCKAC = "LockAC";
+    public static final String CHANNEL_SETUPPAGELOCK = "SetupPageLock";
+    public static final String CHANNEL_LCDBACKLIGHTSTATUS = "LCDBacklightStatus";
+    public static final String CHANNEL_BACKLIGHT = "PanelBacklight";
+    public static final String CHANNEL_STATUSLIGHT = "StatusLight";
     public static final String CHANNEL_ACCOOLINGTEMPSET = "ACCoolingTempSet";
     public static final String CHANNEL_ACHEATTEMPSET = "ACHeatTempSet";
     public static final String CHANNEL_ACAUTOTEMPSET = "ACAutoTempSet";
@@ -269,10 +289,12 @@ public class HdlBindingConstants {
     }
 
     public static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Collections
-            .unmodifiableSet(Stream.of(THING_TYPE_BRIDGE, THING_TYPE_ML01, THING_TYPE_MDT0601, THING_TYPE_MPL8_48_FH,
-                    THING_TYPE_MFH06, THING_TYPE_MPT04_48, THING_TYPE_MR16XX, THING_TYPE_MR12XX, THING_TYPE_MR08XX,
-                    THING_TYPE_MW02, THING_TYPE_MS12, THING_TYPE_MS08, THING_TYPE_MS24, THING_TYPE_MRDA06,
-                    THING_TYPE_MR04XX, THING_TYPE_MDT04015, THING_TYPE_SCENE).collect(Collectors.toSet()));
+            .unmodifiableSet(Stream
+                    .of(THING_TYPE_BRIDGE, THING_TYPE_ML01, THING_TYPE_MDT0601, THING_TYPE_MPL8_48_FH, THING_TYPE_MFH06,
+                            THING_TYPE_MPT04_48, THING_TYPE_MR16XX, THING_TYPE_MR12XX, THING_TYPE_MR08XX,
+                            THING_TYPE_MW02, THING_TYPE_MS12, THING_TYPE_MS08, THING_TYPE_MS24, THING_TYPE_MRDA06,
+                            THING_TYPE_MR04XX, THING_TYPE_MDT04015, THING_TYPE_SCENE, THING_TYPE_AC)
+                    .collect(Collectors.toSet()));
 
     public static final Set<ThingTypeUID> SUPPORTED_DEVICE_THING_TYPES_UIDS = Collections.unmodifiableSet(Stream
             .of(THING_TYPE_ML01, THING_TYPE_MDT0601, THING_TYPE_MPL8_48_FH, THING_TYPE_MFH06, THING_TYPE_MPT04_48,

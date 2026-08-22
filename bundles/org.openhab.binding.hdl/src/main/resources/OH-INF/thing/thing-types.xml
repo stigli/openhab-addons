@@ -114,6 +114,13 @@
 			<channel id="ACMode" typeId="acmode"/>
 			<channel id="ACFanSpeed" typeId="acfanspeed"/>
 			<channel id="MusicCommand" typeId="musiccommand"/>
+			<channel id="ACPower" typeId="readonlyswitch"/>
+			<channel id="PanelKeyLock" typeId="readonlyswitch"/>
+			<channel id="LockAC" typeId="readonlyswitch"/>
+			<channel id="SetupPageLock" typeId="readonlyswitch"/>
+			<channel id="LCDBacklightStatus" typeId="readonlyswitch"/>
+			<channel id="PanelBacklight" typeId="Brightness"/>
+			<channel id="StatusLight" typeId="Brightness"/>
 		</channels>
 		<config-description>
 			<parameter name="Subnet" type="integer" min="1" required="true">
@@ -537,6 +544,59 @@
 		</config-description>
 	</thing-type>
 
+	<thing-type id="AC">
+		<supported-bridge-type-refs>
+			<bridge-type-ref id="bridge"/>
+		</supported-bridge-type-refs>
+		<label>AC Control (send-only)</label>
+		<description>Sends AC control commands (Control_AC) to a dedicated HDL AC gateway device - not a DLP
+			panel's own AC
+			display (see ACMode/ACFanSpeed on MPL8_48_FH for that). Send-only: the gateway that
+			answers these commands reports a
+			product code this binding doesn't recognize, so status can't be
+			read back - every channel here is write-only and has
+			no confirmed state. Implemented from the
+			official "HDL-BUS Pro operation codes" reference document (2026-08-22), not
+			confirmed against real
+			hardware - no AC gateway was available to test against. See the README's "AC Control" section
+			before using this.</description>
+		<channels>
+			<channel id="Power" typeId="acpower"/>
+			<channel id="Mode" typeId="acmode_control"/>
+			<channel id="FanSpeed" typeId="acfanspeed_control"/>
+			<channel id="CoolingSetpoint" typeId="set_temp"/>
+			<channel id="HeatingSetpoint" typeId="set_temp"/>
+			<channel id="AutoSetpoint" typeId="set_temp"/>
+			<channel id="DrySetpoint" typeId="set_temp"/>
+		</channels>
+		<config-description>
+			<parameter name="Subnet" type="integer" min="1" required="true">
+				<label>Subnet</label>
+				<description>Subnet of the AC gateway device.</description>
+			</parameter>
+			<parameter name="DeviceID" type="integer" min="1" required="true">
+				<label>Device ID</label>
+				<description>Device ID of the AC gateway device.</description>
+			</parameter>
+			<parameter name="acNumber" type="integer" min="1" max="128" required="true">
+				<label>AC Number</label>
+				<description>Which AC unit (1-128) on this gateway to control - one gateway can manage multiple
+					physical AC units.</description>
+			</parameter>
+			<parameter name="temperatureType" type="text" required="false">
+				<label>Temperature Unit</label>
+				<description>Which unit this AC gateway expects setpoints in - "C" (default) or "F". This
+					binding cannot detect it
+					automatically since status can't be read back.</description>
+				<default>C</default>
+				<options>
+					<option value="C">Celsius</option>
+					<option value="F">Fahrenheit</option>
+				</options>
+			</parameter>
+		</config-description>
+	</thing-type>
+
 	<channel-type id="control">
 		<item-type>Rollershutter</item-type>
 		<label>Control</label>
@@ -571,6 +631,41 @@
 				<option value="Night">Night</option>
 				<option value="Away">Away</option>
 				<option value="Timer">Timer</option>
+			</options>
+		</state>
+	</channel-type>
+
+	<channel-type id="acpower">
+		<item-type>Switch</item-type>
+		<label>AC Power</label>
+		<description>Turns the AC unit on/off. Write-only - see the "AC Control" README section.</description>
+	</channel-type>
+
+	<channel-type id="acmode_control">
+		<item-type>String</item-type>
+		<label>AC Mode</label>
+		<description>Sets the AC operating mode. Write-only - see the "AC Control" README section.</description>
+		<state pattern="%s">
+			<options>
+				<option value="Cooling">Cooling</option>
+				<option value="Heating">Heating</option>
+				<option value="Fan">Fan</option>
+				<option value="Auto">Auto</option>
+				<option value="Dry">Dry</option>
+			</options>
+		</state>
+	</channel-type>
+
+	<channel-type id="acfanspeed_control">
+		<item-type>String</item-type>
+		<label>AC Fan Speed</label>
+		<description>Sets the AC fan speed. Write-only - see the "AC Control" README section.</description>
+		<state pattern="%s">
+			<options>
+				<option value="Auto">Auto</option>
+				<option value="High">High</option>
+				<option value="Medium">Medium</option>
+				<option value="Low">Low</option>
 			</options>
 		</state>
 	</channel-type>
@@ -748,5 +843,16 @@
 		<item-type>Switch</item-type>
 		<label>Switch</label>
 		<description>Switch Relay</description>
+	</channel-type>
+
+	<channel-type id="readonlyswitch">
+		<item-type>Switch</item-type>
+		<label>Status</label>
+		<description>Read-only status reported by the panel via Response_Panel_Control - confirmed via the
+			official HDL-BUS Pro
+			operation codes reference doc (2026-08-22), not yet independently confirmed
+			against real hardware traffic for this
+			specific field.</description>
+		<state readOnly="true"/>
 	</channel-type>
 </thing:thing-descriptions>

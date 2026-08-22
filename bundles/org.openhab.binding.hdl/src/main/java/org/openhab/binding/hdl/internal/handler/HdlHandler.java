@@ -91,6 +91,24 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
     private int channelNumber;
     private int area;
     private int scene;
+    private int acNumber;
+    private int acTemperatureTypeNr;
+
+    /**
+     * Locally-tracked "desired" AC state for hdl:AC things - this binding never receives AC status back (see
+     * CommandType#Control_AC_Status), so unlike every other writable channel in this binding, there's no real
+     * device state to read from; each of these starts at a plausible default and is only ever updated by
+     * commands sent from openHAB. Control_AC always sends all fields together, so changing just one of
+     * these still requires re-sending the others' last-commanded values.
+     */
+    private boolean acPowerOn = false;
+    private int acModeNr = 3; // Auto
+    private int acFanNr = 0; // Auto
+    private int acCoolingSetpoint = 22;
+    private int acHeatingSetpoint = 22;
+    private int acAutoSetpoint = 22;
+    private int acDrySetpoint = 22;
+
     private @Nullable ScheduledFuture<?> refreshJob;
 
     /**
@@ -136,6 +154,15 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
             } catch (Exception e) {
                 scene = 0;
             }
+
+            try {
+                acNumber = ((BigDecimal) config.get(HdlBindingConstants.PROPERTY_ACNUMBER)).intValueExact();
+            } catch (Exception e) {
+                acNumber = 0;
+            }
+
+            Object temperatureTypeConfig = config.get(HdlBindingConstants.PROPERTY_ACTEMPERATURETYPE);
+            acTemperatureTypeNr = "F".equalsIgnoreCase(String.valueOf(temperatureTypeConfig)) ? 1 : 0;
 
             uvSwitchChannels = buildUvSwitchChannelMap();
 
@@ -624,6 +651,69 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
     }
 
     /**
+     * Maps an AC mode command string to the wire value used by {@link CommandType#Control_AC_Status}'s Mode
+     * nibble, per the official "HDL-BUS Pro operation codes" reference doc. Returns null for anything
+     * unrecognized, so the caller can leave the last-known mode unchanged rather than silently sending 0
+     * ("Cooling") for a typo.
+     */
+    private static @Nullable Integer acModeNameToInt(String modeName) {
+        switch (modeName.toLowerCase()) {
+            case "cooling":
+                return 0;
+            case "heating":
+                return 1;
+            case "fan":
+                return 2;
+            case "auto":
+                return 3;
+            case "dry":
+                return 4;
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Maps an AC fan speed command string to the wire value used by {@link CommandType#Control_AC_Status}'s Fan
+     * nibble, per the official "HDL-BUS Pro operation codes" reference doc.
+     */
+    private static @Nullable Integer acFanNameToInt(String fanName) {
+        switch (fanName.toLowerCase()) {
+            case "auto":
+                return 0;
+            case "high":
+                return 1;
+            case "medium":
+                return 2;
+            case "low":
+                return 3;
+            default:
+                return null;
+        }
+    }
+
+    /**
+     * Builds the 13-field {@link CommandType#Control_AC_Status} payload from this handler's locally-tracked
+     * "desired" AC state (see the field-level comment on {@link #acPowerOn} etc. for why this is tracked
+     * locally instead of read from a Device - this binding never receives AC status back). Per the official
+     * "HDL-BUS Pro operation codes" reference doc (2026-08-22), not confirmed against real hardware.
+     *
+     * <p>
+     * Field 3 ("Now", the AC's own current temperature reading) is sent as 0 - it's a sensor value, not
+     * something meaningful to command. Fields 10/11 ("Setup Mode"/"Setup Speed") mirror the Mode/Fan values
+     * from field 8 - the doc lists them as separate fields but doesn't clearly explain how they differ from
+     * field 8's own Mode/Fan nibbles. Field 12 ("Current Mode") is sent as 0 - the doc labels it a mode but
+     * gives it a temperature range, which looks like a documentation error, so its real meaning is
+     * unconfirmed. Field 13 (Sweep) is sent as 0 ("no sweep") since it isn't exposed as a channel.
+     */
+    private byte[] buildACControlPayload() {
+        return new byte[] { (byte) acNumber, (byte) acTemperatureTypeNr, (byte) 0, (byte) acCoolingSetpoint,
+                (byte) acHeatingSetpoint, (byte) acAutoSetpoint, (byte) acDrySetpoint,
+                (byte) ((acModeNr << 4) | (acFanNr & 0x0F)), (byte) (acPowerOn ? 1 : 0), (byte) acModeNr,
+                (byte) acFanNr, (byte) 0, (byte) 0 };
+    }
+
+    /**
      * Maps a FHMode command/state string ("Normal"/"Day"/"Night"/"Away"/"Timer", case-insensitive) to the
      * wire value used by {@link CommandType#Control_Floor_Heating_Status_DLP}.
      */
@@ -848,6 +938,71 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         sendCommand = true;
                     }
                     break;
+                case HdlBindingConstants.CHANNEL_AC_POWER:
+                    if (command instanceof OnOffType) {
+                        acPowerOn = command.equals(OnOffType.ON);
+                        p.setCommandType(CommandType.Control_AC_Status);
+                        p.setData(buildACControlPayload());
+                        sendCommand = true;
+                    }
+                    break;
+                case HdlBindingConstants.CHANNEL_AC_MODE:
+                    if (command instanceof StringType) {
+                        Integer modeNr = acModeNameToInt(command.toString());
+                        if (modeNr != null) {
+                            acModeNr = modeNr;
+                            p.setCommandType(CommandType.Control_AC_Status);
+                            p.setData(buildACControlPayload());
+                            sendCommand = true;
+                        }
+                    }
+                    break;
+                case HdlBindingConstants.CHANNEL_AC_FANSPEED:
+                    if (command instanceof StringType) {
+                        Integer fanNr = acFanNameToInt(command.toString());
+                        if (fanNr != null) {
+                            acFanNr = fanNr;
+                            p.setCommandType(CommandType.Control_AC_Status);
+                            p.setData(buildACControlPayload());
+                            sendCommand = true;
+                        }
+                    }
+                    break;
+                case HdlBindingConstants.CHANNEL_AC_COOLINGSETPOINT:
+                case HdlBindingConstants.CHANNEL_AC_HEATINGSETPOINT:
+                case HdlBindingConstants.CHANNEL_AC_AUTOSETPOINT:
+                case HdlBindingConstants.CHANNEL_AC_DRYSETPOINT:
+                    Integer acSetpoint = null;
+                    if (command instanceof QuantityType<?> quantityCommand) {
+                        QuantityType<?> celsius = quantityCommand.toUnit(SIUnits.CELSIUS);
+                        if (celsius != null) {
+                            acSetpoint = celsius.intValue();
+                        }
+                    } else if (command instanceof DecimalType decimalCommand) {
+                        acSetpoint = decimalCommand.intValue();
+                    }
+                    if (acSetpoint != null) {
+                        switch (channelUID.getId()) {
+                            case HdlBindingConstants.CHANNEL_AC_COOLINGSETPOINT:
+                                acCoolingSetpoint = acSetpoint;
+                                break;
+                            case HdlBindingConstants.CHANNEL_AC_HEATINGSETPOINT:
+                                acHeatingSetpoint = acSetpoint;
+                                break;
+                            case HdlBindingConstants.CHANNEL_AC_AUTOSETPOINT:
+                                acAutoSetpoint = acSetpoint;
+                                break;
+                            case HdlBindingConstants.CHANNEL_AC_DRYSETPOINT:
+                                acDrySetpoint = acSetpoint;
+                                break;
+                            default:
+                                break;
+                        }
+                        p.setCommandType(CommandType.Control_AC_Status);
+                        p.setData(buildACControlPayload());
+                        sendCommand = true;
+                    }
+                    break;
                 default:
                     logger.warn("For Channel: {} Command: {} Not supported.", channelUID, command);
                     return;
@@ -1062,6 +1217,42 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         if (musicCommand != null) {
                             updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_MUSICCOMMAND),
                                     new StringType(musicCommand));
+                        }
+                        var acPower = ((MPL848FH) device).getACPower();
+                        if (acPower != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_ACPOWER),
+                                    acPower);
+                        }
+                        var panelKeyLock = ((MPL848FH) device).getPanelKeyLock();
+                        if (panelKeyLock != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_PANELKEYLOCK),
+                                    panelKeyLock);
+                        }
+                        var lockAC = ((MPL848FH) device).getLockAC();
+                        if (lockAC != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_LOCKAC),
+                                    lockAC);
+                        }
+                        var setupPageLock = ((MPL848FH) device).getSetupPageLock();
+                        if (setupPageLock != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_SETUPPAGELOCK),
+                                    setupPageLock);
+                        }
+                        var lcdBacklightStatus = ((MPL848FH) device).getLCDBacklightStatus();
+                        if (lcdBacklightStatus != null) {
+                            updateState(
+                                    new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_LCDBACKLIGHTSTATUS),
+                                    lcdBacklightStatus);
+                        }
+                        var panelBacklight = ((MPL848FH) device).getBacklight();
+                        if (panelBacklight != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BACKLIGHT),
+                                    panelBacklight);
+                        }
+                        var statusLight = ((MPL848FH) device).getStatusLight();
+                        if (statusLight != null) {
+                            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_STATUSLIGHT),
+                                    statusLight);
                         }
                         break;
                     case MFH06_432: {

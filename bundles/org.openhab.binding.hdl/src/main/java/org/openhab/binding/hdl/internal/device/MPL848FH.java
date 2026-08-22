@@ -71,6 +71,17 @@ public class MPL848FH extends Device implements UniversalSwitchDevice {
     private @Nullable Double acAutoTemp;
     private @Nullable Double acDryTemp;
     private @Nullable Double acCurrentTemp;
+    private @Nullable OnOffType acPower;
+
+    // Panel settings - confirmed via the official "HDL-BUS Pro operation codes" reference doc
+    // (2026-08-22), not yet independently confirmed against real hardware traffic for these specific
+    // fields (unlike the AC/Floor Heating types above, which were already confirmed).
+    private @Nullable OnOffType panelKeyLock;
+    private @Nullable OnOffType lockAC;
+    private @Nullable OnOffType setupPageLock;
+    private @Nullable OnOffType lcdBacklightStatus;
+    private @Nullable Double backlight;
+    private @Nullable Double statusLight;
 
     /** Device type for this Button Panel (DLP) with AC, Music, Clock, Floor Heating **/
     private DeviceType deviceType = DeviceType.MPL8_48_FH;
@@ -91,6 +102,12 @@ public class MPL848FH extends Device implements UniversalSwitchDevice {
                 break;
             case Response_Panel_Control:
                 switch (p.data[0]) {
+                    case (byte) 2:// Lock key of panel
+                        setPanelKeyLock(p.data[1] == 1 ? OnOffType.ON : OnOffType.OFF);
+                        break;
+                    case (byte) 3:// AC power
+                        setACPower(p.data[1] == 1 ? OnOffType.ON : OnOffType.OFF);
+                        break;
                     case (byte) 4:// Cooling Temp
                         setACCoolingTemperatur(p.data[1]);
                         break;
@@ -125,6 +142,18 @@ public class MPL848FH extends Device implements UniversalSwitchDevice {
                         setACAutoTemperatur(p.data[1]);
                         break;
 
+                    case (byte) 11:// LCD backlight status
+                        setLCDBacklightStatus(p.data[1] == 1 ? OnOffType.ON : OnOffType.OFF);
+                        break;
+                    case (byte) 12:// Lock AC
+                        setLockAC(p.data[1] == 1 ? OnOffType.ON : OnOffType.OFF);
+                        break;
+                    case (byte) 13:// Backlight (0-100)
+                        setBacklight(p.data[1]);
+                        break;
+                    case (byte) 14:// Status light (0-100)
+                        setStatusLight(p.data[1]);
+                        break;
                     case (byte) 19:
                         setACDryTemperatur(p.data[1]);
                         break;
@@ -147,6 +176,9 @@ public class MPL848FH extends Device implements UniversalSwitchDevice {
                         } else if (p.data[1] == 5) {
                             setFloorHeatingMode(EnumFHMode.Timer);
                         }
+                        break;
+                    case (byte) 24:// Setup page lock
+                        setSetupPageLock(p.data[1] == 1 ? OnOffType.ON : OnOffType.OFF);
                         break;
                     case (byte) 25:
                         setFloorHeatingSetNormalTemperatur(p.data[1]);
@@ -581,6 +613,85 @@ public class MPL848FH extends Device implements UniversalSwitchDevice {
 
     public @Nullable DecimalType getACCurrentTemperatur() {
         Double value = this.acCurrentTemp;
+        return value != null ? new DecimalType(BigDecimal.valueOf(value)) : null;
+    }
+
+    public void setACPower(OnOffType value) {
+        if (!Objects.equals(this.acPower, value)) {
+            setUpdated(true);
+        }
+        this.acPower = value;
+    }
+
+    public @Nullable OnOffType getACPower() {
+        return acPower;
+    }
+
+    public void setPanelKeyLock(OnOffType value) {
+        if (!Objects.equals(this.panelKeyLock, value)) {
+            setUpdated(true);
+        }
+        this.panelKeyLock = value;
+    }
+
+    public @Nullable OnOffType getPanelKeyLock() {
+        return panelKeyLock;
+    }
+
+    public void setLockAC(OnOffType value) {
+        if (!Objects.equals(this.lockAC, value)) {
+            setUpdated(true);
+        }
+        this.lockAC = value;
+    }
+
+    public @Nullable OnOffType getLockAC() {
+        return lockAC;
+    }
+
+    public void setSetupPageLock(OnOffType value) {
+        if (!Objects.equals(this.setupPageLock, value)) {
+            setUpdated(true);
+        }
+        this.setupPageLock = value;
+    }
+
+    public @Nullable OnOffType getSetupPageLock() {
+        return setupPageLock;
+    }
+
+    public void setLCDBacklightStatus(OnOffType value) {
+        if (!Objects.equals(this.lcdBacklightStatus, value)) {
+            setUpdated(true);
+        }
+        this.lcdBacklightStatus = value;
+    }
+
+    public @Nullable OnOffType getLCDBacklightStatus() {
+        return lcdBacklightStatus;
+    }
+
+    public void setBacklight(double value) {
+        if (!Objects.equals(this.backlight, value)) {
+            setUpdated(true);
+        }
+        this.backlight = value;
+    }
+
+    public @Nullable DecimalType getBacklight() {
+        Double value = this.backlight;
+        return value != null ? new DecimalType(BigDecimal.valueOf(value)) : null;
+    }
+
+    public void setStatusLight(double value) {
+        if (!Objects.equals(this.statusLight, value)) {
+            setUpdated(true);
+        }
+        this.statusLight = value;
+    }
+
+    public @Nullable DecimalType getStatusLight() {
+        Double value = this.statusLight;
         return value != null ? new DecimalType(BigDecimal.valueOf(value)) : null;
     }
 
