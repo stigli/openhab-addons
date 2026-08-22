@@ -47,7 +47,7 @@ public class MPL848FH extends Device implements UniversalSwitchDevice {
     /** Universal switch state, keyed by switch number (see {@link UniversalSwitchDevice}). **/
     private final Map<Integer, OnOffType> uvSwitches = new HashMap<>();
 
-    private static final Pattern Z_AUDIO_COMMAND_PATTERN = Pattern.compile("^\\*Z\\d+(.+?)\\r?$");
+    private static final Pattern Z_AUDIO_COMMAND_PATTERN = Pattern.compile("^\\*[ZS]\\d+(.+?)\\r?$");
 
     /** Last command the panel's Music tab sent its onboard Z-Audio engine, e.g. "ON", "SRC+". **/
     private @Nullable String musicCommand;
@@ -300,8 +300,11 @@ public class MPL848FH extends Device implements UniversalSwitchDevice {
                 // the panel always drives its onboard Z-Audio engine directly with a plain-text
                 // "*Z<zone><command>\r" string, e.g. "*Z1ON" for Play, "*Z1SRC+" seen tied to a source
                 // change, and "*Z1STATUS?" as a repeating ~1-2s background poll (filtered out below as
-                // noise, not a real button press). The full command vocabulary beyond ON/SRC+ is not yet
-                // mapped - this just exposes whatever comes through verbatim.
+                // noise, not a real button press). The official HDL opcode reference also documents a
+                // parallel "*S<source><command>\r" family (e.g. "*S1PLAY", "*S1STOP", "*S1NEXT") that we
+                // have never captured from real traffic - included below in case Stop or other actions turn
+                // out to use it instead of the Z-prefixed one. The full command vocabulary beyond ON/SRC+ is
+                // not yet mapped - this just exposes whatever comes through verbatim.
                 parseZAudioCommand(p.data);
                 break;
             default:
@@ -314,7 +317,9 @@ public class MPL848FH extends Device implements UniversalSwitchDevice {
         String raw = new String(data, StandardCharsets.US_ASCII);
         Matcher matcher = Z_AUDIO_COMMAND_PATTERN.matcher(raw);
         if (!matcher.matches()) {
-            LOGGER.debug("Music command from {} did not match the expected \"*Z<zone><command>\" format.", getType());
+            LOGGER.debug(
+                    "Music command from {} did not match the expected \"*Z<zone><command>\" or \"*S<source><command>\" format.",
+                    getType());
             return;
         }
         String command = matcher.group(1);
