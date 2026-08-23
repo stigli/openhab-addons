@@ -76,9 +76,20 @@ public abstract class Device {
         return Device.update(p, configurations, device);
     }
 
+    /**
+     * Only some of the many product-code variants {@link DeviceType} knows about are wired up here. A device
+     * whose numeric code resolves to an unlisted variant is otherwise identical in protocol terms - HDL reuses
+     * the same generic multi-channel control commands across amp-rating/hardware-revision siblings of the same
+     * product line, distinguished only by channel count, not by which specific variant code it reports - but
+     * falls through to {@link UnsupportedDevice} until its variant is added here (found and fixed once already
+     * for two `MPL8_48_FH` panels reporting code 186, which nothing in this switch recognized for years).
+     * 2026-08-23: added every other same-channel-count/product-family sibling {@link DeviceType} already
+     * documents for the product lines below, on the same reasoning, without waiting for a report.
+     */
     public static Device create(DeviceConfiguration c) {
         switch (c.getDeviceType()) {
             case MDT0601_233:
+            case MDT0601_433:
                 return new MDT0601(c);
             case MDT04015_433:
                 return new MDT04015(c);
@@ -87,27 +98,49 @@ public abstract class Device {
             case MPL8_48_FH:
                 return new MPL848FH(c);
             case MFH06_432:
+            case MFH06_332:
                 return new MFH06(c);
             case MPT04_48:
                 return new MPT0448(c);
             case MR1610_433:
+            case MR1616_434:
                 return new MR16xx(c);
             case MR1216_233:
             case MR1210_433:
+            case MR1220:
+            case MR1210:
+            case MR1205:
+            case MR1220A:
+            case MR1220_A:
+            case MR1205_A:
+            case MR1210_333:
+            case MR1216_433:
                 return new MR12xx(c);
             case MR0816_432:
             case MR0810_432:
+            case MR0820C_232:
+            case MR0816_232:
+            case MR0810_232:
+            case MR0810_332:
                 return new MR08xx(c);
             case MR0416_C:
             case MR0416_231:
             case MR0416_431:
             case MR0410_431:
+            case MR0416A:
+            case MR0416B:
+            case MR0420_A:
+            case MR0410_231:
+            case MR0425_231:
+            case MR0410_331:
                 return new MR04xx(c);
             case MRDA0610_432:
             case MRDA06:
                 return new MRDA06(c);
             case MSP08M_4C:
             case MS08Mn_2C:
+            case MS08Mn01_2C:
+            case MS08M_2C:
                 return new MS08(c);
             case MS12_2C:
                 return new MS12(c);

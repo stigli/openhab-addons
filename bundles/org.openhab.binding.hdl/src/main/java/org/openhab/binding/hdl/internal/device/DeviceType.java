@@ -1023,6 +1023,8 @@ public enum DeviceType {
                 return MPTL14_46;
             case 180:
                 return MPL8_48_FH;
+            case 186:
+                return MPL8_48_FH;
             case 200:
                 return MSR06_231;
             case 201:
@@ -2312,6 +2314,8 @@ public enum DeviceType {
             case 175:
                 return "MPTL14_46";
             case 180:
+                return "MPL8_48_FH";
+            case 186:
                 return "MPL8_48_FH";
             case 200:
                 return "MSR06_231";
