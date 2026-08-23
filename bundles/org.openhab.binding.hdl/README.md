@@ -39,43 +39,33 @@ reasons, show up in the Inbox. Not every discovered device type maps to a suppor
 
 ## Device Firmware/Revision Codes
 
-Every physical HDL device reports a numeric product code on the bus, which this binding maps to a Thing type
-(`DeviceType.java`). HDL has shipped most product lines under several different codes over the years - the
-same logical product (e.g. "12 channel relay") re-released across amp ratings and hardware revisions, each
-with its own code - and a code this binding doesn't recognize is silently dropped rather than routed to the
-matching Thing (found the hard way: two `MPL8_48_FH` floor-heating panels went completely dark at the openHAB
-level for years because their code, 186, wasn't in the table, even though 4 other codes for the same panel
-model already were).
-
-The table below is what's now covered, added in one pass (2026-08-23) by cross-referencing every code
-`DeviceType.java` already documents for each product line, on the basis that HDL's generic multi-channel
-control commands don't vary with amp rating/revision, only with channel count - this reasoning is also what
-the binding's original codes already relied on (e.g. `MR12xx` already covered both a 16A and a 10A code
-before this pass).
+Every physical HDL device reports a numeric product code on the bus (`DeviceType.java`), which this binding
+maps to a Thing type. HDL has released most product lines under several different codes (amp ratings,
+hardware revisions); an unrecognized code is silently dropped rather than routed to its Thing. Full list of
+codes each Thing type currently recognizes:
 
 | Thing      | Codes covered                                              |
 |------------|--------------------------------------------------------------|
-| MR04xx     | 153, 423, 433, 434, 435, 437, 441, 444, 447 (4-channel relay, all amp ratings/revisions) |
-| MR08xx     | 427, 428, 436, 442, 445, 448 (8-channel relay, all amp ratings/revisions) |
-| MR12xx     | 11, 19, 22, 150, 429, 430, 431, 443, 446, 452 (12-channel relay, all amp ratings/revisions) |
-| MR16xx     | 450, 453 (16-channel relay, both amp ratings) |
-| MDT0601    | 608, 621 (6-channel dimmer, both amp ratings)              |
-| MFH06      | 210, 211 (6-channel Floor Heating Module, both revisions)  |
-| MS08       | 314, 316, 318, 329 ("eight sensors in one" family)          |
+| MDT0601    | 608, 621                                                    |
+| MDT04015   | 620                                                          |
+| ML01       | 1100, 1101, 1102, 1103, 1105, 1106, 1107, 1108, 1109, 1110  |
+| MPL8_48_FH | 158, 162, 167, 180, 186                                     |
+| MFH06      | 209, 210, 211                                               |
+| MPT04      | 226                                                          |
+| MR16xx     | 450, 451, 453                                               |
+| MR12xx     | 11, 19, 22, 150, 429, 430, 431, 440, 443, 446, 449, 452     |
+| MR08xx     | 23, 427, 428, 436, 439, 442, 445, 448                       |
+| MR04xx     | 153, 423, 424, 433, 434, 435, 437, 438, 441, 444, 447       |
+| MRDA06     | 17, 36, 46, 454, 662                                        |
+| MS08       | 305, 309, 314, 315, 316, 318, 322, 329                      |
+| MS12       | 308, 321                                                    |
+| MS24       | 141, 142, 352, 353, 358                                     |
+| MW02       | 704, 705, 706, 707                                          |
 
-**Deliberately not merged** - these have a structurally different description in HDL's own code table (not
-just an amp-rating/revision suffix), which could mean a real protocol difference, not just a hardware
-revision, so they need a real capture from that specific code before assuming they're interchangeable with
-what's already supported:
-
-- `MW02` only recognizes code 707 (`MW02_231`, "2Ch Window Curtain controller"). Codes 700-703 (`MW02`,
-  plain "Curtain controller") are an older, differently-described product and are not auto-mapped.
-- `MS12` only recognizes code 308/321 (`MS12_2C`, "12in1 Multi function Sensor"). Codes 92/140 (`MS12`, plain
-  "12 channels sensor") are an older, differently-described product and are not auto-mapped.
-
-If a device using one of these un-merged codes turns out to behave identically once captured, the fix is the
-same one-line addition to `Device.java`'s `create(DeviceConfiguration)` switch used for everything in the
-table above.
+**Not merged**: `MW02` codes 700-703 and `MS12` codes 92/140 have a structurally different description in
+HDL's own code table (not just an amp-rating/revision suffix) from what's covered above, so they're left
+unmapped pending a real capture rather than assumed interchangeable. Adding a missing code is a one-line
+addition to `Device.java`'s `create(DeviceConfiguration)` switch.
 
 ## Bus Statistics
 
