@@ -167,11 +167,13 @@ Gateway") that manages one or more physical AC units, addressed by an `acNumber`
 Subnet/DeviceID alone - one gateway can control multiple AC units.
 
 **This Thing is send-only.** The gateway that would answer these commands reports a device type this binding
-doesn't recognize (no real hardware was available to capture it from), so status can never be read back -
-every channel is write-only, with no confirmed state, and the Thing will not show real AC status anywhere.
-If you have this hardware and can capture its device type from the log (look for `Unhandled`/`Invalid`
-device type entries after sending a command), that's the one piece needed to add read support - it's a
-one-line addition to `DeviceType.java`, same as previous device compatibility fixes in this binding.
+doesn't recognize (no real hardware was available to capture it from), so status can never be read back from
+the AC unit itself. Every channel instead shows this binding's own **locally-tracked desired state** - what
+was last commanded from openHAB, or the built-in default before the first command - not a confirmed reading
+of what the AC unit is actually doing. If you have this hardware and can capture its device type from the
+log (look for `Unhandled`/`Invalid` device type entries after sending a command), that's the one piece
+needed to add real read support - it's a one-line addition to `DeviceType.java`, same as previous device
+compatibility fixes in this binding.
 
 ```java
 Thing AC 1200 [Subnet=1, DeviceID=200, acNumber=1, temperatureType="C"]
@@ -187,9 +189,13 @@ Number:Temperature E2ACCoolSet "AC Cooling Setpoint [%.1f %unit%]" {channel="hdl
 `Mode` accepts `Cooling`/`Heating`/`Fan`/`Auto`/`Dry`. `FanSpeed` accepts `Auto`/`High`/`Medium`/`Low`. Since
 there's no status readback, this binding tracks your last-sent values internally and re-sends all of them
 together whenever any one channel changes (the underlying `Control_AC` command requires the full state in
-every packet, not just the field that changed) - so the first command you send after a restart will use this
-binding's built-in defaults (Auto/Auto/22°C) for anything you haven't explicitly set yet, not whatever the
-AC unit's own actual last real state was.
+every packet, not just the field that changed). Every channel reflects that internally-tracked value
+immediately (`Power` off, `Mode`/`FanSpeed` "Auto", setpoints 22°C, until you send a command) - **but this
+tracked state is only in memory and does not survive an openHAB restart.** After a restart it resets to
+those same built-in defaults regardless of what you'd last commanded, and the AC unit itself keeps whatever
+state it was last actually told to use - the channel will not reflect that. If you want the last-commanded
+value to survive a restart, configure openHAB's own [persistence](https://www.openhab.org/docs/configuration/persistence.html)
+with `restoreOnStartup` for these specific items.
 
 ## Universal Switches (UVSwitch)
 

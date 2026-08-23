@@ -164,6 +164,26 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
             Object temperatureTypeConfig = config.get(HdlBindingConstants.PROPERTY_ACTEMPERATURETYPE);
             acTemperatureTypeNr = "F".equalsIgnoreCase(String.valueOf(temperatureTypeConfig)) ? 1 : 0;
 
+            if ("hdl:AC".equals(getThing().getThingTypeUID().getAsString())) {
+                // No status readback for this Thing type (see acPowerOn's field comment) - push the built-in
+                // defaults up front so the channels show the same values the first real command would send,
+                // instead of sitting UNDEF until openHAB sends one.
+                updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_AC_POWER),
+                        acPowerOn ? OnOffType.ON : OnOffType.OFF);
+                updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_AC_MODE),
+                        new StringType("Auto"));
+                updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_AC_FANSPEED),
+                        new StringType("Auto"));
+                updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_AC_COOLINGSETPOINT),
+                        new QuantityType<>(acCoolingSetpoint, SIUnits.CELSIUS));
+                updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_AC_HEATINGSETPOINT),
+                        new QuantityType<>(acHeatingSetpoint, SIUnits.CELSIUS));
+                updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_AC_AUTOSETPOINT),
+                        new QuantityType<>(acAutoSetpoint, SIUnits.CELSIUS));
+                updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_AC_DRYSETPOINT),
+                        new QuantityType<>(acDrySetpoint, SIUnits.CELSIUS));
+            }
+
             uvSwitchChannels = buildUvSwitchChannelMap();
 
             if (channelNumber != 0) {
@@ -944,6 +964,9 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         p.setCommandType(CommandType.Control_AC_Status);
                         p.setData(buildACControlPayload());
                         sendCommand = true;
+                        // No status readback for this Thing (see acPowerOn's field comment) - reflect the
+                        // just-sent command straight back so the channel doesn't sit UNDEF forever.
+                        updateState(channelUID, (OnOffType) command);
                     }
                     break;
                 case HdlBindingConstants.CHANNEL_AC_MODE:
@@ -954,6 +977,7 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             p.setCommandType(CommandType.Control_AC_Status);
                             p.setData(buildACControlPayload());
                             sendCommand = true;
+                            updateState(channelUID, (StringType) command);
                         }
                     }
                     break;
@@ -965,6 +989,7 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                             p.setCommandType(CommandType.Control_AC_Status);
                             p.setData(buildACControlPayload());
                             sendCommand = true;
+                            updateState(channelUID, (StringType) command);
                         }
                     }
                     break;
@@ -1001,6 +1026,10 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         p.setCommandType(CommandType.Control_AC_Status);
                         p.setData(buildACControlPayload());
                         sendCommand = true;
+                        // Echo the resolved/truncated integer Celsius value actually stored and sent, not the
+                        // raw command - keeps the channel consistent with buildACControlPayload() even if the
+                        // command arrived in a different unit (e.g. Fahrenheit).
+                        updateState(channelUID, new QuantityType<>(acSetpoint, SIUnits.CELSIUS));
                     }
                     break;
                 default:
