@@ -68,7 +68,8 @@ public class ShellyBindingConstants {
      * CHANNEL_GROUP_LIGHT_CONTROL control Light power, color mode, timers
      * CHANNEL_GROUP_COLOR_CONTROL color HSB, RGBW values
      * CHANNEL_GROUP_WHITE_CONTROL white White brightness and temperature
-     * CHANNEL_GROUP_LIGHT_CHANNEL channel1..n RGBW2 individual white channels
+     * CHANNEL_GROUP_LIGHT_CHANNEL channel1..n RGBW2 individual white channels (deprecated, see light1..n)
+     * CHANNEL_GROUP_LIGHT_INDEX light1..n RGBW2/RGBW PM individual white channels
      * CHANNEL_GROUP_METER meter1..n Watts, kWh, voltage, current
      * CHANNEL_GROUP_NMETER nmeter 3EM neutral current
      * CHANNEL_GROUP_SENSOR sensors All environmental readings
@@ -208,6 +209,7 @@ public class ShellyBindingConstants {
     public static final String CHANNEL_LIGHT_POWER = "power";
     public static final String CHANNEL_LIGHT_DEFSTATE = "defaultState";
     public static final String CHANNEL_GROUP_LIGHT_CHANNEL = "channel";
+    public static final String CHANNEL_GROUP_LIGHT_INDEX = "light";
 
     // Bulb/RGBW2 in color mode
     public static final String CHANNEL_GROUP_COLOR_CONTROL = "color";
@@ -277,6 +279,9 @@ public class ShellyBindingConstants {
     public static final String SHELLY_API_FWCOIOT2 = "v1.8";// CoAP 2 with FW 1.8+
     public static final String SHELLY_API_FW_110 = "v1.10"; // FW 1.10 or newer detected, activates some add feature
     public static final String SHELLY2_API_MIN_FWVERSION = "v0.10.1"; // Gen 2 minimum FW
+
+    // Unprefixed (unlike the "v"-prefixed Gen1 constants above) to match Gen2+ profile.fwVersion (e.g. "1.2.3")
+    public static final String SHELLY2_API_FW_BLEAUTOSCAN = "2.0"; // FW 2.0+: BLE.SetConfig enable flag removed
 
     // Alarm types/messages
     public static final String ALARM_TYPE_NONE = "NONE";
