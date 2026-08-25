@@ -26,7 +26,7 @@ Thing names for physical devices use the article number that HDL are using.
 | MS08          | Thing     | HDL Sensor with 8 functions                                   |
 | MS12          | Thing     | HDL Sensor with 12 functions                                  |
 | MS24          | Thing     | HDL with 24 dry contacts                                      |
-| MW02          | Thing     | HDL Curtain controller for controlling off 3. parts curtains  |
+| MW02          | Thing     | HDL Curtain controller for controlling curtains (2 channels)  |
 | Scene         | Thing     | Virtual - triggers an existing scene defined in the HDL Setup Tool; not a physical device, so it isn't discovered (see "HDL Scenes" below) |
 | AC            | Thing     | Virtual, send-only - controls a dedicated HDL AC gateway device; not discovered, not confirmed on real hardware (see "AC Control" below) |
 

@@ -806,7 +806,7 @@ public enum DeviceType {
             case 61:
                 return MP4RM;
             case 62:
-                return MWH6;
+                return MWL16;
             case 63:
                 return MP4RM;
             case 64:
@@ -872,7 +872,7 @@ public enum DeviceType {
             case 94:
                 return MS06_232;
             case 95:
-                return MHS110_2C;
+                return MHS01;
             case 96:
                 return MPE_2C;
             case 97:
@@ -938,7 +938,7 @@ public enum DeviceType {
             case 127:
                 return MHS110W_2W;
             case 128:
-                return MRS232_231;
+                return MBUS_RS232;
             case 129:
                 return MHS110W_2W;
             case 130:
@@ -2098,7 +2098,7 @@ public enum DeviceType {
             case 61:
                 return "MP4RM";
             case 62:
-                return "MWH6";
+                return "MWL16";
             case 63:
                 return "MP4RM";
             case 64:
@@ -2164,7 +2164,7 @@ public enum DeviceType {
             case 94:
                 return "MS06_232";
             case 95:
-                return "MHS110_2C";
+                return "MHS01";
             case 96:
                 return "MPE_2C";
             case 97:
@@ -2230,7 +2230,7 @@ public enum DeviceType {
             case 127:
                 return "MHS110W_2W";
             case 128:
-                return "MRS232_231";
+                return "MBUS_RS232";
             case 129:
                 return "MHS110W_2W";
             case 130:

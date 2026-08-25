@@ -133,8 +133,6 @@ public class HdlPacket {
 
         HdlPacket packet = new HdlPacket();
 
-        // System.out.println("All Data: " + data);
-
         packet.sourceSubnetID = data[offset] & 0xff;
         offset += 1;
         packet.sourceDeviceID = data[offset] & 0xff;
@@ -212,8 +210,8 @@ public class HdlPacket {
         command = a & 0xffff;
     }
 
-    public void setCommandType(CommandType Type) {
-        setCommand(Type.getValue());
+    public void setCommandType(CommandType type) {
+        setCommand(type.getValue());
     }
 
     public void setData(byte[] d) {

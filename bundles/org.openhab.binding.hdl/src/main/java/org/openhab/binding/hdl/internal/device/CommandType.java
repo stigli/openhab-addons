@@ -195,6 +195,10 @@ public enum CommandType {
                 return Modify_Scene_Information;
             case 9:
                 return Response_Modify_Scene_Information;
+            case 14:
+                return Discover_Device;
+            case 15:
+                return Discover_Device_Response;
             case 26:
                 return Sequence_Control;
             case 27:
@@ -435,6 +439,10 @@ public enum CommandType {
                 return "Modify_Scene_Information";
             case 9:
                 return "Response_Modify_Scene_Information";
+            case 14:
+                return "Discover_Device";
+            case 15:
+                return "Discover_Device_Response";
             case 26:
                 return "Sequence_Control";
             case 27:

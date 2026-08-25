@@ -34,7 +34,7 @@
 			<bridge-type-ref id="bridge"/>
 		</supported-bridge-type-refs>
 		<label>HDL Dimmer 6x1A </label>
-		<description>Dimmer 6x1A - Universell</description>
+		<description>Dimmer 6x1A - Universal</description>
 		<channels>
 			<channel id="DimChannel1" typeId="dimmer"></channel>
 			<channel id="DimChannel2" typeId="dimmer"></channel>
@@ -64,7 +64,7 @@
 			<bridge-type-ref id="bridge"/>
 		</supported-bridge-type-refs>
 		<label>HDL Dimmer 4x1.5A </label>
-		<description>Dimmer 6x1.5A - Universell</description>
+		<description>Dimmer 4x1.5A - Universal</description>
 		<channels>
 			<channel id="DimChannel1" typeId="dimmer"></channel>
 			<channel id="DimChannel2" typeId="dimmer"></channel>
@@ -164,8 +164,8 @@
 				<description>What device id the DLP has.</description>
 			</parameter>
 			<parameter name="channelNumber" type="integer" min="1" required="true">
-				<label>Channel Numner</label>
-				<description>What channel off floor heating module is this.</description>
+				<label>Channel Number</label>
+				<description>What channel of the floor heating module is this.</description>
 			</parameter>
 			<parameter name="refreshInterval" type="integer" min="0" required="false">
 				<label>Refresh Rate</label>
@@ -376,7 +376,7 @@
 			<bridge-type-ref id="bridge"/>
 		</supported-bridge-type-refs>
 		<label>Curtain Controls</label>
-		<description>Curtain Controls fore controlling of 3. parts curtains</description>
+		<description>Curtain controller for controlling curtains (2 channels)</description>
 		<channels>
 			<channel id="Shutter1Control" typeId="control"></channel>
 			<channel id="Shutter2Control" typeId="control"></channel>
@@ -390,7 +390,7 @@
 			</parameter>
 			<parameter name="DeviceID" type="integer" min="1" required="true">
 				<label>Device ID</label>
-				<description>What device id the Curtain Controler has.</description>
+				<description>What device id the Curtain Controller has.</description>
 			</parameter>
 		</config-description>
 	</thing-type>
@@ -461,7 +461,7 @@
 			<bridge-type-ref id="bridge"/>
 		</supported-bridge-type-refs>
 		<label>Sensor Input Module</label>
-		<description>Sensor Input Module with 25 Dry Contanct channels</description>
+		<description>Sensor Input Module with 24 Dry Contact channels</description>
 		<channels>
 			<channel id="DryContact1Status" typeId="DryContactStatus"></channel>
 			<channel id="DryContact2Status" typeId="DryContactStatus"></channel>
