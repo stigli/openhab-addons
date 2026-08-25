@@ -72,6 +72,7 @@ public class HdlDeviceDiscoveryService extends AbstractDiscoveryService implemen
         ThingUID thingUID = null;
         switch (device.getType()) {
             case MDT0601_233:
+            case MDT0601_433:
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MDT0601, bridge.getUID(), device.getSerialNr());
                 break;
             case MDT04015_433:
@@ -85,24 +86,50 @@ public class HdlDeviceDiscoveryService extends AbstractDiscoveryService implemen
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MPL8_48_FH, bridge.getUID(),
                         device.getSerialNr());
                 break;
+            case MFH06_432:
+            case MFH06_332:
+                // channelNumber isn't known from bus traffic alone (one physical module has several
+                // independent heating channels, each its own Thing) - discovered Things still need it set
+                // manually before this Thing starts polling, see the README's "Thing Configuration" section.
+                thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MFH06, bridge.getUID(), device.getSerialNr());
+                break;
             case MPT04_48:
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MPT04_48, bridge.getUID(), device.getSerialNr());
                 break;
             case MR1610_433:
+            case MR1616_434:
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MR16XX, bridge.getUID(), device.getSerialNr());
                 break;
             case MR1216_233:
             case MR1210_433:
+            case MR1220:
+            case MR1210:
+            case MR1205:
+            case MR1220A:
+            case MR1220_A:
+            case MR1205_A:
+            case MR1210_333:
+            case MR1216_433:
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MR12XX, bridge.getUID(), device.getSerialNr());
                 break;
             case MR0816_432:
             case MR0810_432:
+            case MR0820C_232:
+            case MR0816_232:
+            case MR0810_232:
+            case MR0810_332:
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MR08XX, bridge.getUID(), device.getSerialNr());
                 break;
             case MR0416_C:
             case MR0416_231:
             case MR0416_431:
             case MR0410_431:
+            case MR0416A:
+            case MR0416B:
+            case MR0420_A:
+            case MR0410_231:
+            case MR0425_231:
+            case MR0410_331:
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MR04XX, bridge.getUID(), device.getSerialNr());
                 break;
             case MRDA0610_432:
@@ -111,6 +138,8 @@ public class HdlDeviceDiscoveryService extends AbstractDiscoveryService implemen
                 break;
             case MS08Mn_2C:
             case MSP08M_4C:
+            case MS08M_2C:
+            case MS08Mn01_2C:
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MS08, bridge.getUID(), device.getSerialNr());
                 break;
             case MS12_2C:
@@ -120,6 +149,7 @@ public class HdlDeviceDiscoveryService extends AbstractDiscoveryService implemen
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MS24, bridge.getUID(), device.getSerialNr());
                 break;
             case MW02:
+            case MW02_231:
                 thingUID = new ThingUID(HdlBindingConstants.THING_TYPE_MW02, bridge.getUID(), device.getSerialNr());
                 break;
             default:

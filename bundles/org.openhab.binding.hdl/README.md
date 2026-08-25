@@ -34,8 +34,14 @@ Thing names for physical devices use the article number that HDL are using.
 
 The bridge actively searches the HDL bus for devices once when it comes online, and again whenever a manual
 Inbox scan is triggered; devices found this way, as well as any device that is seen sending traffic for other
-reasons, show up in the Inbox. Not every discovered device type maps to a supported Thing type yet (see
-`HdlDeviceDiscoveryService`). Confirmed working on real hardware.
+reasons, show up in the Inbox. Confirmed working on real hardware.
+
+`HdlDeviceDiscoveryService`'s device-type recognition is now kept in sync with `Device.java` (2026-08-25) -
+every product code a Thing type can actually be built from is also correctly suggested in the Inbox with the
+right Thing type, including all the firmware/revision codes listed below. One exception: `MFH06` is
+discoverable, but since one physical Floor Heating Module has several independent heating channels (each its
+own Thing), discovery can't know which `channelNumber` you want - set that manually after adding it from the
+Inbox, see "Thing Configuration" below.
 
 ## Device Firmware/Revision Codes
 
@@ -60,12 +66,25 @@ codes each Thing type currently recognizes:
 | MS08       | 305, 309, 314, 315, 316, 318, 322, 329                      |
 | MS12       | 308, 321                                                    |
 | MS24       | 141, 142, 352, 353, 358                                     |
-| MW02       | 704, 705, 706, 707                                          |
+| MW02       | 700, 701, 702, 703, 704, 705, 706, 707                      |
 
-**Not merged**: `MW02` codes 700-703 and `MS12` codes 92/140 have a structurally different description in
-HDL's own code table (not just an amp-rating/revision suffix) from what's covered above, so they're left
-unmapped pending a real capture rather than assumed interchangeable. Adding a missing code is a one-line
-addition to `Device.java`'s `create(DeviceConfiguration)` switch.
+`MW02`'s two code ranges (700-703, plain "Curtain controller"; 704-707, "2Ch Window Curtain controller") were
+initially left unmerged, same reasoning as `MS12` below - a structurally different description, not just a
+revision suffix. Researched further (2026-08-25): neither reference implementation (`pybuspro`, `smart-bus`)
+maintains a device-type code table to cross-check against, and the official device-type reference document
+couldn't be retrieved in full. Did confirm HDL genuinely sells distinct curtain-controller catalog models
+across hardware generations (e.g. "HDL-MW02.231" vs a newer "HDL-MW02.431"), consistent with 700-703 and
+704-707 being real, different hardware releases rather than a documentation error - but found nothing
+confirming or ruling out protocol compatibility between them. **Merged anyway** on the same basis as every
+other amp-rating/revision merge in this table: HDL's generic curtain-control commands are channel-count-based,
+not model-specific, and every other merge in this table has held up without issue. Flagging here in case a
+real 700-703-coded device ever behaves differently - if so, split it back out of `Device.java`'s
+`create(DeviceConfiguration)` switch.
+
+**Not merged**: `MS12` codes 92/140 (plain "12 channels sensor") have a structurally different description
+from the covered `MS12_2C` codes (308/321, "12in1 Multi function Sensor") - left unmapped pending a real
+capture rather than assumed interchangeable. Adding a missing code is a one-line addition to `Device.java`'s
+`create(DeviceConfiguration)` switch.
 
 ## Bus Statistics
 

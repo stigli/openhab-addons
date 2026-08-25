@@ -147,6 +147,7 @@ public abstract class Device {
             case MS24:
                 return new MS24(c);
             case MW02_231:
+            case MW02:
                 return new MW02(c);
             default:
                 LOGGER.warn("In HDLPacket Type: {} but unhandled device.", c.getDeviceType());
