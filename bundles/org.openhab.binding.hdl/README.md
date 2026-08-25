@@ -250,6 +250,18 @@ automatic retry for any channel that didn't respond - confirmed reliable across 
 No configuration needed for any of this, it's automatic; only the one-time startup probe is affected, not
 periodic `refreshInterval` polls.
 
+### Startup liveness check
+
+Most Thing types (everything except `ML01`, `Scene`, and `AC`, which never actively request status) get a
+one-time check at startup: if the device configured by Subnet/DeviceID never responds at all within 60
+seconds (with one automatic retry at 20s to rule out a single lost packet), the Thing goes
+`OFFLINE`/`COMMUNICATION_ERROR` with a message pointing at the Subnet/DeviceID - catches a Thing configured
+for a device that was never actually added in the HDL Setup Tool, which previously just sat `ONLINE` forever
+with every channel silently `NULL`. This only ever runs once per Thing lifecycle (at startup/re-init) - it
+does not keep checking afterward, so a device that goes quiet later (normal for event-driven panels like
+`MPT04`) is never flagged. The moment any real traffic arrives from that device, even late, the Thing goes
+back `ONLINE` automatically.
+
 ## Channels
 
 Depending on the thing it supports different Channels

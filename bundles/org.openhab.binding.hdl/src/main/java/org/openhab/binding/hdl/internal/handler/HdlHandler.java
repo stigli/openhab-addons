@@ -112,6 +112,21 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
     private @Nullable ScheduledFuture<?> refreshJob;
 
     /**
+     * Startup-only "has this Thing's own device ever answered at all" watchdog - catches a Thing configured
+     * for a Subnet/DeviceID that was never actually provisioned in the HDL Setup Tool (previously: silently
+     * stayed ONLINE forever with every channel NULL, no indication anything was wrong). Deliberately does
+     * NOT do ongoing/ recurring liveness monitoring - several Thing types (MPT04 in particular) are
+     * legitimately silent for long stretches by design, so re-checking after the initial confirmation would
+     * risk false positives on real, working hardware. Disarmed permanently the first time
+     * {@link #onDeviceStateChanged} fires for this Thing's own serial, however long that takes.
+     */
+    private volatile boolean deviceConfirmedAlive;
+    private @Nullable ScheduledFuture<?> livenessRetryJob;
+    private @Nullable ScheduledFuture<?> livenessTimeoutJob;
+    private static final int LIVENESS_RETRY_DELAY_MS = 20_000;
+    private static final int LIVENESS_TIMEOUT_MS = 60_000;
+
+    /**
      * Which universal switch number each of this Thing's dynamically-added UVSwitch channels represents
      * (read from that channel's own "switchNumber" config - see {@link HdlBindingConstants#CHANNELTYPE_UVSWITCH}),
      * populated once in {@link #initialize()}. Built per-Thing instead of a fixed channel-id list since how
@@ -202,8 +217,18 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
             @Nullable
             HdlBridgeHandler hdlBridge = getHdlBridgeHandler();
 
+            deviceConfirmedAlive = false;
+            if (livenessRetryJob != null) {
+                livenessRetryJob.cancel(true);
+                livenessRetryJob = null;
+            }
+            if (livenessTimeoutJob != null) {
+                livenessTimeoutJob.cancel(true);
+                livenessTimeoutJob = null;
+            }
+
             if (hdlBridge != null && getThing().getStatus().equals(ThingStatus.ONLINE)) {
-                sendUpdatePackets(hdlBridge);
+                boolean probeSent = sendUpdatePackets(hdlBridge);
                 // refreshRate == -1 means event-only refresh (currently only used by hdl:MPT04): no fixed-delay
                 // job is scheduled, status is instead requested reactively, see onDeviceStateChanged.
                 if (refreshRate > 0) {
@@ -211,6 +236,28 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                         refreshJob = scheduler.scheduleWithFixedDelay(refreshRunnable, 1, refreshRate,
                                 TimeUnit.SECONDS);
                     }
+                }
+
+                if (probeSent) {
+                    // Startup-only liveness watchdog - see the deviceConfirmedAlive field comment for scope.
+                    // Retry once (covers a single lost UDP packet, the most likely real-world false-positive
+                    // cause) before finally declaring COMMUNICATION_ERROR.
+                    livenessRetryJob = scheduler.schedule(() -> {
+                        if (!deviceConfirmedAlive) {
+                            HdlBridgeHandler retryBridge = getHdlBridgeHandler();
+                            if (retryBridge != null) {
+                                sendUpdatePackets(retryBridge);
+                            }
+                        }
+                    }, LIVENESS_RETRY_DELAY_MS, TimeUnit.MILLISECONDS);
+
+                    livenessTimeoutJob = scheduler.schedule(() -> {
+                        if (!deviceConfirmedAlive && getThing().getStatus().equals(ThingStatus.ONLINE)) {
+                            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
+                                    "No response from Subnet " + subNet + "/Device " + deviceID
+                                            + " - check it's configured in the HDL Setup Tool and the Subnet/Device ID match.");
+                        }
+                    }, LIVENESS_TIMEOUT_MS, TimeUnit.MILLISECONDS);
                 }
             }
         } catch (Exception e) {
@@ -238,6 +285,15 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
         if (refreshJob != null && !refreshJob.isCancelled()) {
             refreshJob.cancel(true);
             refreshJob = null;
+        }
+
+        if (livenessRetryJob != null) {
+            livenessRetryJob.cancel(true);
+            livenessRetryJob = null;
+        }
+        if (livenessTimeoutJob != null) {
+            livenessTimeoutJob.cancel(true);
+            livenessTimeoutJob = null;
         }
 
         logger.debug("Disposed HDL! device {} {}.", getThing().getUID(), hdldeviceSerial);
@@ -404,7 +460,13 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
         return this.bridgeHandler;
     }
 
-    private void sendUpdatePackets(HdlBridgeHandler hdlBridge) {
+    /**
+     * @return true if at least one status-request packet was actually sent (or delegated, e.g. MS24's own
+     *         probe) - used by {@link #initialize()} to decide whether arming the liveness watchdog makes
+     *         sense at all; false for Thing types with no active probe ({@code default:}) or a configured
+     *         {@code MFH06} missing its required {@code channelNumber}.
+     */
+    private boolean sendUpdatePackets(HdlBridgeHandler hdlBridge) {
         Collection<HdlPacket> hdlPacketList = new ArrayList<HdlPacket>();
 
         HdlPacket p = new HdlPacket();
@@ -452,7 +514,7 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                 logger.debug("For Thing Type: {} command: Refresh is sent.",
                         getThing().getThingTypeUID().getAsString());
                 sendMs24StatusProbe(hdlBridge, true);
-                return;
+                return true;
             case "hdl:MFH06":
                 if (channelNumber != 0) {
                     p.setCommandType(CommandType.Read_Floor_Heating_Status);
@@ -505,7 +567,11 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
             default:
                 logger.debug("For Thing Type: {} command: Refresh not supported.",
                         getThing().getThingTypeUID().getAsString());
-                return;
+                return false;
+        }
+
+        if (hdlPacketList.isEmpty()) {
+            return false;
         }
 
         try {
@@ -516,6 +582,7 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
         } catch (IOException e) {
             logger.warn("Could not send msg to bridge, got error msg: {}", e.getMessage());
         }
+        return true;
     }
 
     /**
@@ -1053,6 +1120,24 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
     @Override
     public void onDeviceStateChanged(ThingUID bridge, Device device) {
         if (device.getSerialNr().equals(hdldeviceSerial)) {
+            if (!deviceConfirmedAlive) {
+                // First-ever confirmed real traffic from this Thing's own device - disarm the startup
+                // liveness watchdog permanently (see the deviceConfirmedAlive field comment) and clear
+                // COMMUNICATION_ERROR if the watchdog had already fired before this arrived.
+                deviceConfirmedAlive = true;
+                if (livenessRetryJob != null) {
+                    livenessRetryJob.cancel(true);
+                    livenessRetryJob = null;
+                }
+                if (livenessTimeoutJob != null) {
+                    livenessTimeoutJob.cancel(true);
+                    livenessTimeoutJob = null;
+                }
+                if (getThing().getStatus().equals(ThingStatus.OFFLINE)
+                        && ThingStatusDetail.COMMUNICATION_ERROR.equals(getThing().getStatusInfo().getStatusDetail())) {
+                    updateStatus(ThingStatus.ONLINE);
+                }
+            }
             if (device.isUpdated()) {
                 logger.debug("Updating states of {} {} id: {}", device.getType(), device.getSerialNr(),
                         getThing().getUID());
