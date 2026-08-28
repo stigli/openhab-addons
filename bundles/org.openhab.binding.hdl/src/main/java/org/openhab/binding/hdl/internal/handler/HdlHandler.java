@@ -112,6 +112,17 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
     private @Nullable ScheduledFuture<?> refreshJob;
 
     /**
+     * Set whenever a channel link requests a refresh ({@link #handleCommand}'s {@code RefreshType} branch) -
+     * forces the *next* {@link #onDeviceStateChanged} push through even if the device's answer didn't
+     * actually change anything. Without this, a newly-linked Item never receives a value at all if the
+     * underlying {@link Device} object's cached field already matches what the device reports (its cache is
+     * per-bridge-lifetime, not per-Item-link, so "no change" and "this specific Item has never seen a value"
+     * are otherwise indistinguishable) - found via a real report of Items staying NULL indefinitely after a
+     * mass relink from an unrelated .items file edit.
+     */
+    private volatile boolean forceNextPush;
+
+    /**
      * Startup-only "has this Thing's own device ever answered at all" watchdog - catches a Thing configured
      * for a Subnet/DeviceID that was never actually provisioned in the HDL Setup Tool (previously: silently
      * stayed ONLINE forever with every channel NULL, no indication anything was wrong). Deliberately does
@@ -864,6 +875,9 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
 
         Integer uvSwitchNumber = uvSwitchChannels.get(channelUID);
         if (command instanceof RefreshType) {
+            // A newly-linked channel's refresh request must result in a push even if the device's answer
+            // matches what's already cached - see forceNextPush's field comment for why.
+            forceNextPush = true;
             sendUpdatePackets(hdlBridge);
         } else if (uvSwitchNumber != null) {
             // Dynamically-added UVSwitch channel (see initialize()/uvSwitchChannels) - the switch number
@@ -1138,7 +1152,7 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                     updateStatus(ThingStatus.ONLINE);
                 }
             }
-            if (device.isUpdated()) {
+            if (device.isUpdated() || forceNextPush) {
                 logger.debug("Updating states of {} {} id: {}", device.getType(), device.getSerialNr(),
                         getThing().getUID());
                 switch (device.getType()) {
@@ -2008,6 +2022,7 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                     }
                 }
                 device.setUpdated(false);
+                forceNextPush = false;
             } else {
                 logger.debug("No changes for {} {} id: {}", device.getType(), device.getSerialNr(),
                         getThing().getUID());
