@@ -19,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.junit.jupiter.api.Test;
 import org.openhab.binding.hdl.internal.handler.HdlPacket;
+import org.openhab.core.library.types.StopMoveType;
+import org.openhab.core.library.types.UpDownType;
 
 /**
  * Tests for {@link MW02}'s elapsed-time curtain position estimate ({@code getEstimatedPositionShutter1/2}) -
@@ -51,6 +53,13 @@ class MW02Test {
         HdlPacket p = new HdlPacket();
         p.commandType = CommandType.Response_Curtain_Switch_Control;
         p.data = new byte[] { (byte) channel, (byte) status };
+        device.treatHDLPacketForDevice(p);
+    }
+
+    private static void sendCurtainBroadcast(MW02 device, byte... levelsThenStatuses) {
+        HdlPacket p = new HdlPacket();
+        p.commandType = CommandType.Broadcast_Status_of_Status_of_Curtain_Switches;
+        p.data = levelsThenStatuses;
         device.treatHDLPacketForDevice(p);
     }
 
@@ -108,6 +117,34 @@ class MW02Test {
         Integer afterPartialClose = device.getEstimatedPositionShutter1();
         assertTrue(afterPartialClose != null && afterPartialClose < 100 && afterPartialClose > 0,
                 "a short move toward UP from 100 should land somewhere between 0 and 100, got: " + afterPartialClose);
+    }
+
+    @Test
+    void broadcastDecodesParallelArraysNotChannelStatusPairs() {
+        // Real capture (device 1039, only channel 1 physically touched): first half of the payload is the
+        // "level" array (unused here), second half is the "status" array - NOT a [channel, status] pair
+        // like Response_Curtain_Switch_Control uses. This is the exact layout mismatch that caused physical
+        // panel moves to be silently misrouted before the fix.
+        MW02 device = newDevice();
+        sendCurtainBroadcast(device, (byte) 0x01, (byte) 0x00, (byte) 0x01, (byte) 0x00);
+        assertEquals(UpDownType.DOWN, device.getUpDownShutter1Status());
+        assertEquals(StopMoveType.MOVE, device.getStopMoveShutter1Status());
+        assertNull(device.getUpDownShutter2Status(), "channel 2 wasn't touched in this capture - must stay untouched");
+
+        sendCurtainBroadcast(device, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00);
+        assertEquals(StopMoveType.STOP, device.getStopMoveShutter1Status());
+    }
+
+    @Test
+    void broadcastFullDurationMoveCalibratesPositionSameAsDirectControl() throws InterruptedException {
+        // The position estimate must be reachable via the broadcast path too, not just
+        // Response_Curtain_Switch_Control - both funnel through the same applyCurtainStatus().
+        MW02 device = newDevice();
+        sendDuration(device, CHANNEL_1, DURATION_SECONDS);
+        sendCurtainBroadcast(device, (byte) 0x01, (byte) 0x00, (byte) 0x01, (byte) 0x00); // channel 1 Open
+        Thread.sleep((DURATION_SECONDS * 1000) + 200);
+        sendCurtainBroadcast(device, (byte) 0x00, (byte) 0x00, (byte) 0x00, (byte) 0x00); // Stop
+        assertEquals(100, device.getEstimatedPositionShutter1());
     }
 
     @Test

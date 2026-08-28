@@ -50,4 +50,16 @@ class DeviceTypeTest {
     void unknownValueResolvesToInvalid() {
         assertEquals(DeviceType.Invalid, DeviceType.create(-1));
     }
+
+    @Test
+    void aliasCode186ResolvesToMpl848Fh() {
+        // Regression for the exact bug the class doc references: code 186 was missing from create()'s
+        // switch even though MPL8_48_FH's own primary value round-tripped fine.
+        assertEquals(DeviceType.MPL8_48_FH, DeviceType.create(186));
+    }
+
+    @Test
+    void aliasCode662ResolvesToMrda0610432() {
+        assertEquals(DeviceType.MRDA0610_432, DeviceType.create(662));
+    }
 }
