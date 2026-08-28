@@ -61,6 +61,9 @@ public class MW02 extends Device {
             case Response_Curtain_Switch_Control:
                 handleCurtainSwitchStatus(p);
                 break;
+            case Broadcast_Status_of_Status_of_Curtain_Switches:
+                handleCurtainSwitchBroadcast(p);
+                break;
             case Get_Curtain_Duration_Response:
                 // Confirmed via real hardware (2026-08-21): 3-byte payload [channel, duration(2B BE)], not
                 // the 4-byte [channel, reserved, duration(2B)] shape a reference implementation assumed.
@@ -90,7 +93,32 @@ public class MW02 extends Device {
         if (channel < 1 || channel > CHANNEL_COUNT) {
             return;
         }
-        switch (p.data[1]) {
+        applyCurtainStatus(channel, p.data[1]);
+    }
+
+    /**
+     * Confirmed via real hardware capture (2026-08-28): the physical panel driving this device's curtain
+     * broadcasts its own status change (openHAB previously never saw this - only reflected commands openHAB
+     * itself sent). Not a [channel, status] pair like {@link #handleCurtainSwitchStatus} - cross-checked
+     * against the {@code smart-bus} reference implementation's 0xE3E4 fixture and validated against three
+     * real transitions (Open/Close/Stop, only channel 2 physically moved each time): parallel arrays, first
+     * half of the payload is a per-channel "level" (not used here - duplicates "status" for this 2-state,
+     * no-percent-feedback device), second half is per-channel "status" in the same 0/1/2 convention used
+     * elsewhere in this class.
+     */
+    private void handleCurtainSwitchBroadcast(HdlPacket p) {
+        int size = p.data.length / 2;
+        for (int i = 0; i < size; i++) {
+            int channel = i + 1;
+            if (channel > CHANNEL_COUNT) {
+                break;
+            }
+            applyCurtainStatus(channel, p.data[size + i]);
+        }
+    }
+
+    private void applyCurtainStatus(int channel, byte status) {
+        switch (status) {
             case (byte) 0: // Stop
                 setStopMoveStatus(channel, StopMoveType.STOP);
                 break;
