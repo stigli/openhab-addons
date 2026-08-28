@@ -138,6 +138,14 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
     private static final int LIVENESS_TIMEOUT_MS = 60_000;
 
     /**
+     * Runs only while at least one of hdl:MW02's two curtain channels is actively moving (see
+     * {@link #manageCurtainPositionTickJob}) - periodically re-pushes {@link MW02#getEstimatedPositionShutter1}/
+     * {@code Shutter2} so the channel's percentage ticks smoothly during a move, not just at start/stop.
+     */
+    private @Nullable ScheduledFuture<?> curtainPositionTickJob;
+    private static final int CURTAIN_POSITION_TICK_MS = 1000;
+
+    /**
      * Which universal switch number each of this Thing's dynamically-added UVSwitch channels represents
      * (read from that channel's own "switchNumber" config - see {@link HdlBindingConstants#CHANNELTYPE_UVSWITCH}),
      * populated once in {@link #initialize()}. Built per-Thing instead of a fixed channel-id list since how
@@ -305,6 +313,10 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
         if (livenessTimeoutJob != null) {
             livenessTimeoutJob.cancel(true);
             livenessTimeoutJob = null;
+        }
+        if (curtainPositionTickJob != null) {
+            curtainPositionTickJob.cancel(true);
+            curtainPositionTickJob = null;
         }
 
         logger.debug("Disposed HDL! device {} {}.", getThing().getUID(), hdldeviceSerial);
@@ -1970,6 +1982,8 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                                     new DecimalType(curtainDurationShutter2));
                         }
                     }
+                        pushCurtainPositions((MW02) device);
+                        manageCurtainPositionTickJob((MW02) device);
                         break;
                     case MPT04_48: {
                         var button1Value = ((MPT0448) device).getbutton1Value();
@@ -2027,6 +2041,42 @@ public class HdlHandler extends BaseThingHandler implements DeviceStatusListener
                 logger.debug("No changes for {} {} id: {}", device.getType(), device.getSerialNr(),
                         getThing().getUID());
             }
+        }
+    }
+
+    /**
+     * Pushes the current elapsed-time position estimate for both curtain channels - see
+     * {@link MW02#getEstimatedPosition}. Called both immediately on a real move start/stop event (from
+     * {@link #onDeviceStateChanged}) and on every {@link #curtainPositionTickJob} tick while moving.
+     */
+    private void pushCurtainPositions(MW02 device) {
+        var estimatedPositionShutter1 = device.getEstimatedPositionShutter1();
+        if (estimatedPositionShutter1 != null) {
+            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_SHUTTER1CONTROL),
+                    new PercentType(estimatedPositionShutter1));
+        }
+        var estimatedPositionShutter2 = device.getEstimatedPositionShutter2();
+        if (estimatedPositionShutter2 != null) {
+            updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_SHUTTER2CONTROL),
+                    new PercentType(estimatedPositionShutter2));
+        }
+    }
+
+    /**
+     * Starts {@link #curtainPositionTickJob} if either curtain channel just started moving and it isn't
+     * already running, or cancels it once neither channel is moving anymore - checked on every real
+     * move-related event, not just once, so it self-corrects if a stop event is ever missed.
+     */
+    private void manageCurtainPositionTickJob(MW02 device) {
+        boolean moving = device.isMovingShutter1() || device.isMovingShutter2();
+        if (moving) {
+            if (curtainPositionTickJob == null || curtainPositionTickJob.isCancelled()) {
+                curtainPositionTickJob = scheduler.scheduleWithFixedDelay(() -> pushCurtainPositions(device), 0,
+                        CURTAIN_POSITION_TICK_MS, TimeUnit.MILLISECONDS);
+            }
+        } else if (curtainPositionTickJob != null) {
+            curtainPositionTickJob.cancel(true);
+            curtainPositionTickJob = null;
         }
     }
 

@@ -111,33 +111,38 @@ unexpectedly driving a curtain directly (bypassing openHAB). Enable debug loggin
 
 ## Curtain Position (MW02)
 
-`MW02`'s `Shutter1Control`/`Shutter2Control` channels only support `UP`/`DOWN`/`STOP` - there's no native
-percentage feedback, so a Rollershutter item bound directly to them jumps straight to 0%/100% the instant a
-move starts, instead of tracking real travel over time.
+`MW02`'s `Shutter1Control`/`Shutter2Control` channels natively estimate position (0-100%, 0=open/UP,
+100=closed/DOWN) - no external profile or Item-link configuration needed. The device reports its own
+configured full-travel duration automatically at startup (also exposed on the read-only `Curtain1Duration`/
+`Curtain2Duration` channels, in seconds - confirmed against real MW02 hardware, 2026-08-21), and the binding
+tracks elapsed time against that duration whenever a real move happens - from openHAB, or from the physical
+panel, both are seen and handled the same way.
 
-openHAB core already ships a purpose-built fix for exactly this class of problem (motors with no position
-feedback, e.g. Somfy): the `org.openhab.transform.rollershutterposition` add-on's `ROLLERSHUTTERPOSITION`
-profile. Apply it on the Item link instead of writing any binding-specific code:
+The estimate starts unknown (not assumed to be 0) and only becomes known once a move runs for the device's
+full configured duration - that must mean it hit the physical end-stop, so it's used as a calibration point
+(0% or 100%) regardless of whether a prior position was known. Every subsequent full-duration move
+recalibrates the same way, self-correcting any drift; a move stopped early before that self-calibrates and
+just estimates from the last known position and elapsed time.
 
-```java
-Rollershutter E2R5MW02 "Rollershutter [%s]" {channel="hdl:MW02:Setup:1038:Shutter1Control"[profile="transform:ROLLERSHUTTERPOSITION", uptime=35, downtime=35]}
-```
+Push notifications happen immediately on any real Open/Close/Stop event, plus every second while actively
+moving, so the percentage ticks smoothly rather than jumping straight to an end value.
 
-`uptime`/`downtime` are the full-travel time in seconds. Don't guess these - `MW02` queries the device's own
-configured travel time automatically at startup and exposes it on the read-only `Curtain1Duration`/
-`Curtain2Duration` channels; check those (e.g. link them to a temporary `Number` item, or view the Thing's
-channel state in MainUI) and copy the value straight into `uptime`/`downtime` above. Confirmed working
-against real MW02 hardware (2026-08-21, both channels returned `35`), though the specific unit (assumed
-seconds) isn't formally documented anywhere, just inferred from a plausible value.
-
-If a channel stays undefined, the device didn't respond to the query - you can retry it manually via the
-console, watching the log for a response:
+If a channel's duration stays undefined, the device didn't respond to the query (needed before any
+percentage can be estimated) - retry manually via the console, watching the log for a response:
 
 ```text
 openhab:hdl curtainduration <subnet> <device> <channel>
 ```
 
 (enable DEBUG logging for `org.openhab.binding.hdl` first, and look for `Get_Curtain_Duration_Response`).
+
+**If you were already using the `org.openhab.transform.rollershutterposition` add-on's**
+**`ROLLERSHUTTERPOSITION` profile on these channels, you must remove it.** Confirmed on real hardware
+(2026-08-28): that profile's `onStateUpdateFromHandler` is a no-op, so it silently discards every state this
+binding pushes and substitutes its own separately-computed estimate instead - leaving it attached is not
+harmless, it fully hides the binding's native tracking behind the profile's own (independently buggy)
+estimate. Remove the `profile="transform:ROLLERSHUTTERPOSITION", uptime=..., downtime=...` part of the Item
+link entirely and bind directly to the channel.
 
 ## HDL Scenes
 
@@ -299,7 +304,7 @@ DryContact(1-24)Status  means that that it can be 24 Dry Contact channels. What 
 | Sonic                         | Switch           | This channel indicates if there is any movement.               | MS12                                          |
 | temperature                   | Number           | This channel indicates the measured temperature (in °C).       | MPL8_48_FH, MS08, MS12                        |
 | time                          | DateTime         | Current time.                                                 | ML01                                          |
-| Shutter(1-2)Control           | Rollershutter    | Device control: send UP/DOWN/STOP commands; state reflects the last known UP/DOWN direction (no native percentage support - see "Curtain Position (MW02)" above for a fix). | MW02                                          |
+| Shutter(1-2)Control           | Rollershutter    | Device control: send UP/DOWN/STOP commands; state reflects an estimated position (0-100%) - see "Curtain Position (MW02)" above. | MW02                                          |
 | Curtain(1-2)Duration           | Number           | Configured full-travel duration in seconds, queried from the device automatically at startup. Read-only. See "Curtain Position (MW02)" above.  | MW02                                          |
 | FHMode                        | String           | Floor heating mode (Normal, Day, Night, Away, Timer). Writable on MPL8_48_FH.         | MPL8_48_FH, MFH06                             |
 | FHNormalTempSet / FHTempSet / FHNightTempSet / FHAwayTempSet | Number:Temperature | Floor heating setpoint temperatures. Individually writable on MPL8_48_FH.       | MPL8_48_FH, MFH06                             |
