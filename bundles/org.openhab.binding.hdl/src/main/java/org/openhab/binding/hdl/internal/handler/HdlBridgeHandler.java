@@ -33,6 +33,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -41,10 +42,13 @@ import org.openhab.binding.hdl.internal.device.CommandType;
 import org.openhab.binding.hdl.internal.device.Device;
 import org.openhab.binding.hdl.internal.device.DeviceConfiguration;
 import org.openhab.binding.hdl.internal.device.DeviceType;
+import org.openhab.binding.hdl.internal.handler.HdlBusStatistics.UnknownTarget;
 import org.openhab.core.config.core.Configuration;
 import org.openhab.core.library.types.DecimalType;
+import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.Bridge;
 import org.openhab.core.thing.ChannelUID;
+import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.BaseBridgeHandler;
@@ -140,19 +144,60 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
     }
 
     /**
-     * Updates the BusMessageRate/BusInvalidPacketCount channels from {@link #busStatistics}; for the
-     * full breakdown (top senders/receivers, peak rate, etc.) see the "busstats" console command
-     * (HdlConsoleCommandExtension), which reads {@link #getBusStatistics()} directly.
+     * Updates the BusMessageRate/BusInvalidPacketCount/BusUnknownTargetCount/BusUnknownTargets channels from
+     * {@link #busStatistics}; for the full breakdown (top senders/receivers, peak rate, etc.) see the
+     * "busstats" console command (HdlConsoleCommandExtension), which reads {@link #getBusStatistics()}
+     * directly.
      */
     private void updateStatisticsChannels() {
         updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BUS_MESSAGE_RATE),
                 new DecimalType(busStatistics.takeRecentAverageRatePerSecond()));
         updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BUS_INVALID_PACKET_COUNT),
                 new DecimalType(busStatistics.getInvalidPacketCount()));
+
+        List<UnknownTarget> unknownTargets = getUnknownTargets();
+        updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BUS_UNKNOWN_TARGET_COUNT),
+                new DecimalType(unknownTargets.size()));
+        String formatted = unknownTargets.isEmpty() ? "none"
+                : unknownTargets.stream()
+                        .map(t -> t.address() + " (from " + String.join(", ", t.senderAddresses()) + ")")
+                        .collect(Collectors.joining("; "));
+        updateState(new ChannelUID(getThing().getUID(), HdlBindingConstants.CHANNEL_BUS_UNKNOWN_TARGETS),
+                new StringType(formatted));
     }
 
     public HdlBusStatistics getBusStatistics() {
         return busStatistics;
+    }
+
+    /**
+     * Subnet/DeviceID pairs (as {@code "subnet.device"} strings) configured on every Thing under this
+     * bridge, read directly off each child Thing's {@link Configuration} - works whether or not the Thing
+     * has ever initialized/gone ONLINE. Used to keep a real-but-quiet configured Thing (hasn't spoken since
+     * last restart, or is legitimately silent for long stretches, e.g. MPT04) from ever being flagged as an
+     * unknown target - see {@link HdlBusStatistics#isUnknownTarget}.
+     */
+    public Set<String> getConfiguredDeviceAddresses() {
+        Set<String> addresses = new HashSet<>();
+        for (Thing childThing : getThing().getThings()) {
+            Configuration config = childThing.getConfiguration();
+            Object subnetObj = config.get(HdlBindingConstants.PROPERTY_SUBNET);
+            Object deviceObj = config.get(HdlBindingConstants.PROPERTY_DEVICEID);
+            if (subnetObj instanceof BigDecimal subnet && deviceObj instanceof BigDecimal device) {
+                addresses.add(subnet.intValueExact() + "." + device.intValueExact());
+            }
+        }
+        return addresses;
+    }
+
+    /**
+     * Every bus address addressed by a command but never proven to exist on the bus and not configured as
+     * any Thing - see {@link HdlBusStatistics#isUnknownTarget}. Single place both
+     * {@link #updateStatisticsChannels()} and {@code HdlConsoleCommandExtension} call through, so they can't
+     * drift out of sync with each other.
+     */
+    public List<UnknownTarget> getUnknownTargets() {
+        return busStatistics.getUnknownTargets(getConfiguredDeviceAddresses());
     }
 
     protected void onRead(ByteBuffer byteBuffer, DatagramChannel datagramChannel) {
@@ -167,6 +212,7 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
         busStatistics.recordPacket(p.sourceSubnetID, p.sourceDeviceID, p.sourcedeviceType, p.targetSubnetID,
                 p.targetDeviceID);
         logCurtainControlDiagnostics(p);
+        logUnknownTargetDiagnostics(p);
 
         try {
             if (p.sourcedeviceType != DeviceType.Invalid) {
@@ -310,6 +356,22 @@ public class HdlBridgeHandler extends BaseBridgeHandler {
                         + "openHAB, {}.{} is the device that sent it.",
                 p.commandType, channel, action, p.sourceSubnetID, p.sourceDeviceID, p.sourcedeviceType,
                 p.targetSubnetID, p.targetDeviceID, p.sourceSubnetID, p.sourceDeviceID);
+    }
+
+    /**
+     * Logs the moment a command is seen addressed to a bus address that's never proven to exist and isn't
+     * configured as any Thing - see {@link HdlBusStatistics#isUnknownTarget} - rather than waiting for the
+     * next periodic BusUnknownTargets channel update. Likely a wrong Subnet/DeviceID in the HDL Setup Tool;
+     * the source address named here is the physical device/panel whose configuration to go fix.
+     */
+    private void logUnknownTargetDiagnostics(HdlPacket p) {
+        String target = p.targetSubnetID + "." + p.targetDeviceID;
+        if (busStatistics.isUnknownTarget(target, getConfiguredDeviceAddresses())) {
+            logger.debug(
+                    "Command {} from {}.{} targets {}.{}, which has never answered on the bus and isn't "
+                            + "configured as any Thing - likely a wrong Subnet/DeviceID in the HDL Setup Tool.",
+                    p.commandType, p.sourceSubnetID, p.sourceDeviceID, p.targetSubnetID, p.targetDeviceID);
+        }
     }
 
     @Override

@@ -9,6 +9,8 @@
 		<channels>
 			<channel id="BusMessageRate" typeId="busMessageRate"></channel>
 			<channel id="BusInvalidPacketCount" typeId="busInvalidPacketCount"></channel>
+			<channel id="BusUnknownTargetCount" typeId="busUnknownTargetCount"></channel>
+			<channel id="BusUnknownTargets" typeId="busUnknownTargets"></channel>
 		</channels>
 		<config-description>
 			<parameter name="ip" type="text" required="true">
@@ -39,5 +41,29 @@
 		<label>Bus Invalid Packet Count</label>
 		<description>Total count of unparseable/invalid packets seen since the bridge started.</description>
 		<state pattern="%d" readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="busUnknownTargetCount">
+		<item-type>Number</item-type>
+		<label>Bus Unknown Target Count</label>
+		<description>Count of bus addresses that have been sent a command but have never answered on the bus
+			and aren't
+			configured as any Thing - likely a wrong Subnet/DeviceID in the HDL Setup Tool. See
+			BusUnknownTargets for details.</description>
+		<state pattern="%d" readOnly="true"/>
+	</channel-type>
+
+	<channel-type id="busUnknownTargets">
+		<item-type>String</item-type>
+		<label>Bus Unknown Targets</label>
+		<description>Bus addresses that have been sent a command but have never answered on the bus and
+			aren't configured as
+			any Thing, each with the real device(s) that sent to it - format
+			"target (from sender1, sender2); ...". Points
+			directly at what to go fix: the target is likely a
+			wrong Subnet/DeviceID in the HDL Setup Tool, and the sender is the
+			physical device/panel whose
+			configuration to correct.</description>
+		<state pattern="%s" readOnly="true"/>
 	</channel-type>
 </thing:thing-descriptions>

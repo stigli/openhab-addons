@@ -79,6 +79,8 @@ public class HdlBindingConstants {
     // List of all Channel ids
     public static final String CHANNEL_BUS_MESSAGE_RATE = "BusMessageRate";
     public static final String CHANNEL_BUS_INVALID_PACKET_COUNT = "BusInvalidPacketCount";
+    public static final String CHANNEL_BUS_UNKNOWN_TARGET_COUNT = "BusUnknownTargetCount";
+    public static final String CHANNEL_BUS_UNKNOWN_TARGETS = "BusUnknownTargets";
     public static final String CHANNEL_TEMPERATUR = "temperature";
     public static final String CHANNEL_TIME = "time";
     public static final String CHANNEL_BRIGHTNESS = "Brightness";

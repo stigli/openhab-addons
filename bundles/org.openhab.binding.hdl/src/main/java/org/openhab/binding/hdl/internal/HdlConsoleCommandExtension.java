@@ -75,7 +75,7 @@ public class HdlConsoleCommandExtension extends AbstractConsoleCommandExtension 
         for (Thing bridge : bridges) {
             if (bridge.getHandler() instanceof HdlBridgeHandler handler) {
                 console.println(bridge.getUID().toString() + ":");
-                console.println(handler.getBusStatistics().formatSummary());
+                console.println(handler.getBusStatistics().formatSummary(handler.getConfiguredDeviceAddresses()));
             } else {
                 console.println(bridge.getUID().toString() + ": no handler (not initialized)");
             }

@@ -88,15 +88,37 @@ capture rather than assumed interchangeable. Adding a missing code is a one-line
 
 ## Bus Statistics
 
-The bridge Thing has two channels for trending bus load over time:
+The bridge Thing has four channels for trending bus load over time and catching wrong configurations:
 
 | Channel Type ID        | Item Type | Description                                                        |
 |-------------------------|-----------|---------------------------------------------------------------------|
 | BusMessageRate          | Number    | Average messages/second seen on the bus since the last update (updated every 60s). |
 | BusInvalidPacketCount   | Number    | Total count of unparseable/invalid packets seen since the bridge started.           |
+| BusUnknownTargetCount   | Number    | Count of bus addresses sent a command but never proven to exist (updated every 60s). See below. |
+| BusUnknownTargets       | String    | Those addresses, each with the sender(s) that targeted them - `"target (from sender1, sender2); ..."`. |
 
-For a detailed on-demand breakdown (average/peak rate, total messages, and the top 5 sending and receiving
-addresses on the bus), use the console command:
+**BusUnknownTargetCount/BusUnknownTargets** catch a specific real-world misconfiguration: a device in the
+physical HDL Setup Tool (e.g. a panel button's CMD list) configured to target a Subnet/DeviceID that was
+never actually provisioned - the command just goes nowhere today, with no ACK, no error, and nothing to
+point at it. Since the bridge passively observes every packet on the bus (not just ones addressed to Things
+it manages), a target address that's been sent a command but has never once answered and isn't configured
+as any Thing here is almost certainly a stale/wrong address in the Setup Tool - the sender named alongside
+it is the physical device/panel whose configuration to go fix. A real-but-quiet configured Thing (hasn't
+spoken since the last restart, or is a Thing type that's legitimately silent for long stretches, e.g.
+`MPT04`) is cross-referenced against every Thing's own Subnet/DeviceID and never flagged, even transiently.
+Two non-device addresses are also always excluded: the broadcast address (any `Subnet.255`, not just the
+full `255.255`, per the HDL Buspro convention - confirmed on real hardware), and `240.254`, empirically
+observed to be the physical HDL Setup Tool PC software's own self-address (real devices answer commands
+targeting it while actively being edited in the Setup Tool) - not from official documentation, but
+consistently corroborated across multiple real devices and sessions. The one residual, honest limitation: a
+device that's real on the bus but not configured as any openHAB Thing at all, and hasn't spoken since the
+last restart, could still appear here transiently - the same passive-discovery gap the `Discover_Device`
+startup broadcast (see "Discovery" above) already exists to shrink, not a new problem, and it self-clears
+the moment that device is either configured or speaks. Enable DEBUG logging for `org.openhab.binding.hdl` to
+see each occurrence logged in real time as it happens, not just on the next 60s update.
+
+For a detailed on-demand breakdown (average/peak rate, total messages, the top 5 sending and receiving
+addresses on the bus, and the same unknown-targets list), use the console command:
 
 ```shell
 openhab:hdl busstats
